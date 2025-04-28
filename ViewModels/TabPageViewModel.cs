@@ -10,6 +10,8 @@ namespace DocCreator01.ViewModels
 {
     public sealed class TabPageViewModel : ReactiveObject
     {
+
+        public string Title => TextPart?.Title;
         public TextPart TextPart { get; }
 
         public TabPageViewModel (TextPart textPart)

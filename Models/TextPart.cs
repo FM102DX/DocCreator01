@@ -10,6 +10,8 @@ namespace DocCreator01.Models
 {
     public class TextPart
     {
+        public string Title { get; set; }
         public string Text { get; set; }
+
     }
 }

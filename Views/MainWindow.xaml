@@ -6,46 +6,67 @@
         Title="DocGen App" Height="800" Width="1200">
 
     <Window.Resources>
+        <!-- Кладём шаблон заголовка -->
+        <!-- Window.Resources -->
         <DataTemplate x:Key="ClosableTabHeaderTemplate">
-            <StackPanel Orientation="Horizontal" Margin="0">
-                <!-- Текст заголовка -->
-                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <Grid Margin="0"
+                  Background="Aquamarine" 
+                  MinHeight="40" MinWidth="100">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <!-- текст -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- крестик -->
+                </Grid.ColumnDefinitions>
 
-                <!-- Крестик -->
-                <Button Content="×"
-                Width="16" Height="16" Padding="0"
+                <!-- Заголовок -->
+                <TextBlock Text="{Binding Title}"
+                   VerticalAlignment="Center"
+                   Margin="12"
+                   FontSize="14"
+                   Foreground="#333"/>
+
+        <!-- Крестик -->
+        <Button Grid.Column="1"
+                Content="×"
+                Width="18" Height="18"
                 FontWeight="Bold"
-                ToolTip="Закрыть вкладку"
+                Padding="0"
+                FontSize="18"
                 Cursor="Hand"
                 BorderThickness="0"
                 Background="Transparent"
-                VerticalAlignment="Center"
+                ToolTip="Закрыть вкладку"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
                 Command="{Binding DataContext.CloseTabCommand,
                                   RelativeSource={RelativeSource AncestorType=TabControl}}"
                 CommandParameter="{Binding}">
-                    <!-- убираем фокус-рамку -->
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                            <Setter Property="Focusable" Value="False"/>
-                            <Setter Property="Foreground" Value="#444"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="Button">
-                                        <ContentPresenter HorizontalAlignment="Center"
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Setter Property="Focusable"  Value="False"/>
+                    <Setter Property="Foreground" Value="#666"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter HorizontalAlignment="Center"
                                                   VerticalAlignment="Center"/>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Foreground" Value="Red"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-            </StackPanel>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="Red"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+    </Grid>
         </DataTemplate>
+
+
+
 
     </Window.Resources>
     
@@ -100,21 +121,36 @@
                         Background="Red" Foreground="White"/>
 
                 <TabControl Grid.Row="1"
-                            ItemsSource="{Binding Tabs}"
-                            SelectedItem="{Binding SelectedTab}">
+            ItemsSource="{Binding Tabs}"
+            SelectedItem="{Binding SelectedTab}">
                     <TabControl.ItemContainerStyle>
                         <Style TargetType="TabItem">
-                            <Setter Property="Header" Value="{Binding Model.Title}"/>
-                            <EventSetter Event="MouseRightButtonUp" Handler="TabItem_RightClick"/>
+                            <!-- растягиваем Grid-шапку -->
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            
+                           
+                            <!-- подключаем шаблон -->
+                            <Setter Property="HeaderTemplate" Value="{StaticResource ClosableTabHeaderTemplate}"/>
+
+                            <!-- размеры вкладки -->
+                            <Setter Property="MinWidth" Value="100"/>
+                            <Setter Property="Height"   Value="40"/>
+
+                            <!-- контекстное меню (если нужно) -->
+                            <EventSetter Event="MouseRightButtonUp"
+                         Handler="TabItem_RightClick"/>
                         </Style>
                     </TabControl.ItemContainerStyle>
 
+                    <!-- контент вкладки -->
                     <TabControl.ContentTemplate>
                         <DataTemplate DataType="{x:Type vm:TabPageViewModel}">
                             <views:TextPartUserControl DataContext="{Binding Model}"/>
                         </DataTemplate>
                     </TabControl.ContentTemplate>
                 </TabControl>
+
+
             </Grid>
 
             <!-- Правая колонка -->

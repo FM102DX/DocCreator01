@@ -48,6 +48,7 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> ExitCommand { get; }
         public ReactiveCommand<Unit, Unit> AddTabCommand { get; }
         public ReactiveCommand<TabPageViewModel, Unit> CloseTabCommand { get; }
+        public ReactiveCommand<Unit, Unit> CloseAllTabsCommand { get; }
         public ReactiveCommand<TabPageViewModel, Unit> DeleteTabCommand { get; }
         public ReactiveCommand<Unit, Unit> GenerateCommand { get; }
 
@@ -55,19 +56,26 @@ namespace DocCreator01.ViewModel
         {
             _repo = repo;
             _docGen = docGen;
-
             OpenCommand = ReactiveCommand.Create(Open);
             SaveCommand = ReactiveCommand.Create(Save);
             ExitCommand = ReactiveCommand.Create(() => System.Windows.Application.Current.Shutdown());
             AddTabCommand = ReactiveCommand.Create(AddTab);
             CloseTabCommand = ReactiveCommand.Create<TabPageViewModel>(CloseTab);
+            CloseAllTabsCommand = ReactiveCommand.Create(CloseAllTabs);
+            
+
             DeleteTabCommand = ReactiveCommand.Create<TabPageViewModel>(DeleteTab);
             GenerateCommand = ReactiveCommand.Create(Generate);
         }
 
         void AddTab()
         {
-            var tp = new TextPart { Text = $"Tab {CurrentProject.ProjectData.TextParts.Count + 1}" };
+            var newTextPartName = CurrentProject.GetNewTextPartName();
+            var tp = new TextPart { 
+                Title= newTextPartName, 
+                Text = $"Tab {CurrentProject.ProjectData.TextParts.Count + 1}" 
+            };
+
             CurrentProject.ProjectData.TextParts.Add(tp);
             var vm = new TabPageViewModel(tp);
             Tabs.Add(vm);
@@ -75,6 +83,8 @@ namespace DocCreator01.ViewModel
         }
 
         void CloseTab(TabPageViewModel? vm) => Tabs.Remove(vm!);
+
+        void CloseAllTabs() => Tabs.Clear();
 
         void DeleteTab(TabPageViewModel? vm)
         {
@@ -87,10 +97,8 @@ namespace DocCreator01.ViewModel
         {
             var dlg = new OpenFileDialog { Filter = "Project (*.json)|*.json|All (*.*)|*.*", Title = "Открыть проект" };
             if (dlg.ShowDialog() != true) return;
-
             CurrentProject = _repo.Load(dlg.FileName);
             _currentPath = dlg.FileName;
-
             Tabs.Clear();
             foreach (var tp in CurrentProject.ProjectData.TextParts)
                 Tabs.Add(new TabPageViewModel(tp));

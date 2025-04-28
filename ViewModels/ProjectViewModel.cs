@@ -10,16 +10,16 @@ namespace DocCreator01.ViewModels
 {
     public sealed class ProjectViewModel : ReactiveObject
     {
-        public Project Model { get; }
+        public Project Project { get; }
 
         public SettingsViewModel Settings { get; }
         public ProjectDataViewModel ProjectData { get; }
 
-        public ProjectViewModel(Project model)
+        public ProjectViewModel(Project project)
         {
-            Model = model;
-            Settings = new SettingsViewModel(Model.Settings);
-            ProjectData = new ProjectDataViewModel(Model.ProjectData);
+            Project = project;
+            Settings = new SettingsViewModel(Project.Settings);
+            ProjectData = new ProjectDataViewModel(Project.ProjectData);
         }
 
         /* Если понадобятся свойства верхнего уровня: */

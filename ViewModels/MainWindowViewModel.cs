@@ -9,38 +9,109 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows;
+using DocCreator01.Data.Enums;
+using DocCreator01.ViewModels;
+using ReactiveUI;
+using System.Collections.ObjectModel;
+using System.Reactive;
 
 
 namespace DocCreator01.ViewModel
 {
-    public class MainWindowViewModel
+    public sealed class MainWindowViewModel : ReactiveObject
     {
-        private readonly IProjectService _projectService;
-        public Project CurrentProject => _projectService.CurrentProject;
+        readonly IProjectRepository _repo;
+        readonly IDocGenerator _docGen;
 
-        public ICommand OpenCommand { get; }
-        public ICommand ExitCommand { get; }
+        string? _currentPath;
+        Project _currentProject = new();
 
-        public MainWindowViewModel(IProjectService projectService)
+        public Project CurrentProject
         {
-            _projectService = projectService;
-            OpenCommand = new RelayCommand(_ => Open());
-            ExitCommand = new RelayCommand(_ => Application.Current.Shutdown());
+            get => _currentProject;
+            private set => this.RaiseAndSetIfChanged(ref _currentProject, value);
         }
 
-        private void Open()
+        public ObservableCollection<TabPageViewModel> Tabs { get; } = new();
+        TabPageViewModel? _selectedTab;
+        public TabPageViewModel? SelectedTab
         {
-            var dlg = new OpenFileDialog
-            {
-                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                Title = "Открыть проект"
-            };
+            get => _selectedTab;
+            set => this.RaiseAndSetIfChanged(ref _selectedTab, value);
+        }
 
-            if (dlg.ShowDialog() == true)
+        public ObservableCollection<string> GeneratedDocs { get; } = new();
+
+        // ReactiveCommands
+        public ReactiveCommand<Unit, Unit> OpenCommand { get; }
+        public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+        public ReactiveCommand<Unit, Unit> ExitCommand { get; }
+        public ReactiveCommand<Unit, Unit> AddTabCommand { get; }
+        public ReactiveCommand<TabPageViewModel, Unit> CloseTabCommand { get; }
+        public ReactiveCommand<TabPageViewModel, Unit> DeleteTabCommand { get; }
+        public ReactiveCommand<Unit, Unit> GenerateCommand { get; }
+
+        public MainWindowViewModel(IProjectRepository repo, IDocGenerator docGen)
+        {
+            _repo = repo;
+            _docGen = docGen;
+
+            OpenCommand = ReactiveCommand.Create(Open);
+            SaveCommand = ReactiveCommand.Create(Save);
+            ExitCommand = ReactiveCommand.Create(() => System.Windows.Application.Current.Shutdown());
+            AddTabCommand = ReactiveCommand.Create(AddTab);
+            CloseTabCommand = ReactiveCommand.Create<TabPageViewModel>(CloseTab);
+            DeleteTabCommand = ReactiveCommand.Create<TabPageViewModel>(DeleteTab);
+            GenerateCommand = ReactiveCommand.Create(Generate);
+        }
+
+        void AddTab()
+        {
+            var tp = new TextPart { Text = $"Tab {CurrentProject.ProjectData.TextParts.Count + 1}" };
+            CurrentProject.ProjectData.TextParts.Add(tp);
+            var vm = new TabPageViewModel(tp);
+            Tabs.Add(vm);
+            SelectedTab = vm;
+        }
+
+        void CloseTab(TabPageViewModel? vm) => Tabs.Remove(vm!);
+
+        void DeleteTab(TabPageViewModel? vm)
+        {
+            if (vm == null) return;
+            CurrentProject.ProjectData.TextParts.Remove(vm.TextPart);
+            CloseTab(vm);
+        }
+
+        void Open()
+        {
+            var dlg = new OpenFileDialog { Filter = "Project (*.json)|*.json|All (*.*)|*.*", Title = "Открыть проект" };
+            if (dlg.ShowDialog() != true) return;
+
+            CurrentProject = _repo.Load(dlg.FileName);
+            _currentPath = dlg.FileName;
+
+            Tabs.Clear();
+            foreach (var tp in CurrentProject.ProjectData.TextParts)
+                Tabs.Add(new TabPageViewModel(tp));
+            SelectedTab = Tabs.FirstOrDefault();
+        }
+
+        void Save()
+        {
+            if (string.IsNullOrEmpty(_currentPath))
             {
-                _projectService.Load(dlg.FileName);
-                // Здесь вызвать уведомление об обновлении UI (INotifyPropertyChanged)
+                var dlg = new SaveFileDialog { Filter = "Project (*.json)|*.json", Title = "Сохранить проект" };
+                if (dlg.ShowDialog() == true) _currentPath = dlg.FileName;
+                else return;
             }
+            _repo.Save(CurrentProject, _currentPath!);
+        }
+
+        void Generate()
+        {
+            _docGen.Generate(CurrentProject, GenerateFileTypeEnum.DOCX);
+            GeneratedDocs.Add($"Doc{GeneratedDocs.Count + 1:D2}.docx");
         }
     }
 }

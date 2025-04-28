@@ -1,4 +1,5 @@
 ﻿using DocCreator01.ViewModel;
+using DocCreator01.ViewModels;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,7 +11,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace DocCreator01
+namespace DocCreator01.Views
 {
 
     public partial class MainWindow : Window

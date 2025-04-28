@@ -1,0 +1,109 @@
+# .gitignore for C# WPF + ReactiveUI + embedded Python
+
+###################################################
+# VISUAL STUDIO / .NET (covers C#, WPF, ReactiveUI)
+###################################################
+
+# User‑specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# IDE settings
+.vs/
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug*/
+[Rr]elease*/
+x64/
+x86/
+
+# Rider / ReSharper
+.idea/
+_ReSharper*/
+*.DotSettings.user
+
+# NuGet
+packages/
+*.nupkg
+# Paket
+.paket/
+paket-files/
+
+# Azure & ClickOnce
+PublishScripts/
+*.azurePubxml
+*.publishproj
+publish/
+AppPackages/
+BundleArtifacts/
+
+###################################################
+# WINDOWS OS
+###################################################
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+###################################################
+# PYTHON (embedded libs, tooling)
+###################################################
+# Byte‑compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Unit test / coverage
+.tox/
+.nox/
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Misc
+*.log
+
+###################################################
+# VS CODE (optional)
+###################################################
+.vscode/
+
+###################################################
+# END
+###################################################

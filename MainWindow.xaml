@@ -1,0 +1,18 @@
+﻿<Window x:Class="DocCreator01.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DocGen App" Height="350" Width="600">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="Файл">
+                <MenuItem Header="Открыть..." Command="{Binding OpenCommand}"/>
+                <Separator/>
+                <MenuItem Header="Выход" Command="{Binding ExitCommand}"/>
+            </MenuItem>
+        </Menu>
+        <Grid Margin="10">
+            <ListBox ItemsSource="{Binding CurrentProject.ProjectData.TextParts}" 
+                     DisplayMemberPath="Text"/>
+        </Grid>
+    </DockPanel>
+</Window>

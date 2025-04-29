@@ -14,6 +14,7 @@ using DocCreator01.ViewModels;
 using ReactiveUI;
 using System.Collections.ObjectModel;
 using System.Reactive;
+using System.Windows.Controls;
 
 
 namespace DocCreator01.ViewModel
@@ -52,6 +53,12 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<TabPageViewModel, Unit> DeleteTabCommand { get; }
         public ReactiveCommand<Unit, Unit> GenerateCommand { get; }
 
+        //----- Команды для панели слева -----
+        public ReactiveCommand<Unit, Unit> AddTextPartCommand { get; }
+        public ReactiveCommand<Unit, Unit> RemoveTextPartCommand { get; }
+        public ReactiveCommand<Unit, Unit> MoveUpCommand { get; }
+        public ReactiveCommand<Unit, Unit> MoveDownCommand { get; }
+
         public MainWindowViewModel(IProjectRepository repo, IDocGenerator docGen)
         {
             _repo = repo;
@@ -66,6 +73,12 @@ namespace DocCreator01.ViewModel
 
             DeleteTabCommand = ReactiveCommand.Create<TabPageViewModel>(DeleteTab);
             GenerateCommand = ReactiveCommand.Create(Generate);
+
+            AddTextPartCommand = ReactiveCommand.Create(AddTab);          // уже есть метод AddTab()
+            RemoveTextPartCommand = ReactiveCommand.Create(RemoveCurrent);
+            MoveUpCommand = ReactiveCommand.Create(MoveCurrentUp);
+            MoveDownCommand = ReactiveCommand.Create(MoveCurrentDown);
+
         }
 
         void AddTab()
@@ -121,5 +134,40 @@ namespace DocCreator01.ViewModel
             _docGen.Generate(CurrentProject, GenerateFileTypeEnum.DOCX);
             GeneratedDocs.Add($"Doc{GeneratedDocs.Count + 1:D2}.docx");
         }
+
+
+
+        void RemoveCurrent()
+        {
+            if (SelectedTab is null) return;
+            CurrentProject.ProjectData.TextParts.Remove(SelectedTab.TextPart);
+            Tabs.Remove(SelectedTab);
+            SelectedTab = Tabs.FirstOrDefault();
+        }
+
+        void MoveCurrentUp()
+        {
+            if (SelectedTab is null) return;
+            var list = CurrentProject.ProjectData.TextParts;
+            int idx = list.IndexOf(SelectedTab.TextPart);
+            if (idx > 0)
+            {
+                list.Move(idx, idx - 1);          // ObservableCollection.Move
+                Tabs.Move(idx, idx - 1);
+            }
+        }
+
+        void MoveCurrentDown()
+        {
+            if (SelectedTab is null) return;
+            var list = CurrentProject.ProjectData.TextParts;
+            int idx = list.IndexOf(SelectedTab.TextPart);
+            if (idx < list.Count - 1 && idx >= 0)
+            {
+                list.Move(idx, idx + 1);
+                Tabs.Move(idx, idx + 1);
+            }
+        }
+
     }
 }

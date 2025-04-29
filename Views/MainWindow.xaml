@@ -10,8 +10,8 @@
         <!-- Window.Resources -->
         <DataTemplate x:Key="ClosableTabHeaderTemplate">
             <Grid Margin="0"
-                  Background="Aquamarine" 
-                  MinHeight="40" MinWidth="100">
+                  MinHeight="30" 
+                  MinWidth="70">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <!-- текст -->
@@ -22,7 +22,7 @@
                 <!-- Заголовок -->
                 <TextBlock Text="{Binding Title}"
                    VerticalAlignment="Center"
-                   Margin="12"
+                   Margin="0"
                    FontSize="14"
                    Foreground="#333"/>
 
@@ -64,14 +64,9 @@
         </Button>
     </Grid>
         </DataTemplate>
-
-
-
-
     </Window.Resources>
     
     <DockPanel>
-
         <!-- Верхнее меню -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="Файл">
@@ -94,18 +89,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Левая голубая панель -->
-            <DockPanel Grid.Column="0">
-                <ListBox ItemsSource="{Binding CurrentProject.ProjectData.TextParts}"
-                         SelectedItem="{Binding SelectedTab.Model, Mode=TwoWay}"
-                         DisplayMemberPath="Title"
-                         Background="#B7DAF2"
-                         DockPanel.Dock="Top" Height="260"/>
-                <StackPanel DockPanel.Dock="Bottom" Margin="0,20,0,0">
-                    <Button Content="Button1" Height="60" Margin="10" Background="#CDEFA3"/>
-                    <Button Content="Button2" Height="60" Margin="10" Background="#CDEFA3"/>
-                    <Button Content="⚙"       Height="60" Margin="10" Background="#CDEFA3"/>
-                </StackPanel>
-            </DockPanel>
+            <views:TextPartsPanel Grid.Column="0" DataContext="{Binding}"/>
 
             <!-- Центральный TabControl -->
             <Grid Grid.Column="1">
@@ -133,8 +117,8 @@
                             <Setter Property="HeaderTemplate" Value="{StaticResource ClosableTabHeaderTemplate}"/>
 
                             <!-- размеры вкладки -->
-                            <Setter Property="MinWidth" Value="100"/>
-                            <Setter Property="Height"   Value="40"/>
+                            <Setter Property="MinWidth" Value="70"/>
+                            <Setter Property="Height"   Value="30"/>
 
                             <!-- контекстное меню (если нужно) -->
                             <EventSetter Event="MouseRightButtonUp"

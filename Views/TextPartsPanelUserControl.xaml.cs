@@ -15,8 +15,8 @@ using System.Windows.Shapes;
 
 namespace DocCreator01.Views
 {
-        public partial class TextPartsPanel : UserControl
+        public partial class TextPartsPanelUserControl : UserControl
         {
-            public TextPartsPanel() => InitializeComponent();
+            public TextPartsPanelUserControl() => InitializeComponent();
         }
 }

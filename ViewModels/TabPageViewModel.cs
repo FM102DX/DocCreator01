@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DocCreator01.Models;
@@ -10,14 +11,18 @@ namespace DocCreator01.ViewModels
 {
     public sealed class TabPageViewModel : ReactiveObject
     {
+        private TextPart? textPart;
 
-        public string Title => TextPart?.Title;
-        public TextPart TextPart { get; }
-
-        public TabPageViewModel (TextPart textPart)
+        public TabPageViewModel(TextPart? textPart)
         {
-            TextPart = textPart;
+            this.textPart = textPart;
         }
 
+        public TextPart? TextPart
+        {
+            get => textPart;
+            set => this.RaiseAndSetIfChanged(ref textPart, value);
+        }
+        public string? Title => TextPart?.Title;
     }
 }

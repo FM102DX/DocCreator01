@@ -89,7 +89,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Левая голубая панель -->
-            <views:TextPartsPanel Grid.Column="0" DataContext="{Binding}"/>
+            <views:TextPartsPanelUserControl Grid.Column="0" DataContext="{Binding}"/>
 
             <!-- Центральный TabControl -->
             <Grid Grid.Column="1">
@@ -105,7 +105,7 @@
                         Background="Red" Foreground="White"/>
 
                 <TabControl Grid.Row="1"
-            ItemsSource="{Binding Tabs}"
+            ItemsSource="{Binding Tabs}" 
             SelectedItem="{Binding SelectedTab}">
                     <TabControl.ItemContainerStyle>
                         <Style TargetType="TabItem">
@@ -129,7 +129,7 @@
                     <!-- контент вкладки -->
                     <TabControl.ContentTemplate>
                         <DataTemplate DataType="{x:Type vm:TabPageViewModel}">
-                            <views:TextPartUserControl DataContext="{Binding Model}"/>
+                            <views:TextPartUserControl DataContext="{Binding TextPart}"/>
                         </DataTemplate>
                     </TabControl.ContentTemplate>
                 </TabControl>

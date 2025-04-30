@@ -1,21 +1,15 @@
-﻿using DocCreator01.Commands;
+﻿using ReactiveUI;
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Reactive;
+using System.Windows;
+using Microsoft.Win32;
 using DocCreator01.Contracts;
 using DocCreator01.Models;
-using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using System.Windows;
 using DocCreator01.Data.Enums;
 using DocCreator01.ViewModels;
-using ReactiveUI;
-using System.Collections.ObjectModel;
-using System.Reactive;
-using System.Windows.Controls;
-
+using System.Reactive.Concurrency;
 
 namespace DocCreator01.ViewModel
 {
@@ -23,17 +17,12 @@ namespace DocCreator01.ViewModel
     {
         readonly IProjectRepository _repo;
         readonly IDocGenerator _docGen;
-
         string? _currentPath;
-        Project _currentProject = new();
-
-        public Project CurrentProject
-        {
-            get => _currentProject;
-            private set => this.RaiseAndSetIfChanged(ref _currentProject, value);
-        }
+        public Project CurrentProject { get; private set; } = new();
 
         public ObservableCollection<TabPageViewModel> Tabs { get; } = new();
+        public ObservableCollection<string> GeneratedDocs { get; } = new();
+
         TabPageViewModel? _selectedTab;
         public TabPageViewModel? SelectedTab
         {
@@ -41,9 +30,8 @@ namespace DocCreator01.ViewModel
             set => this.RaiseAndSetIfChanged(ref _selectedTab, value);
         }
 
-        public ObservableCollection<string> GeneratedDocs { get; } = new();
+        IScheduler Ui => RxApp.MainThreadScheduler;
 
-        // ReactiveCommands
         public ReactiveCommand<Unit, Unit> OpenCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveCommand { get; }
         public ReactiveCommand<Unit, Unit> ExitCommand { get; }
@@ -53,42 +41,39 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<TabPageViewModel, Unit> DeleteTabCommand { get; }
         public ReactiveCommand<Unit, Unit> GenerateCommand { get; }
 
-        //----- Команды для панели слева -----
         public ReactiveCommand<Unit, Unit> AddTextPartCommand { get; }
         public ReactiveCommand<Unit, Unit> RemoveTextPartCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveUpCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveDownCommand { get; }
-
+        public ReactiveCommand<Unit, Unit> ActivateTabCommand { get; }
+        
         public MainWindowViewModel(IProjectRepository repo, IDocGenerator docGen)
         {
             _repo = repo;
             _docGen = docGen;
-            OpenCommand = ReactiveCommand.Create(Open);
-            SaveCommand = ReactiveCommand.Create(Save);
-            ExitCommand = ReactiveCommand.Create(() => System.Windows.Application.Current.Shutdown());
-            AddTabCommand = ReactiveCommand.Create(AddTab);
-            CloseTabCommand = ReactiveCommand.Create<TabPageViewModel>(CloseTab);
-            CloseAllTabsCommand = ReactiveCommand.Create(CloseAllTabs);
-            
 
-            DeleteTabCommand = ReactiveCommand.Create<TabPageViewModel>(DeleteTab);
-            GenerateCommand = ReactiveCommand.Create(Generate);
-
-            AddTextPartCommand = ReactiveCommand.Create(AddTab);          // уже есть метод AddTab()
-            RemoveTextPartCommand = ReactiveCommand.Create(RemoveCurrent);
-            MoveUpCommand = ReactiveCommand.Create(MoveCurrentUp);
-            MoveDownCommand = ReactiveCommand.Create(MoveCurrentDown);
-
+            OpenCommand = ReactiveCommand.Create(Open, outputScheduler: Ui);
+            SaveCommand = ReactiveCommand.Create(Save, outputScheduler: Ui);
+            ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown(), outputScheduler: Ui);
+            AddTabCommand = ReactiveCommand.Create(AddTab, outputScheduler: RxApp.MainThreadScheduler);
+            CloseTabCommand = ReactiveCommand.Create<TabPageViewModel>(vm => CloseTab(vm), outputScheduler: Ui);
+            CloseAllTabsCommand = ReactiveCommand.Create(CloseAllTabs, outputScheduler: Ui);
+            DeleteTabCommand = ReactiveCommand.Create<TabPageViewModel>(DeleteTab, outputScheduler: Ui);
+            GenerateCommand = ReactiveCommand.Create(Generate, outputScheduler: Ui);
+            AddTextPartCommand = AddTabCommand;
+            RemoveTextPartCommand = ReactiveCommand.Create(RemoveCurrent, outputScheduler: Ui);
+            MoveUpCommand = ReactiveCommand.Create(MoveCurrentUp, outputScheduler: Ui);
+            MoveDownCommand = ReactiveCommand.Create(MoveCurrentDown, outputScheduler: Ui);
+            ActivateTabCommand = ReactiveCommand.Create(ActivateTab, outputScheduler: Ui);
         }
 
         void AddTab()
         {
-            var newTextPartName = CurrentProject.GetNewTextPartName();
-            var tp = new TextPart { 
-                Title= newTextPartName, 
-                Text = $"Tab {CurrentProject.ProjectData.TextParts.Count + 1}" 
+            var tp = new TextPart
+            {
+                Title = CurrentProject.GetNewTextPartName(),
+                Text = $"Tab {CurrentProject.ProjectData.TextParts.Count + 1}"
             };
-
             CurrentProject.ProjectData.TextParts.Add(tp);
             var vm = new TabPageViewModel(tp);
             Tabs.Add(vm);
@@ -96,7 +81,6 @@ namespace DocCreator01.ViewModel
         }
 
         void CloseTab(TabPageViewModel? vm) => Tabs.Remove(vm!);
-
         void CloseAllTabs() => Tabs.Clear();
 
         void DeleteTab(TabPageViewModel? vm)
@@ -108,7 +92,7 @@ namespace DocCreator01.ViewModel
 
         void Open()
         {
-            var dlg = new OpenFileDialog { Filter = "Project (*.json)|*.json|All (*.*)|*.*", Title = "Открыть проект" };
+            var dlg = new OpenFileDialog { Filter = "Project (*.json)|*.json|All (*.*)|*.*" };
             if (dlg.ShowDialog() != true) return;
             CurrentProject = _repo.Load(dlg.FileName);
             _currentPath = dlg.FileName;
@@ -122,7 +106,7 @@ namespace DocCreator01.ViewModel
         {
             if (string.IsNullOrEmpty(_currentPath))
             {
-                var dlg = new SaveFileDialog { Filter = "Project (*.json)|*.json", Title = "Сохранить проект" };
+                var dlg = new SaveFileDialog { Filter = "Project (*.json)|*.json" };
                 if (dlg.ShowDialog() == true) _currentPath = dlg.FileName;
                 else return;
             }
@@ -135,11 +119,9 @@ namespace DocCreator01.ViewModel
             GeneratedDocs.Add($"Doc{GeneratedDocs.Count + 1:D2}.docx");
         }
 
-
-
         void RemoveCurrent()
         {
-            if (SelectedTab is null) return;
+            if (SelectedTab == null) return;
             CurrentProject.ProjectData.TextParts.Remove(SelectedTab.TextPart);
             Tabs.Remove(SelectedTab);
             SelectedTab = Tabs.FirstOrDefault();
@@ -147,19 +129,19 @@ namespace DocCreator01.ViewModel
 
         void MoveCurrentUp()
         {
-            if (SelectedTab is null) return;
+            if (SelectedTab == null) return;
             var list = CurrentProject.ProjectData.TextParts;
             int idx = list.IndexOf(SelectedTab.TextPart);
             if (idx > 0)
             {
-                list.Move(idx, idx - 1);          // ObservableCollection.Move
+                list.Move(idx, idx - 1);
                 Tabs.Move(idx, idx - 1);
             }
         }
 
         void MoveCurrentDown()
         {
-            if (SelectedTab is null) return;
+            if (SelectedTab == null) return;
             var list = CurrentProject.ProjectData.TextParts;
             int idx = list.IndexOf(SelectedTab.TextPart);
             if (idx < list.Count - 1 && idx >= 0)
@@ -169,5 +151,9 @@ namespace DocCreator01.ViewModel
             }
         }
 
+        void ActivateTab()
+        {
+
+        }
     }
 }

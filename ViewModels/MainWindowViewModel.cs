@@ -45,8 +45,9 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> RemoveTextPartCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveUpCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveDownCommand { get; }
-        public ReactiveCommand<Unit, Unit> ActivateTabCommand { get; }
-        
+        public ReactiveCommand<TextPart, Unit> ActivateTabCommand { get; }
+        public ReactiveCommand<Unit, Unit> CloseCurrentCommand { get; }
+
         public MainWindowViewModel(IProjectRepository repo, IDocGenerator docGen)
         {
             _repo = repo;
@@ -64,13 +65,25 @@ namespace DocCreator01.ViewModel
             RemoveTextPartCommand = ReactiveCommand.Create(RemoveCurrent, outputScheduler: Ui);
             MoveUpCommand = ReactiveCommand.Create(MoveCurrentUp, outputScheduler: Ui);
             MoveDownCommand = ReactiveCommand.Create(MoveCurrentDown, outputScheduler: Ui);
-            ActivateTabCommand = ReactiveCommand.Create(ActivateTab, outputScheduler: Ui);
+            ActivateTabCommand = ReactiveCommand.Create<TextPart>(ActivateTab, outputScheduler: Ui);
+            CloseCurrentCommand = ReactiveCommand.Create(CloseCurrent, outputScheduler: Ui);
         }
+
+
+        public string WindowTitle =>
+            string.IsNullOrEmpty(_currentPath)
+                ? "DocGen App"
+                : $"DocGen App - {System.IO.Path.GetFileName(_currentPath)}";
+
+        // маленький помощник, чтобы не писать RaisePropertyChanged много раз
+        void UpdateWindowTitle() => this.RaisePropertyChanged(nameof(WindowTitle));
+        void UpdateCurrentProject() => this.RaisePropertyChanged(nameof(CurrentProject));
 
         void AddTab()
         {
             var tp = new TextPart
             {
+                Id= Guid.NewGuid(),
                 Title = CurrentProject.GetNewTextPartName(),
                 Text = $"Tab {CurrentProject.ProjectData.TextParts.Count + 1}"
             };
@@ -92,24 +105,50 @@ namespace DocCreator01.ViewModel
 
         void Open()
         {
-            var dlg = new OpenFileDialog { Filter = "Project (*.json)|*.json|All (*.*)|*.*" };
+            var dlg = new OpenFileDialog
+            {
+                Filter = "Doc Parts (*.docparts)|*.docparts|All (*.*)|*.*",
+                DefaultExt = ".docparts"
+            };
+
             if (dlg.ShowDialog() != true) return;
-            CurrentProject = _repo.Load(dlg.FileName);
-            _currentPath = dlg.FileName;
+            
+            CurrentProject.ProjectData.TextParts.Clear();
+            
             Tabs.Clear();
+
+            CurrentProject = _repo.Load(dlg.FileName);
+
+            _currentPath = dlg.FileName;
+
+            UpdateWindowTitle();
+            
             foreach (var tp in CurrentProject.ProjectData.TextParts)
-                Tabs.Add(new TabPageViewModel(tp));
+            {
+                if(CurrentProject.OpenedTabs.Contains(tp.Id))
+                    Tabs.Add(new TabPageViewModel(tp));
+            }
             SelectedTab = Tabs.FirstOrDefault();
+            UpdateCurrentProject();
         }
 
         void Save()
         {
             if (string.IsNullOrEmpty(_currentPath))
             {
-                var dlg = new SaveFileDialog { Filter = "Project (*.json)|*.json" };
-                if (dlg.ShowDialog() == true) _currentPath = dlg.FileName;
+                var dlg = new SaveFileDialog
+                {
+                    Filter = "Doc Parts (*.docparts)|*.docparts",
+                    DefaultExt = ".docparts"
+                };
+                if (dlg.ShowDialog() == true)
+                {
+                    _currentPath = dlg.FileName;
+                    UpdateWindowTitle();
+                }
                 else return;
             }
+            CurrentProject.OpenedTabs = Tabs.Select(x => x.TextPart.Id).ToList();
             _repo.Save(CurrentProject, _currentPath!);
         }
 
@@ -151,9 +190,42 @@ namespace DocCreator01.ViewModel
             }
         }
 
-        void ActivateTab()
+        void ActivateTab(TextPart tp)
         {
-
+            var vm = Tabs.FirstOrDefault(t => t.TextPart == tp);
+            if (vm == null)
+            {
+                vm = new TabPageViewModel(tp);
+                Tabs.Add(vm);
+            }
+            SelectedTab = vm;
         }
+
+        void CloseCurrent()
+        {
+            // спрашиваем пользователя, что делать с текущим документом
+            var res = MessageBox.Show(
+                "Сохранить изменения перед закрытием?",
+                "Закрыть документ",
+                MessageBoxButton.YesNoCancel,
+                MessageBoxImage.Question);
+
+            if (res == MessageBoxResult.Cancel)
+                return;               //- пользователь передумал закрывать
+
+            if (res == MessageBoxResult.Yes)
+                Save();               //- сохраняем, затем продолжаем закрытие
+
+            // ------------------ «обычное» закрытие ------------------
+            _currentPath = null;
+            UpdateWindowTitle();
+            Tabs.Clear();
+            GeneratedDocs.Clear();
+            CurrentProject.ProjectData.TextParts.Clear();
+            SelectedTab = null;
+
+            CurrentProject = new Project();  // создаём новый пустой проект
+        }
+
     }
 }

@@ -40,14 +40,15 @@
         </StackPanel>
 
         <!-- DataGrid вместо ListBox -->
-        <DataGrid ItemsSource="{Binding CurrentProject.ProjectData.TextParts}"
+        <DataGrid x:Name="PartsGrid"
+                  ItemsSource="{Binding CurrentProject.ProjectData.TextParts}"
                   SelectedItem="{Binding SelectedPanelItem.TextPart, Mode=TwoWay}"
                   AutoGenerateColumns="False"
                   HeadersVisibility="None"
                   GridLinesVisibility="None"
                   Background="#B7DAF2"
                   BorderThickness="0"
-                  RowHeight="26"         
+                  RowHeight="26"
                   Padding="0"
                   IsReadOnly="True"
                   CanUserAddRows="False"
@@ -55,13 +56,17 @@
                   CanUserResizeRows="False"
                   CanUserReorderColumns="False"
                   CanUserResizeColumns="False">
+
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Title}" Width="*" />
             </DataGrid.Columns>
+
+            <!-- двойной-клик открывает вкладку для выбранной части -->
             <DataGrid.InputBindings>
                 <MouseBinding Gesture="LeftDoubleClick"
                               Command="{Binding DataContext.ActivateTabCommand,
-                                                RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              CommandParameter="{Binding SelectedItem, ElementName=PartsGrid}" />
             </DataGrid.InputBindings>
         </DataGrid>
     </DockPanel>

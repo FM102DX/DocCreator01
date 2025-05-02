@@ -1,6 +1,7 @@
 ﻿using ReactiveUI;
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Windows;
@@ -10,28 +11,28 @@ using DocCreator01.Models;
 using DocCreator01.Data.Enums;
 using DocCreator01.ViewModels;
 using System.Reactive.Concurrency;
+using System.Reactive.Linq;
+using System.Windows.Controls;
 
 namespace DocCreator01.ViewModel
 {
     public sealed class MainWindowViewModel : ReactiveObject
     {
-        readonly IProjectRepository _repo;
-        readonly IDocGenerator _docGen;
-        string? _currentPath;
-        public Project CurrentProject { get; private set; } = new();
-
-        public ObservableCollection<TabPageViewModel> Tabs { get; } = new();
-        public ObservableCollection<string> GeneratedDocs { get; } = new();
-
-        TabPageViewModel? _selectedTab;
-        public TabPageViewModel? SelectedTab
+        private readonly IProjectRepository _repo;
+        private readonly IDocGenerator _docGen;
+        private string? _currentPath;
+        private bool _isProjectDirty;
+        private Project _currentProject = new();
+        private TabPageViewModel? _selectedTab;
+        public bool IsProjectDirty
         {
-            get => _selectedTab;
-            set => this.RaiseAndSetIfChanged(ref _selectedTab, value);
+            get => _isProjectDirty;
+            private set
+            {
+                this.RaiseAndSetIfChanged(ref _isProjectDirty, value);
+                UpdateWindowTitle();                 // сразу обновляем заголовок
+            }
         }
-
-        IScheduler Ui => RxApp.MainThreadScheduler;
-
         public ReactiveCommand<Unit, Unit> OpenCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveCommand { get; }
         public ReactiveCommand<Unit, Unit> ExitCommand { get; }
@@ -40,20 +41,19 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> CloseAllTabsCommand { get; }
         public ReactiveCommand<TabPageViewModel, Unit> DeleteTabCommand { get; }
         public ReactiveCommand<Unit, Unit> GenerateCommand { get; }
-
+        public ReactiveCommand<string, Unit> OpenRecentCommand { get; }
         public ReactiveCommand<Unit, Unit> AddTextPartCommand { get; }
         public ReactiveCommand<Unit, Unit> RemoveTextPartCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveUpCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveDownCommand { get; }
         public ReactiveCommand<TextPart, Unit> ActivateTabCommand { get; }
         public ReactiveCommand<Unit, Unit> CloseCurrentCommand { get; }
-
         public MainWindowViewModel(IProjectRepository repo, IDocGenerator docGen)
         {
             _repo = repo;
             _docGen = docGen;
 
-            OpenCommand = ReactiveCommand.Create(Open, outputScheduler: Ui);
+            OpenCommand = ReactiveCommand.Create(OpenFile, outputScheduler: Ui);
             SaveCommand = ReactiveCommand.Create(Save, outputScheduler: Ui);
             ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown(), outputScheduler: Ui);
             AddTabCommand = ReactiveCommand.Create(AddTab, outputScheduler: RxApp.MainThreadScheduler);
@@ -67,72 +67,125 @@ namespace DocCreator01.ViewModel
             MoveDownCommand = ReactiveCommand.Create(MoveCurrentDown, outputScheduler: Ui);
             ActivateTabCommand = ReactiveCommand.Create<TextPart>(ActivateTab, outputScheduler: Ui);
             CloseCurrentCommand = ReactiveCommand.Create(CloseCurrent, outputScheduler: Ui);
+            OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent, outputScheduler: Ui);
+
         }
 
 
+        public Project CurrentProject
+        {
+            get => _currentProject;
+            private set => this.RaiseAndSetIfChanged(ref _currentProject, value);
+        }
+        public ObservableCollection<string> RecentFiles { get; } = new();
+
+        public ObservableCollection<TabPageViewModel> Tabs { get; } = new();
+        public ObservableCollection<string> GeneratedDocs { get; } = new();
+        public TabPageViewModel? SelectedTab
+        {
+            get => _selectedTab;
+            set => this.RaiseAndSetIfChanged(ref _selectedTab, value);
+        }
+        private IScheduler Ui => RxApp.MainThreadScheduler;
+
+        // добавление пути в список (макс. 5 элементов)
+        private void AddRecent(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            // дубликат? — поднимаем вверх
+            if (RecentFiles.Contains(path))
+                RecentFiles.Remove(path);
+
+            RecentFiles.Insert(0, path);
+
+            while (RecentFiles.Count > 5)
+                RecentFiles.RemoveAt(RecentFiles.Count - 1);
+        }
         public string WindowTitle =>
             string.IsNullOrEmpty(_currentPath)
-                ? "DocGen App"
-                : $"DocGen App - {System.IO.Path.GetFileName(_currentPath)}";
+                ? $"DocGenApp{(IsProjectDirty ? " *" : "")}"
+                : $"DocGenApp - {Path.GetFileName(_currentPath)}{(IsProjectDirty ? " *" : "")}";
 
         // маленький помощник, чтобы не писать RaisePropertyChanged много раз
-        void UpdateWindowTitle() => this.RaisePropertyChanged(nameof(WindowTitle));
-        void UpdateCurrentProject() => this.RaisePropertyChanged(nameof(CurrentProject));
-
-        void AddTab()
+        private void UpdateWindowTitle() => this.RaisePropertyChanged(nameof(WindowTitle));
+        private void SubscribeTab(TabPageViewModel vm)
+        {
+            // любое IsDirty=true на вкладке делает «грязным» весь проект
+            vm.WhenAnyValue(x => x.IsDirty)
+                .Where(d => d)                     // интересует только переход в true
+                .Subscribe(_ => IsProjectDirty = true);
+        }
+        private void AddTab()
         {
             var tp = new TextPart
             {
-                Id= Guid.NewGuid(),
+                Id = Guid.NewGuid(),
                 Title = CurrentProject.GetNewTextPartName(),
                 Text = $"Tab {CurrentProject.ProjectData.TextParts.Count + 1}"
             };
             CurrentProject.ProjectData.TextParts.Add(tp);
+
             var vm = new TabPageViewModel(tp);
+            SubscribeTab(vm);               // ← новый вызов
             Tabs.Add(vm);
             SelectedTab = vm;
+
+            IsProjectDirty = true;          // структура изменилась
         }
-
-        void CloseTab(TabPageViewModel? vm) => Tabs.Remove(vm!);
-        void CloseAllTabs() => Tabs.Clear();
-
-        void DeleteTab(TabPageViewModel? vm)
+        private void CloseTab(TabPageViewModel? vm) => Tabs.Remove(vm!);
+        private void CloseAllTabs() => Tabs.Clear();
+        private void DeleteTab(TabPageViewModel? vm)
         {
             if (vm == null) return;
             CurrentProject.ProjectData.TextParts.Remove(vm.TextPart);
             CloseTab(vm);
+            IsProjectDirty = true;
         }
-
-        void Open()
+        private void OpenFile()
         {
             var dlg = new OpenFileDialog
             {
                 Filter = "Doc Parts (*.docparts)|*.docparts|All (*.*)|*.*",
                 DefaultExt = ".docparts"
             };
-
             if (dlg.ShowDialog() != true) return;
-            
+            LoadProject(dlg.FileName);
+        }
+        private void OpenRecent(string fileName)
+        {
+            if (!File.Exists(fileName))
+            {
+                MessageBox.Show($"Файл «{fileName}» не найден.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                RecentFiles.Remove(fileName);      // удаляем битую запись
+                return;
+            }
+            LoadProject(fileName);
+        }
+        private void LoadProject(string fileName)
+        {
+            // очистка старого состояния
             CurrentProject.ProjectData.TextParts.Clear();
-            
             Tabs.Clear();
-
-            CurrentProject = _repo.Load(dlg.FileName);
-
-            _currentPath = dlg.FileName;
-
+            CurrentProject = _repo.Load(fileName);
+            _currentPath = fileName;
+            AddRecent(fileName);  
             UpdateWindowTitle();
-            
             foreach (var tp in CurrentProject.ProjectData.TextParts)
             {
-                if(CurrentProject.OpenedTabs.Contains(tp.Id))
-                    Tabs.Add(new TabPageViewModel(tp));
+                if (CurrentProject.OpenedTabs.Contains(tp.Id))
+                {
+                    var vm = new TabPageViewModel(tp);
+                    SubscribeTab(vm);
+                    Tabs.Add(vm);
+                }
             }
             SelectedTab = Tabs.FirstOrDefault();
-            UpdateCurrentProject();
+            IsProjectDirty = false;
         }
 
-        void Save()
+        private void Save()
         {
             if (string.IsNullOrEmpty(_currentPath))
             {
@@ -150,23 +203,29 @@ namespace DocCreator01.ViewModel
             }
             CurrentProject.OpenedTabs = Tabs.Select(x => x.TextPart.Id).ToList();
             _repo.Save(CurrentProject, _currentPath!);
+            AddRecent(_currentPath);      // ← новая строка
+            foreach (var tab in Tabs)
+                tab.AcceptChanges();
+
+            IsProjectDirty = false;
         }
 
-        void Generate()
+        private void Generate()
         {
             _docGen.Generate(CurrentProject, GenerateFileTypeEnum.DOCX);
             GeneratedDocs.Add($"Doc{GeneratedDocs.Count + 1:D2}.docx");
         }
 
-        void RemoveCurrent()
+        private void RemoveCurrent()
         {
             if (SelectedTab == null) return;
             CurrentProject.ProjectData.TextParts.Remove(SelectedTab.TextPart);
             Tabs.Remove(SelectedTab);
             SelectedTab = Tabs.FirstOrDefault();
+            IsProjectDirty = true;
         }
 
-        void MoveCurrentUp()
+        private void MoveCurrentUp()
         {
             if (SelectedTab == null) return;
             var list = CurrentProject.ProjectData.TextParts;
@@ -176,9 +235,10 @@ namespace DocCreator01.ViewModel
                 list.Move(idx, idx - 1);
                 Tabs.Move(idx, idx - 1);
             }
+            IsProjectDirty = true;
         }
 
-        void MoveCurrentDown()
+        private void MoveCurrentDown()
         {
             if (SelectedTab == null) return;
             var list = CurrentProject.ProjectData.TextParts;
@@ -188,9 +248,10 @@ namespace DocCreator01.ViewModel
                 list.Move(idx, idx + 1);
                 Tabs.Move(idx, idx + 1);
             }
+            IsProjectDirty = true;
         }
 
-        void ActivateTab(TextPart tp)
+        private void ActivateTab(TextPart tp)
         {
             var vm = Tabs.FirstOrDefault(t => t.TextPart == tp);
             if (vm == null)
@@ -201,7 +262,7 @@ namespace DocCreator01.ViewModel
             SelectedTab = vm;
         }
 
-        void CloseCurrent()
+        private void CloseCurrent()
         {
             // спрашиваем пользователя, что делать с текущим документом
             var res = MessageBox.Show(
@@ -223,9 +284,10 @@ namespace DocCreator01.ViewModel
             GeneratedDocs.Clear();
             CurrentProject.ProjectData.TextParts.Clear();
             SelectedTab = null;
-
+            IsProjectDirty = false;
             CurrentProject = new Project();  // создаём новый пустой проект
         }
+
 
     }
 }

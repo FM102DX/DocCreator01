@@ -42,6 +42,7 @@ namespace DocCreator01.Views
             menu.Items.Add(del);
             menu.IsOpen = true;
         }
+
     }
 
 }

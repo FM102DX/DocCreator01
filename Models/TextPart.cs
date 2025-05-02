@@ -5,14 +5,42 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace DocCreator01.Models
 {
-    public class TextPart
+    public sealed class TextPart : ReactiveObject   // ← теперь ReactiveObject
     {
+        string _title = "";
+        string _text = "";
+        
+        public TextPart()
+        {
+            
+        }
+        [JsonConstructor]                       // для Newtonsoft.Json
+        public TextPart(Guid id, string title, string text)
+        {
+            Id = id;
+            Title = title;
+            Text = text;
+        }
+        [JsonProperty]
         public Guid Id { get; set; }
-        public string Title { get; set; }
-        public string Text { get; set; }
 
+        [JsonProperty]
+        public string Title
+        {
+            get => _title;
+            set => this.RaiseAndSetIfChanged(ref _title, value);
+        }
+
+        [JsonProperty]
+        public string Text
+        {
+            get => _text;
+            set => this.RaiseAndSetIfChanged(ref _text, value);
+        }
     }
+
 }

@@ -12,7 +12,6 @@ namespace DocCreator01.Models
         public Settings Settings { get; set; } = new Settings();
         public ProjectData ProjectData { get; set; } = new ProjectData();
         public List<Guid> OpenedTabs { get; set; } = new List<Guid>();
-
         public string GetNewTextPartName()
         {
             // Собираем все текущие названия (без учёта регистра, чтобы "TextPart-001" и "textpart-001"

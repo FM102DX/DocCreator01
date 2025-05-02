@@ -11,18 +11,44 @@ namespace DocCreator01.ViewModels
 {
     public sealed class TabPageViewModel : ReactiveObject
     {
-        private TextPart? textPart;
+        
+
+        bool _isDirty;
+        private TextPart? _textPart;
+        public string? Title => TextPart?.Title;
+        public bool IsDirty
+        {
+            get => _isDirty;
+            private set => this.RaiseAndSetIfChanged(ref _isDirty, value);
+        }
+
+        // заголовок для вкладки (с * если IsDirty)
+        public string Header => IsDirty ? $"{TextPart.Title} *" : TextPart.Title;
 
         public TabPageViewModel(TextPart? textPart)
         {
-            this.textPart = textPart;
+            this._textPart = textPart;
+            this.WhenAnyValue(_ => _.TextPart.Title,
+                    _ => _.TextPart.Text)
+                .Skip(1)
+                .Subscribe(_ =>
+                {
+                    IsDirty = true;                      // ← вот здесь флаг «грязно»
+                    this.RaisePropertyChanged(nameof(Header));
+                });
         }
 
         public TextPart? TextPart
         {
-            get => textPart;
-            set => this.RaiseAndSetIfChanged(ref textPart, value);
+            get => _textPart;
+            set => this.RaiseAndSetIfChanged(ref _textPart, value);
         }
-        public string? Title => TextPart?.Title;
+        /// <summary>Вызывается после успешного сохранения проекта.</summary>
+        public void AcceptChanges()
+        {
+            IsDirty = false;
+            this.RaisePropertyChanged(nameof(Header));
+        }
+
     }
 }

@@ -21,12 +21,5 @@ namespace DocCreator01.ViewModels
             Settings = new SettingsViewModel(Project.Settings);
             ProjectData = new ProjectDataViewModel(Project.ProjectData);
         }
-
-        /* Если понадобятся свойства верхнего уровня: */
-        // public string Name
-        // {
-        //     get => Model.Name;
-        //     set => this.RaiseAndSetIfChanged(ref Model.Name, value);
-        // }
     }
 }

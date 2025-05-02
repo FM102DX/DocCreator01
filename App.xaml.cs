@@ -2,6 +2,7 @@
 using DocCreator01.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
+using DocCreator01.Data;
 
 namespace DocCreator01
 {

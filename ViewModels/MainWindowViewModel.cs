@@ -268,18 +268,22 @@ namespace DocCreator01.ViewModel
 
         private void CloseCurrent()
         {
-            // спрашиваем пользователя, что делать с текущим документом
-            var res = MessageBox.Show(
-                "Сохранить изменения перед закрытием?",
-                "Закрыть документ",
-                MessageBoxButton.YesNoCancel,
-                MessageBoxImage.Question);
+            // Only ask about saving if the project has unsaved changes
+            if (IsProjectDirty)
+            {
+                // спрашиваем пользователя, что делать с текущим документом
+                var res = MessageBox.Show(
+                    "Сохранить изменения перед закрытием?",
+                    "Закрыть документ",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Question);
 
-            if (res == MessageBoxResult.Cancel)
-                return;               //- пользователь передумал закрывать
+                if (res == MessageBoxResult.Cancel)
+                    return;               //- пользователь передумал закрывать
 
-            if (res == MessageBoxResult.Yes)
-                Save();               //- сохраняем, затем продолжаем закрытие
+                if (res == MessageBoxResult.Yes)
+                    Save();               //- сохраняем, затем продолжаем закрытие
+            }
 
             // ------------------ «обычное» закрытие ------------------
             _currentPath = null;

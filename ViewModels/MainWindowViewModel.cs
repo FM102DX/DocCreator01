@@ -196,7 +196,8 @@ namespace DocCreator01.ViewModel
                 var dlg = new SaveFileDialog
                 {
                     Filter = "Doc Parts (*.docparts)|*.docparts",
-                    DefaultExt = ".docparts"
+                    DefaultExt = ".docparts",
+                    FileName = $"{CurrentProject.Name}.docparts" // Set default filename to project name
                 };
                 if (dlg.ShowDialog() == true)
                 {
@@ -207,7 +208,7 @@ namespace DocCreator01.ViewModel
             }
             CurrentProject.OpenedTabs = Tabs.Select(x => x.TextPart.Id).ToList();
             _repo.Save(CurrentProject, _currentPath!);
-            AddRecent(_currentPath);      // ← новая строка
+            AddRecent(_currentPath);
             foreach (var tab in Tabs)
                 tab.AcceptChanges();
 

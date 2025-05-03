@@ -100,7 +100,16 @@
                 <Separator />
 
                 <!-- Блок «Последние файлы» автоматически заполняется -->
-                <MenuItem Header="Недавние" x:Name="RecentFilesMenu"/>
+                <MenuItem Header="Недавние" x:Name="RecentFilesMenu">
+                    <MenuItem.ItemsSource>
+                        <Binding Path="RecentFiles" />
+                    </MenuItem.ItemsSource>
+                    <MenuItem.ItemTemplate>
+                        <DataTemplate>
+                            <MenuItem Header="{Binding}" Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </MenuItem.ItemTemplate>
+                </MenuItem>
             </MenuItem>
         </Menu>
 

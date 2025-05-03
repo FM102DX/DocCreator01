@@ -68,6 +68,8 @@ namespace DocCreator01.ViewModel
             CloseCurrentCommand = ReactiveCommand.Create(CloseCurrent, outputScheduler: Ui);
             OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent, outputScheduler: Ui);
             AppDataDir = GetProgramDataPath();
+
+            LoadRecentFiles(); // Load recent files on startup
         }
 
         public string AppDataDir { get; private set; }
@@ -101,6 +103,8 @@ namespace DocCreator01.ViewModel
 
             while (RecentFiles.Count > 5)
                 RecentFiles.RemoveAt(RecentFiles.Count - 1);
+
+            SaveRecentFiles(); // Save changes to the file
         }
         public string WindowTitle =>
             string.IsNullOrEmpty(_currentPath)
@@ -299,6 +303,26 @@ namespace DocCreator01.ViewModel
 
             Directory.CreateDirectory(docsDir);          // прав администратора не нужно
             return docsDir;
+        }
+
+        private void LoadRecentFiles()
+        {
+            string filePath = Path.Combine(AppDataDir, "appdata.docpartsettings");
+            if (File.Exists(filePath))
+            {
+                var recentFiles = File.ReadAllLines(filePath);
+                foreach (var file in recentFiles)
+                {
+                    if (!string.IsNullOrWhiteSpace(file))
+                        RecentFiles.Add(file);
+                }
+            }
+        }
+
+        private void SaveRecentFiles()
+        {
+            string filePath = Path.Combine(AppDataDir, "appdata.docpartsettings");
+            File.WriteAllLines(filePath, RecentFiles);
         }
     }
 }

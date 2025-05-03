@@ -24,15 +24,13 @@ namespace DocCreator01.ViewModel
         private bool _isProjectDirty;
         private Project _currentProject = new();
         private TabPageViewModel? _selectedTab;
-        public bool IsProjectDirty
-        {
-            get => _isProjectDirty;
-            private set
-            {
-                this.RaiseAndSetIfChanged(ref _isProjectDirty, value);
-                UpdateWindowTitle();                 // сразу обновляем заголовок
-            }
-        }
+
+        private TextPart? _selectedMainGridItem;
+        private MainGridLineViewModel? _selectedTextPartListViewModel;
+
+        // Collection of TextPartListViewModels for display in the DataGrid
+        public ObservableCollection<MainGridLineViewModel> MainGridLines { get; } = new();
+
         public ReactiveCommand<Unit, Unit> OpenCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveCommand { get; }
         public ReactiveCommand<Unit, Unit> ExitCommand { get; }
@@ -46,8 +44,11 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> RemoveTextPartCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveUpCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveDownCommand { get; }
-        public ReactiveCommand<TextPart, Unit> ActivateTabCommand { get; }
+        public ReactiveCommand<Unit, Unit> ActivateTabCommand { get; }
         public ReactiveCommand<Unit, Unit> CloseCurrentCommand { get; }
+        public ReactiveCommand<Unit, Unit> MoveLeftCommand { get; }
+        public ReactiveCommand<Unit, Unit> MoveRightCommand { get; }
+
         public MainWindowViewModel(IProjectRepository repo, IDocGenerator docGen)
         {
             _repo = repo;
@@ -64,14 +65,29 @@ namespace DocCreator01.ViewModel
             RemoveTextPartCommand = ReactiveCommand.Create(RemoveCurrent, outputScheduler: Ui);
             MoveUpCommand = ReactiveCommand.Create(MoveCurrentUp, outputScheduler: Ui);
             MoveDownCommand = ReactiveCommand.Create(MoveCurrentDown, outputScheduler: Ui);
-            ActivateTabCommand = ReactiveCommand.Create<TextPart>(ActivateTab, outputScheduler: Ui);
+            ActivateTabCommand = ReactiveCommand.Create(ActivateTab, outputScheduler: Ui);
             CloseCurrentCommand = ReactiveCommand.Create(CloseCurrent, outputScheduler: Ui);
             OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent, outputScheduler: Ui);
+            MoveLeftCommand = ReactiveCommand.Create(MoveCurrentLeft, outputScheduler: Ui);
+            MoveRightCommand = ReactiveCommand.Create(MoveCurrentRight, outputScheduler: Ui);
             AppDataDir = GetProgramDataPath();
+
+            // Subscribe to changes in the TextParts collection
+            this.WhenAnyValue(x => x.CurrentProject)
+                .Subscribe(_ => RefreshTextPartViewModels());
 
             LoadRecentFiles(); // Load recent files on startup
         }
 
+        public bool IsProjectDirty
+        {
+            get => _isProjectDirty;
+            private set
+            {
+                this.RaiseAndSetIfChanged(ref _isProjectDirty, value);
+                UpdateWindowTitle();                 // сразу обновляем заголовок
+            }
+        }
         public string AppDataDir { get; private set; }
 
         public Project CurrentProject
@@ -79,8 +95,20 @@ namespace DocCreator01.ViewModel
             get => _currentProject;
             private set => this.RaiseAndSetIfChanged(ref _currentProject, value);
         }
-        public ObservableCollection<string> RecentFiles { get; } = new();
 
+        public MainGridLineViewModel? SelectedTextPartListViewModel
+        {
+            get => _selectedTextPartListViewModel;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _selectedTextPartListViewModel, value);
+                if (value != null)
+                    SelectedMainGridItem = value.Model;
+                else
+                    SelectedMainGridItem = null;
+            }
+        }
+        public ObservableCollection<string> RecentFiles { get; } = new();
         public ObservableCollection<TabPageViewModel> Tabs { get; } = new();
         public ObservableCollection<string> GeneratedDocs { get; } = new();
         public TabPageViewModel? SelectedTab
@@ -88,7 +116,43 @@ namespace DocCreator01.ViewModel
             get => _selectedTab;
             set => this.RaiseAndSetIfChanged(ref _selectedTab, value);
         }
+        public TextPart? SelectedMainGridItem
+        {
+            get => _selectedMainGridItem;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _selectedMainGridItem, value);
+                if (_selectedTextPartListViewModel == null ||
+                    (_selectedMainGridItem != null && _selectedTextPartListViewModel.Model != _selectedMainGridItem))
+                {
+                    _selectedTextPartListViewModel =
+                        MainGridLines.FirstOrDefault(vm => vm.Model == _selectedMainGridItem);
+                    this.RaisePropertyChanged(nameof(SelectedTextPartListViewModel));
+                }
+            }
+        }
+
         private IScheduler Ui => RxApp.MainThreadScheduler;
+        private void RefreshTextPartViewModels()
+        {
+            MainGridLines.Clear();
+
+            foreach (var textPart in CurrentProject.ProjectData.TextParts)
+            {
+                MainGridLines.Add(new MainGridLineViewModel(textPart));
+            }
+
+            // Ensure we stay synchronized with the model collection
+            CurrentProject.ProjectData.TextParts.CollectionChanged += (s, e) =>
+            {
+                // Re-build the view models collection when the underlying collection changes
+                MainGridLines.Clear();
+                foreach (var textPart in CurrentProject.ProjectData.TextParts)
+                {
+                    MainGridLines.Add(new MainGridLineViewModel(textPart));
+                }
+            };
+        }
 
         // добавление пути в список (макс. 5 элементов)
         private void AddRecent(string? path)
@@ -111,7 +175,6 @@ namespace DocCreator01.ViewModel
                 ? $"{CurrentProject.Name}{(IsProjectDirty ? " *" : "")} [not-saved]"
                 : $"{CurrentProject.Name} - {Path.GetFileName(_currentPath)}{(IsProjectDirty ? " *" : "")}";
 
-        // маленький помощник, чтобы не писать RaisePropertyChanged много раз
         private void UpdateWindowTitle() => this.RaisePropertyChanged(nameof(WindowTitle));
         private void SubscribeTab(TabPageViewModel vm)
         {
@@ -132,6 +195,10 @@ namespace DocCreator01.ViewModel
             };
             CurrentProject.ProjectData.TextParts.Add(tp);
 
+            // Add corresponding view model
+            var listViewModel = new MainGridLineViewModel(tp);
+            MainGridLines.Add(listViewModel);
+
             var vm = new TabPageViewModel(tp);
             SubscribeTab(vm);               // ← новый вызов
             Tabs.Add(vm);
@@ -144,6 +211,12 @@ namespace DocCreator01.ViewModel
         private void DeleteTab(TabPageViewModel? vm)
         {
             if (vm == null) return;
+
+            // Find and remove the corresponding view model
+            var viewModel = MainGridLines.FirstOrDefault(x => x.Model == vm.TextPart);
+            if (viewModel != null)
+                MainGridLines.Remove(viewModel);
+
             CurrentProject.ProjectData.TextParts.Remove(vm.TextPart);
             CloseTab(vm);
             IsProjectDirty = true;
@@ -173,11 +246,16 @@ namespace DocCreator01.ViewModel
         {
             // очистка старого состояния
             CurrentProject.ProjectData.TextParts.Clear();
+            MainGridLines.Clear();
             Tabs.Clear();
             CurrentProject = _repo.Load(fileName);
             _currentPath = fileName;
             CurrentProject.FilePath = fileName; // Set FilePath when loading a project
-            AddRecent(fileName);  
+
+            // Create view models for each text part
+            RefreshTextPartViewModels();
+
+            AddRecent(fileName);
             UpdateWindowTitle();
             foreach (var tp in CurrentProject.ProjectData.TextParts)
             {
@@ -229,53 +307,132 @@ namespace DocCreator01.ViewModel
                 Settings = CurrentProject.Settings,
                 FilePath = CurrentProject.FilePath
             };
-            
+
             foreach (var part in CurrentProject.ProjectData.TextParts.Where(p => p.IncludeInDocument))
             {
                 filteredProject.ProjectData.TextParts.Add(part);
             }
-            
+
             _docGen.Generate(filteredProject, GenerateFileTypeEnum.DOCX);
             GeneratedDocs.Add($"Doc{GeneratedDocs.Count + 1:D2}.docx");
         }
 
         private void RemoveCurrent()
         {
-            if (SelectedTab == null) return;
-            CurrentProject.ProjectData.TextParts.Remove(SelectedTab.TextPart);
-            Tabs.Remove(SelectedTab);
+            if (SelectedTextPartListViewModel == null) return;
+
+            var textPart = SelectedTextPartListViewModel.Model;
+            var tab = Tabs.FirstOrDefault(t => t.TextPart == textPart);
+
+            if (tab != null)
+                Tabs.Remove(tab);
+
+            CurrentProject.ProjectData.TextParts.Remove(textPart);
+            MainGridLines.Remove(SelectedTextPartListViewModel);
+
+            SelectedTextPartListViewModel = MainGridLines.FirstOrDefault();
             SelectedTab = Tabs.FirstOrDefault();
+
             IsProjectDirty = true;
         }
 
         private void MoveCurrentUp()
         {
-            if (SelectedTab == null) return;
+            if (SelectedTextPartListViewModel == null) return;
+
+            var textPart = SelectedTextPartListViewModel.Model;
             var list = CurrentProject.ProjectData.TextParts;
-            int idx = list.IndexOf(SelectedTab.TextPart);
+            int idx = list.IndexOf(textPart);
+
             if (idx > 0)
             {
+                // Move in the model collection
                 list.Move(idx, idx - 1);
-                Tabs.Move(idx, idx - 1);
+
+                // Move in the view model collection
+                MainGridLines.Move(idx, idx - 1);
+
+                // Find and move any associated tab
+                int tabIdx = -1;
+                for (int i = 0; i < Tabs.Count; i++)
+                {
+                    if (Tabs[i].TextPart == textPart)
+                    {
+                        tabIdx = i;
+                        break;
+                    }
+                }
+
+                if (tabIdx >= 0)
+                    Tabs.Move(tabIdx, tabIdx);
             }
+
             IsProjectDirty = true;
         }
 
         private void MoveCurrentDown()
         {
-            if (SelectedTab == null) return;
+            if (SelectedTextPartListViewModel == null) return;
+
+            var textPart = SelectedTextPartListViewModel.Model;
             var list = CurrentProject.ProjectData.TextParts;
-            int idx = list.IndexOf(SelectedTab.TextPart);
+            int idx = list.IndexOf(textPart);
+
             if (idx < list.Count - 1 && idx >= 0)
             {
+                // Move in the model collection
                 list.Move(idx, idx + 1);
-                Tabs.Move(idx, idx + 1);
+
+                // Move in the view model collection
+                MainGridLines.Move(idx, idx + 1);
+
+                // Find and move any associated tab
+                int tabIdx = -1;
+                for (int i = 0; i < Tabs.Count; i++)
+                {
+                    if (Tabs[i].TextPart == textPart)
+                    {
+                        tabIdx = i;
+                        break;
+                    }
+                }
+
+                if (tabIdx >= 0)
+                    Tabs.Move(tabIdx, tabIdx);
             }
+
             IsProjectDirty = true;
         }
 
-        private void ActivateTab(TextPart tp)
+        private void MoveCurrentLeft()
         {
+            if (SelectedTextPartListViewModel == null) return;
+
+            var textPart = SelectedTextPartListViewModel.Model;
+            if (textPart.Level > 1)
+            {
+                textPart.Level--;
+                // The view model will update automatically via reactive binding
+                IsProjectDirty = true;
+            }
+        }
+
+        private void MoveCurrentRight()
+        {
+            if (SelectedTextPartListViewModel == null) return;
+
+            var textPart = SelectedTextPartListViewModel.Model;
+            if (textPart.Level < 5)
+            {
+                textPart.Level++;
+                // The view model will update automatically via reactive binding
+                IsProjectDirty = true;
+            }
+        }
+
+        private void ActivateTab()
+        {
+            var tp = SelectedMainGridItem;
             var vm = Tabs.FirstOrDefault(t => t.TextPart == tp);
             if (vm == null)
             {
@@ -310,7 +467,9 @@ namespace DocCreator01.ViewModel
             Tabs.Clear();
             GeneratedDocs.Clear();
             CurrentProject.ProjectData.TextParts.Clear();
+            MainGridLines.Clear();
             SelectedTab = null;
+            SelectedTextPartListViewModel = null;
             IsProjectDirty = false;
             CurrentProject = new Project();  // создаём новый пустой проект с именем "New project" и пустым FilePath
         }

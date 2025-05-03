@@ -39,10 +39,10 @@
                     Command="{Binding MoveRightCommand}"/>
         </StackPanel>
 
-        <!-- DataGrid вместо ListBox -->
+        <!-- DataGrid updated to use TextPartViewModels -->
         <DataGrid x:Name="PartsGrid"
-                  ItemsSource="{Binding CurrentProject.ProjectData.TextParts}"
-                  SelectedItem="{Binding SelectedPanelItem.TextPart, Mode=TwoWay}"
+                  ItemsSource="{Binding MainGridLines}"
+                  SelectedItem="{Binding SelectedTextPartListViewModel, Mode=TwoWay}"
                   AutoGenerateColumns="False"
                   HeadersVisibility="None"
                   GridLinesVisibility="None"
@@ -58,15 +58,35 @@
                   CanUserResizeColumns="False">
 
             <DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding Title}" Width="*" />
+                <DataGridTemplateColumn Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <!-- The indentation is now handled by the view model -->
+                                <TextBlock Text="{Binding Indentation}" 
+                                           Foreground="White" 
+                                           FontFamily="Consolas" 
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Title}" 
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text=" — " 
+                                           Foreground="#777777" 
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Level}" 
+                                           Foreground="#FF6600" 
+                                           FontWeight="SemiBold" 
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
 
-            <!-- двойной-клик открывает вкладку для выбранной части -->
             <DataGrid.InputBindings>
                 <MouseBinding Gesture="LeftDoubleClick"
                               Command="{Binding DataContext.ActivateTabCommand,
                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              CommandParameter="{Binding SelectedItem, ElementName=PartsGrid}" />
+                              CommandParameter="{Binding Model}" />
             </DataGrid.InputBindings>
         </DataGrid>
     </DockPanel>

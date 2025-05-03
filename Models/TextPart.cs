@@ -15,19 +15,21 @@ namespace DocCreator01.Models
         string _text = "";
         string _name = "";
         bool _includeInDocument = true;
+        int _level = 1; // Default level is 1
         
         public TextPart()
         {
             
         }
         [JsonConstructor]                       // для Newtonsoft.Json
-        public TextPart(Guid id, string title, string text, string name = "", bool includeInDocument = true)
+        public TextPart(Guid id, string title, string text, string name = "", bool includeInDocument = true, int level = 1)
         {
             Id = id;
             Title = title;
             Text = text;
             Name = name;
             IncludeInDocument = includeInDocument;
+            Level = level;
         }
         [JsonProperty]
         public Guid Id { get; set; }
@@ -59,6 +61,12 @@ namespace DocCreator01.Models
             get => _includeInDocument;
             set => this.RaiseAndSetIfChanged(ref _includeInDocument, value);
         }
+        
+        [JsonProperty]
+        public int Level
+        {
+            get => _level;
+            set => this.RaiseAndSetIfChanged(ref _level, Math.Clamp(value, 1, 5)); // Ensure level is between 1 and 5
+        }
     }
-
 }

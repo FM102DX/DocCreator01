@@ -108,8 +108,8 @@ namespace DocCreator01.ViewModel
         }
         public string WindowTitle =>
             string.IsNullOrEmpty(_currentPath)
-                ? $"DocGenApp{(IsProjectDirty ? " *" : "")}"
-                : $"DocGenApp - {Path.GetFileName(_currentPath)}{(IsProjectDirty ? " *" : "")}";
+                ? $"{CurrentProject.Name}{(IsProjectDirty ? " *" : "")}"
+                : $"{CurrentProject.Name} - {Path.GetFileName(_currentPath)}{(IsProjectDirty ? " *" : "")}";
 
         // маленький помощник, чтобы не писать RaisePropertyChanged много раз
         private void UpdateWindowTitle() => this.RaisePropertyChanged(nameof(WindowTitle));
@@ -293,7 +293,7 @@ namespace DocCreator01.ViewModel
             CurrentProject.ProjectData.TextParts.Clear();
             SelectedTab = null;
             IsProjectDirty = false;
-            CurrentProject = new Project();  // создаём новый пустой проект
+            CurrentProject = new Project();  // создаём новый пустой проект с именем "New project"
         }
 
         private string GetProgramDataPath()

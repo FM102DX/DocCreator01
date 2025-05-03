@@ -9,9 +9,16 @@ namespace DocCreator01.Models
 {
     public class Project
     {
+        public string Name { get; set; } = "New project";
         public Settings Settings { get; set; } = new Settings();
         public ProjectData ProjectData { get; set; } = new ProjectData();
         public List<Guid> OpenedTabs { get; set; } = new List<Guid>();
+
+        public Project()
+        {
+            Name = "New project";
+        }
+
         public string GetNewTextPartName()
         {
             // Собираем все текущие названия (без учёта регистра, чтобы "TextPart-001" и "textpart-001"

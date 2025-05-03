@@ -108,7 +108,7 @@ namespace DocCreator01.ViewModel
         }
         public string WindowTitle =>
             string.IsNullOrEmpty(_currentPath)
-                ? $"{CurrentProject.Name}{(IsProjectDirty ? " *" : "")}"
+                ? $"{CurrentProject.Name}{(IsProjectDirty ? " *" : "")} [not-saved]"
                 : $"{CurrentProject.Name} - {Path.GetFileName(_currentPath)}{(IsProjectDirty ? " *" : "")}";
 
         // маленький помощник, чтобы не писать RaisePropertyChanged много раз
@@ -174,6 +174,7 @@ namespace DocCreator01.ViewModel
             Tabs.Clear();
             CurrentProject = _repo.Load(fileName);
             _currentPath = fileName;
+            CurrentProject.FilePath = fileName; // Set FilePath when loading a project
             AddRecent(fileName);  
             UpdateWindowTitle();
             foreach (var tp in CurrentProject.ProjectData.TextParts)
@@ -202,12 +203,14 @@ namespace DocCreator01.ViewModel
                 if (dlg.ShowDialog() == true)
                 {
                     _currentPath = dlg.FileName;
+                    CurrentProject.FilePath = _currentPath; // Set FilePath when saving to a new file
                     UpdateWindowTitle();
                 }
                 else return;
             }
             CurrentProject.OpenedTabs = Tabs.Select(x => x.TextPart.Id).ToList();
             _repo.Save(CurrentProject, _currentPath!);
+            CurrentProject.FilePath = _currentPath!; // Ensure FilePath is always updated when saving
             AddRecent(_currentPath);
             foreach (var tab in Tabs)
                 tab.AcceptChanges();
@@ -294,7 +297,7 @@ namespace DocCreator01.ViewModel
             CurrentProject.ProjectData.TextParts.Clear();
             SelectedTab = null;
             IsProjectDirty = false;
-            CurrentProject = new Project();  // создаём новый пустой проект с именем "New project"
+            CurrentProject = new Project();  // создаём новый пустой проект с именем "New project" и пустым FilePath
         }
 
         private string GetProgramDataPath()

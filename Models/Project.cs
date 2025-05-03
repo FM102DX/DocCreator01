@@ -13,10 +13,12 @@ namespace DocCreator01.Models
         public Settings Settings { get; set; } = new Settings();
         public ProjectData ProjectData { get; set; } = new ProjectData();
         public List<Guid> OpenedTabs { get; set; } = new List<Guid>();
+        public string FilePath { get; set; } = string.Empty;
 
         public Project()
         {
             Name = "New project";
+            FilePath = string.Empty;
         }
 
         public string GetNewTextPartName()

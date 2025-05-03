@@ -52,7 +52,6 @@ namespace DocCreator01.ViewModel
         {
             _repo = repo;
             _docGen = docGen;
-
             OpenCommand = ReactiveCommand.Create(OpenFile, outputScheduler: Ui);
             SaveCommand = ReactiveCommand.Create(Save, outputScheduler: Ui);
             ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown(), outputScheduler: Ui);
@@ -68,9 +67,10 @@ namespace DocCreator01.ViewModel
             ActivateTabCommand = ReactiveCommand.Create<TextPart>(ActivateTab, outputScheduler: Ui);
             CloseCurrentCommand = ReactiveCommand.Create(CloseCurrent, outputScheduler: Ui);
             OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent, outputScheduler: Ui);
-
+            AppDataDir = GetProgramDataPath();
         }
 
+        public string AppDataDir { get; private set; }
 
         public Project CurrentProject
         {
@@ -288,6 +288,17 @@ namespace DocCreator01.ViewModel
             CurrentProject = new Project();  // создаём новый пустой проект
         }
 
+        private string GetProgramDataPath()
+        {
+            string company = "RICompany";
+            string product = "DockPartApp";
 
+            string docsDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                company, product);
+
+            Directory.CreateDirectory(docsDir);          // прав администратора не нужно
+            return docsDir;
+        }
     }
 }

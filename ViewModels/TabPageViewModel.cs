@@ -11,8 +11,6 @@ namespace DocCreator01.ViewModels
 {
     public sealed class TabPageViewModel : ReactiveObject
     {
-        
-
         bool _isDirty;
         private TextPart? _textPart;
         public string? Title => TextPart?.Title;
@@ -29,7 +27,9 @@ namespace DocCreator01.ViewModels
         {
             this._textPart = textPart;
             this.WhenAnyValue(_ => _.TextPart.Title,
-                    _ => _.TextPart.Text)
+                    _ => _.TextPart.Text,
+                    _ => _.TextPart.Name,
+                    _ => _.TextPart.IncludeInDocument)
                 .Skip(1)
                 .Subscribe(_ =>
                 {
@@ -49,6 +49,5 @@ namespace DocCreator01.ViewModels
             IsDirty = false;
             this.RaisePropertyChanged(nameof(Header));
         }
-
     }
 }

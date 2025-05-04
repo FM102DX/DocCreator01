@@ -169,11 +169,20 @@
 
             <!-- Правая колонка -->
             <DockPanel Grid.Column="2" Margin="10,0,0,0">
-                <Border Background="#E5A100" Height="200" DockPanel.Dock="Top">
-                    <TextBlock Text="Status"
-                               Foreground="White"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"/>
+                <Border Background="#E5A100" DockPanel.Dock="Top">
+                    <StackPanel>
+                        <TextBlock Text="Status"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,10,0,5"/>
+                        
+                        <!-- Add the SettingsUserControl here -->
+                        <views:SettingsUserControl 
+                            DataContext="{Binding SettingsViewModel}" 
+                            Background="White" 
+                            Margin="10" 
+                            Padding="5"/>
+                    </StackPanel>
                 </Border>
 
                 <Button Content="Create"

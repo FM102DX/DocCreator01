@@ -58,6 +58,10 @@ namespace DocCreator01.ViewModel
             _docGen = docGen;
             _textPartHelper = textPartHelper;
             _appPathsHelper = appPathsHelper;
+
+            // Initialize SettingsViewModel
+            SettingsViewModel = new SettingsViewModel(CurrentProject.Settings);
+
             OpenCommand = ReactiveCommand.Create(OpenFile, outputScheduler: Ui);
             SaveCommand = ReactiveCommand.Create(Save, outputScheduler: Ui);
             ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown(), outputScheduler: Ui);
@@ -220,6 +224,10 @@ namespace DocCreator01.ViewModel
             CurrentProject = _textPartHelper.LoadProject(fileName);
             _currentPath = fileName;
 
+            // Update SettingsViewModel with new project's settings
+            SettingsViewModel = new SettingsViewModel(CurrentProject.Settings);
+            this.RaisePropertyChanged(nameof(SettingsViewModel));
+
             // Create view models for each text part
             RefreshTextPartViewModels();
 
@@ -282,11 +290,13 @@ namespace DocCreator01.ViewModel
                     filteredProject.ProjectData.TextParts.Add(part);
                 }
 
-                _docGen.Generate(filteredProject, GenerateFileTypeEnum.DOCX);
-                
-                // Add entry to generated documents list - this will be the file name 
-                // that appears in the UI list
-                GeneratedDocs.Add($"Doc{GeneratedDocs.Count + 1:D2}.docx");
+                // Use the selected document type from settings
+                var docType = CurrentProject.Settings.GenDocType;
+                _docGen.Generate(filteredProject, docType);
+
+                // Add entry to generated docs list with appropriate extension
+                string extension = docType == GenerateFileTypeEnum.HTML ? "html" : "docx";
+                GeneratedDocs.Add($"Doc{GeneratedDocs.Count + 1:D2}.{extension}");
             }
             catch (Exception ex)
             {
@@ -321,7 +331,7 @@ namespace DocCreator01.ViewModel
             if (_textPartHelper.MoveTextPartUp(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
             {
                 IsProjectDirty = true;
-                
+
                 // Find and mark the affected tab as dirty
                 var tab = Tabs.FirstOrDefault(t => t.TextPart == textPart);
                 if (tab != null)
@@ -329,7 +339,7 @@ namespace DocCreator01.ViewModel
                     // This will raise the IsDirty property and update the Header
                     tab.MarkAsDirty();
                 }
-                
+
                 // Restore selection after moving
                 SelectedMainGridItem = textPart;
             }
@@ -343,7 +353,7 @@ namespace DocCreator01.ViewModel
             if (_textPartHelper.MoveTextPartDown(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
             {
                 IsProjectDirty = true;
-                
+
                 // Find and mark the affected tab as dirty
                 var tab = Tabs.FirstOrDefault(t => t.TextPart == textPart);
                 if (tab != null)
@@ -351,7 +361,7 @@ namespace DocCreator01.ViewModel
                     // This will raise the IsDirty property and update the Header
                     tab.MarkAsDirty();
                 }
-                
+
                 // Restore selection after moving
                 SelectedMainGridItem = textPart;
             }
@@ -421,6 +431,8 @@ namespace DocCreator01.ViewModel
             SelectedMainGridItemViewModel = null;
             IsProjectDirty = false;
             CurrentProject = new Project();  // создаём новый пустой проект с именем "New project" и пустым FilePath
+            SettingsViewModel = new SettingsViewModel(CurrentProject.Settings);
+            this.RaisePropertyChanged(nameof(SettingsViewModel));
         }
 
         private void LoadRecentFiles()
@@ -456,5 +468,8 @@ namespace DocCreator01.ViewModel
 
             SaveRecentFiles(); // Save changes to the file
         }
+
+        // Add this property to MainWindowViewModel class
+        public SettingsViewModel SettingsViewModel { get; private set; }
     }
 }

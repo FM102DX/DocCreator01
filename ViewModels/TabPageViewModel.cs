@@ -13,7 +13,7 @@ namespace DocCreator01.ViewModels
     {
         bool _isDirty;
         private TextPart? _textPart;
-        public string? Title => TextPart?.Title;
+        public string? Name => TextPart?.Name;
         public bool IsDirty
         {
             get => _isDirty;
@@ -21,12 +21,12 @@ namespace DocCreator01.ViewModels
         }
 
         // заголовок для вкладки (с * если IsDirty)
-        public string Header => IsDirty ? $"{TextPart.Title} *" : TextPart.Title;
+        public string Header => IsDirty ? $"{TextPart.Name} *" : TextPart.Name;
 
         public TabPageViewModel(TextPart? textPart)
         {
             this._textPart = textPart;
-            this.WhenAnyValue(_ => _.TextPart.Title,
+            this.WhenAnyValue(_ => _.TextPart.Name,
                     _ => _.TextPart.Text,
                     _ => _.TextPart.Name,
                     _ => _.TextPart.Level,  // Add the Level property to track
@@ -34,7 +34,7 @@ namespace DocCreator01.ViewModels
                 .Skip(1)
                 .Subscribe(_ =>
                 {
-                    IsDirty = true;                      // ← вот здесь флаг «грязно»
+                    IsDirty = true;                      //вот здесь флаг «грязно»
                     this.RaisePropertyChanged(nameof(Header));
                 });
         }
@@ -48,6 +48,12 @@ namespace DocCreator01.ViewModels
         public void AcceptChanges()
         {
             IsDirty = false;
+            this.RaisePropertyChanged(nameof(Header));
+        }
+        /// <summary>Manually marks the tab as dirty</summary>
+        public void MarkAsDirty()
+        {
+            IsDirty = true;
             this.RaisePropertyChanged(nameof(Header));
         }
     }

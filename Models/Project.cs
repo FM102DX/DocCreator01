@@ -27,7 +27,7 @@ namespace DocCreator01.Models
             // считались занятыми одинаково)
             var used = new HashSet<string>(
                 ProjectData.TextParts
-                           .Select(tp => tp.Title ?? string.Empty),
+                           .Select(tp => tp.Name ?? string.Empty),
                 StringComparer.OrdinalIgnoreCase);
 
             // Ищем свободный суффикс от 001 до 999

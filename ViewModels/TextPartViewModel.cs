@@ -38,6 +38,6 @@ namespace DocCreator01.ViewModels
         }
 
         // Property to display the title with proper indentation based on level
-        public string DisplayTitle => new string(' ', (Level - 1) * 3) + Model.Title;
+        public string DisplayTitle => new string(' ', (Level - 1) * 3) + Model.Name;
     }
 }

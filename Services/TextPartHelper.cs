@@ -23,9 +23,8 @@ namespace DocCreator01.Services
             return new TextPart
             {
                 Id = Guid.NewGuid(),
-                Title = project.GetNewTextPartName(),
                 Text = $"Tab {project.ProjectData.TextParts.Count + 1}",
-                Name = $"Part {project.ProjectData.TextParts.Count + 1}",
+                Name = project.GetNewTextPartName(),
                 IncludeInDocument = true
             };
         }
@@ -79,9 +78,11 @@ namespace DocCreator01.Services
                 // Move in the model collection
                 textParts.Move(idx, idx - 1);
 
-                // Move in the view model collection
-                viewModels.Move(idx, idx - 1);
+                // Refresh view model collection to ensure UI is updated
+                RefreshTextPartViewModels(textParts, viewModels);
                 
+                // Find the moved item in the refreshed view models and return it
+                // so the calling code can restore the selection
                 return true;
             }
 
@@ -97,9 +98,11 @@ namespace DocCreator01.Services
                 // Move in the model collection
                 textParts.Move(idx, idx + 1);
 
-                // Move in the view model collection
-                viewModels.Move(idx, idx + 1);
+                // Refresh view model collection to ensure UI is updated
+                RefreshTextPartViewModels(textParts, viewModels);
                 
+                // Find the moved item in the refreshed view models and return it
+                // so the calling code can restore the selection
                 return true;
             }
 

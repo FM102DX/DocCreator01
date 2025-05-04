@@ -309,6 +309,17 @@ namespace DocCreator01.ViewModel
             if (_textPartHelper.MoveTextPartUp(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
             {
                 IsProjectDirty = true;
+                
+                // Find and mark the affected tab as dirty
+                var tab = Tabs.FirstOrDefault(t => t.TextPart == textPart);
+                if (tab != null)
+                {
+                    // This will raise the IsDirty property and update the Header
+                    tab.MarkAsDirty();
+                }
+                
+                // Restore selection after moving
+                SelectedMainGridItem = textPart;
             }
         }
 
@@ -320,6 +331,17 @@ namespace DocCreator01.ViewModel
             if (_textPartHelper.MoveTextPartDown(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
             {
                 IsProjectDirty = true;
+                
+                // Find and mark the affected tab as dirty
+                var tab = Tabs.FirstOrDefault(t => t.TextPart == textPart);
+                if (tab != null)
+                {
+                    // This will raise the IsDirty property and update the Header
+                    tab.MarkAsDirty();
+                }
+                
+                // Restore selection after moving
+                SelectedMainGridItem = textPart;
             }
         }
 

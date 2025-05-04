@@ -17,8 +17,6 @@ namespace DocCreator01.ViewModels
             this.WhenAnyValue(x => x._textPart.Level)
                 .Subscribe(_ => 
                 {
-                    this.RaisePropertyChanged(nameof(FormattedTitle));
-                    this.RaisePropertyChanged(nameof(IndentedTitle));
                     this.RaisePropertyChanged(nameof(Indentation));
                     this.RaisePropertyChanged(nameof(Level));
                 });
@@ -28,7 +26,7 @@ namespace DocCreator01.ViewModels
         public TextPart Model => _textPart;
         
         // Display properties
-        public string Title => _textPart.Title;
+        public string Name => _textPart.Name;
         public int Level => _textPart.Level;
         
         // String with double hyphens representing the indentation level
@@ -47,10 +45,5 @@ namespace DocCreator01.ViewModels
             }
         }
         
-        // Title with indentation for display
-        public string IndentedTitle => Indentation + Title;
-        
-        // Formatted title for display with level indicator
-        public string FormattedTitle => $"{Title} — {_textPart.Level}";
     }
 }

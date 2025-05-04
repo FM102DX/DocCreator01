@@ -10,17 +10,50 @@
 
     <!-- ───────── ресурсы ───────── -->
     <UserControl.Resources>
+
+        <!-- Насыщенный (всегда активный) цвет выделения -->
+        <SolidColorBrush x:Key="SelectionBrush" Color="#FF3399FF"/>
+
+        <!-- Кнопки на панели инструментов -->
         <Style x:Key="SmallToolButtonStyle" TargetType="Button">
             <Setter Property="Height"       Value="24"/>
             <Setter Property="Width"        Value="24"/>
             <Setter Property="Margin"       Value="0,0,4,0"/>
             <Setter Property="FontWeight"   Value="Bold"/>
         </Style>
+
+        <!-- Строка DataGrid: всегда синий, даже без фокуса -->
+        <Style x:Key="PersistentSelectedRowStyle" TargetType="{x:Type DataGridRow}">
+            <Setter Property="Background"    Value="Transparent"/>
+            <Setter Property="Foreground"    Value="Black"/>
+            <Setter Property="BorderBrush"   Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Style.Triggers>
+                <!-- Единственное условие: строка выбрана -->
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{StaticResource SelectionBrush}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Ячейка DataGrid: та же логика, чтобы не перебивала цвет строки -->
+        <Style x:Key="PersistentSelectedCellStyle" TargetType="{x:Type DataGridCell}">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{StaticResource SelectionBrush}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
     </UserControl.Resources>
 
+    <!-- ───────── разметка ───────── -->
     <DockPanel Margin="7,0,7,7" LastChildFill="True">
 
-        <!-- панель инструментов -->
+        <!-- Панель инструментов -->
         <StackPanel Orientation="Horizontal"
                     DockPanel.Dock="Top"
                     Margin="0,7,0,5">
@@ -39,14 +72,18 @@
                     Command="{Binding MoveRightCommand}"/>
         </StackPanel>
 
-        <!-- DataGrid updated to use TextPartViewModels -->
+        <!-- Главный DataGrid -->
         <DataGrid x:Name="PartsGrid"
                   ItemsSource="{Binding MainGridLines}"
-                  SelectedItem="{Binding SelectedMainGridItemViewModel, Mode=TwoWay}"
+                  SelectedItem="{Binding SelectedMainGridItemViewModel,
+                                        Mode=TwoWay,
+                                        UpdateSourceTrigger=PropertyChanged}"
+                  RowStyle="{StaticResource PersistentSelectedRowStyle}"
+                  CellStyle="{StaticResource PersistentSelectedCellStyle}"
                   AutoGenerateColumns="False"
                   HeadersVisibility="None"
                   GridLinesVisibility="None"
-                  Background="#B7DAF2"
+                  Background="White"
                   BorderThickness="0"
                   RowHeight="26"
                   Padding="0"
@@ -62,31 +99,32 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <!-- The indentation is now handled by the view model -->
-                                <TextBlock Text="{Binding Indentation}" 
-                                           Foreground="White" 
-                                           FontFamily="Consolas" 
-                                           VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding Title}" 
-                                           VerticalAlignment="Center" />
-                                <TextBlock Text=" — " 
-                                           Foreground="#777777" 
-                                           VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding Level}" 
-                                           Foreground="#FF6600" 
-                                           FontWeight="SemiBold" 
-                                           VerticalAlignment="Center" />
+                                <!-- Отступ формируется во вью-модели -->
+                                <TextBlock Text="{Binding Indentation}"
+                                           Foreground="White"
+                                           FontFamily="Consolas"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Name}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text=" — "
+                                           Foreground="#777777"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Level}"
+                                           Foreground="#FF6600"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
                             </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
 
+            <!-- Двойной щелчок активирует вкладку -->
             <DataGrid.InputBindings>
                 <MouseBinding Gesture="LeftDoubleClick"
                               Command="{Binding DataContext.ActivateTabCommand,
-                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              CommandParameter="{Binding Model}" />
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              CommandParameter="{Binding Model}"/>
             </DataGrid.InputBindings>
         </DataGrid>
     </DockPanel>

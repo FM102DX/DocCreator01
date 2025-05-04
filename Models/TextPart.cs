@@ -22,10 +22,9 @@ namespace DocCreator01.Models
             
         }
         [JsonConstructor]                       // для Newtonsoft.Json
-        public TextPart(Guid id, string title, string text, string name = "", bool includeInDocument = true, int level = 1)
+        public TextPart(Guid id, string text, string name = "", bool includeInDocument = true, int level = 1)
         {
             Id = id;
-            Title = title;
             Text = text;
             Name = name;
             IncludeInDocument = includeInDocument;
@@ -34,12 +33,6 @@ namespace DocCreator01.Models
         [JsonProperty]
         public Guid Id { get; set; }
 
-        [JsonProperty]
-        public string Title
-        {
-            get => _title;
-            set => this.RaiseAndSetIfChanged(ref _title, value);
-        }
 
         [JsonProperty]
         public string Text

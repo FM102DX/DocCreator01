@@ -28,6 +28,9 @@ namespace DocCreator01
                 services.AddSingleton<IDocGenerator, DocGenerator>();
                 services.AddSingleton<ITextPartHelper, TextPartHelper>();
 
+                // Register the Python helper
+                services.AddSingleton<IPythonHelper, PythonHelper>();
+
                 services.AddTransient<MainWindowViewModel>();
                 services.AddTransient<MainWindow>();
 

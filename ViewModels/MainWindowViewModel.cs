@@ -264,23 +264,34 @@ namespace DocCreator01.ViewModel
             IsProjectDirty = false;
         }
 
-        private void GenerateProject()
+        private async void GenerateProject()
         {
-            // Filter out parts that should not be included
-            var filteredProject = new Project
+            try
             {
-                Name = CurrentProject.Name,
-                Settings = CurrentProject.Settings,
-                FilePath = CurrentProject.FilePath
-            };
+                // Filter out parts that should not be included
+                var filteredProject = new Project
+                {
+                    Name = CurrentProject.Name,
+                    Settings = CurrentProject.Settings,
+                    FilePath = CurrentProject.FilePath
+                };
 
-            foreach (var part in CurrentProject.ProjectData.TextParts.Where(p => p.IncludeInDocument))
-            {
-                filteredProject.ProjectData.TextParts.Add(part);
+                foreach (var part in CurrentProject.ProjectData.TextParts.Where(p => p.IncludeInDocument))
+                {
+                    filteredProject.ProjectData.TextParts.Add(part);
+                }
+
+                _docGen.Generate(filteredProject, GenerateFileTypeEnum.DOCX);
+                
+                // Add entry to generated documents list - this will be the file name 
+                // that appears in the UI list
+                GeneratedDocs.Add($"Doc{GeneratedDocs.Count + 1:D2}.docx");
             }
-
-            _docGen.Generate(filteredProject, GenerateFileTypeEnum.DOCX);
-            GeneratedDocs.Add($"Doc{GeneratedDocs.Count + 1:D2}.docx");
+            catch (Exception ex)
+            {
+                // Handle any exceptions during document generation
+                MessageBox.Show($"Error generating document: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void RemoveCurrent()

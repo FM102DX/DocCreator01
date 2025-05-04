@@ -1,0 +1,15 @@
+namespace DocCreator01.Contracts
+{
+    /// <summary>
+    /// Interface for browser operations
+    /// </summary>
+    public interface IBrowserService
+    {
+        /// <summary>
+        /// Opens a file or URL in Opera browser
+        /// </summary>
+        /// <param name="path">Path to the file or URL to open</param>
+        /// <returns>True if successfully opened, false otherwise</returns>
+        bool OpenInOpera(string path);
+    }
+}

@@ -36,6 +36,9 @@ namespace DocCreator01
 
                 // Register HTML document creator service
                 services.AddSingleton<IHtmlDocumentCreatorService, HtmlDocumentCreatorService>();
+                
+                // Register browser service
+                services.AddSingleton<IBrowserService, BrowserService>();
 
                 services.AddTransient<MainWindowViewModel>();
                 services.AddTransient<MainWindow>();

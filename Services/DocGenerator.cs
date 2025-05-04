@@ -11,11 +11,16 @@ namespace DocCreator01.Services
     {
         private readonly IPythonHelper _pythonHelper;
         private readonly IHtmlDocumentCreatorService _htmlDocumentCreator;
+        private readonly IBrowserService _browserService;
 
-        public DocGenerator(IPythonHelper pythonHelper, IHtmlDocumentCreatorService htmlDocumentCreator)
+        public DocGenerator(
+            IPythonHelper pythonHelper, 
+            IHtmlDocumentCreatorService htmlDocumentCreator,
+            IBrowserService browserService)
         {
             _pythonHelper = pythonHelper ?? throw new ArgumentNullException(nameof(pythonHelper));
             _htmlDocumentCreator = htmlDocumentCreator ?? throw new ArgumentNullException(nameof(htmlDocumentCreator));
+            _browserService = browserService ?? throw new ArgumentNullException(nameof(browserService));
         }
 
         public async void Generate(Project project, GenerateFileTypeEnum type)
@@ -33,18 +38,25 @@ namespace DocCreator01.Services
 
                 // Generate a filename based on project name
                 string fileName = $"{project.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.{type.ToString().ToLower()}";
+                string filePath = string.Empty;
                 
                 // Branch based on document type
                 switch (type)
                 {
                     case GenerateFileTypeEnum.DOCX:
                         // Create the document using Python helper for DOCX
-                        await _pythonHelper.CreateDocumentAsync(type, parts, fileName);
+                        filePath = await _pythonHelper.CreateDocumentAsync(type, parts, fileName);
                         break;
                         
                     case GenerateFileTypeEnum.HTML:
                         // Create the document using HTML document creator service
-                        await _htmlDocumentCreator.CreateDocumentAsync(parts, fileName);
+                        filePath = await _htmlDocumentCreator.CreateDocumentAsync(parts, fileName);
+                        
+                        // Open HTML document in Opera browser
+                        if (!string.IsNullOrEmpty(filePath))
+                        {
+                            _browserService.OpenInOpera(filePath);
+                        }
                         break;
                         
                     default:

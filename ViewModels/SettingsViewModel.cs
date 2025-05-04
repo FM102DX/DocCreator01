@@ -4,6 +4,7 @@ using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,8 +13,29 @@ namespace DocCreator01.ViewModels
     public sealed class SettingsViewModel : ReactiveObject
     {
         public Settings Model { get; }
+        private bool _isDirty;
 
-        public SettingsViewModel(Settings model) => Model = model;
+        public SettingsViewModel(Settings model)
+        {
+            Model = model;
+
+            // Subscribe to Model's GenDocType changes
+            this.WhenAnyValue(x => x.Model.GenDocType)
+                .Skip(1) // Skip initial value
+                .Subscribe(_ =>
+                {
+                    IsDirty = true;
+                    this.RaisePropertyChanged(nameof(GenDocType));
+                    this.RaisePropertyChanged(nameof(IsDocxSelected));
+                    this.RaisePropertyChanged(nameof(IsHtmlSelected));
+                });
+        }
+
+        public bool IsDirty
+        {
+            get => _isDirty;
+            private set => this.RaiseAndSetIfChanged(ref _isDirty, value);
+        }
 
         // Wrapper property for GenDocType
         public GenerateFileTypeEnum GenDocType
@@ -24,7 +46,6 @@ namespace DocCreator01.ViewModels
                 if (Model.GenDocType != value)
                 {
                     Model.GenDocType = value;
-                    this.RaisePropertyChanged();
                 }
             }
         }
@@ -38,8 +59,6 @@ namespace DocCreator01.ViewModels
                 if (value && Model.GenDocType != GenerateFileTypeEnum.DOCX)
                 {
                     GenDocType = GenerateFileTypeEnum.DOCX;
-                    this.RaisePropertyChanged();
-                    this.RaisePropertyChanged(nameof(IsHtmlSelected));
                 }
             }
         }
@@ -52,10 +71,14 @@ namespace DocCreator01.ViewModels
                 if (value && Model.GenDocType != GenerateFileTypeEnum.HTML)
                 {
                     GenDocType = GenerateFileTypeEnum.HTML;
-                    this.RaisePropertyChanged();
-                    this.RaisePropertyChanged(nameof(IsDocxSelected));
                 }
             }
+        }
+
+        /// <summary>Resets the dirty flag after project is saved</summary>
+        public void AcceptChanges()
+        {
+            IsDirty = false;
         }
     }
 }

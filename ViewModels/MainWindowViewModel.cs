@@ -62,6 +62,11 @@ namespace DocCreator01.ViewModel
             // Initialize SettingsViewModel
             SettingsViewModel = new SettingsViewModel(CurrentProject.Settings);
 
+            // Subscribe to SettingsViewModel IsDirty property
+            this.WhenAnyValue(x => x.SettingsViewModel.IsDirty)
+                .Where(isDirty => isDirty)
+                .Subscribe(_ => IsProjectDirty = true);
+
             OpenCommand = ReactiveCommand.Create(OpenFile, outputScheduler: Ui);
             SaveCommand = ReactiveCommand.Create(Save, outputScheduler: Ui);
             ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown(), outputScheduler: Ui);
@@ -269,6 +274,9 @@ namespace DocCreator01.ViewModel
             AddRecent(_currentPath);
             foreach (var tab in Tabs)
                 tab.AcceptChanges();
+
+            // After saving the project, make sure to reset dirty state on SettingsViewModel
+            SettingsViewModel.AcceptChanges();
 
             IsProjectDirty = false;
         }

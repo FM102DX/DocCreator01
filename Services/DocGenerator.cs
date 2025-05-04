@@ -19,7 +19,7 @@ namespace DocCreator01.Services
         public async void Generate(Project project, GenerateFileTypeEnum type)
         {
             if (project == null)
-                throw new ArgumentNullException(nameof(project);
+                throw new ArgumentNullException(nameof(project));
                 
             try
             {

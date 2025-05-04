@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DocCreator01.Helpers
+namespace DocCreator01.Services
 {
     public class AppPathsHelper : IAppPathsHelper
     {

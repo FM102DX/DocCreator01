@@ -22,6 +22,7 @@ namespace DocCreator01.ViewModel
         private readonly IProjectRepository _repo;
         private readonly IDocGenerator _docGen;
         private readonly ITextPartHelper _textPartHelper;
+        private readonly IAppPathsHelper _appPathsHelper;
         private string? _currentPath;
         private bool _isProjectDirty;
         private Project _currentProject = new();
@@ -51,11 +52,12 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> MoveLeftCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveRightCommand { get; }
 
-        public MainWindowViewModel(IProjectRepository repo, IDocGenerator docGen, ITextPartHelper textPartHelper)
+        public MainWindowViewModel(IProjectRepository repo, IDocGenerator docGen, ITextPartHelper textPartHelper, IAppPathsHelper appPathsHelper)
         {
             _repo = repo;
             _docGen = docGen;
             _textPartHelper = textPartHelper;
+            _appPathsHelper = appPathsHelper;
             OpenCommand = ReactiveCommand.Create(OpenFile, outputScheduler: Ui);
             SaveCommand = ReactiveCommand.Create(Save, outputScheduler: Ui);
             ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown(), outputScheduler: Ui);
@@ -73,7 +75,6 @@ namespace DocCreator01.ViewModel
             OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent, outputScheduler: Ui);
             MoveLeftCommand = ReactiveCommand.Create(MoveCurrentLeft, outputScheduler: Ui);
             MoveRightCommand = ReactiveCommand.Create(MoveCurrentRight, outputScheduler: Ui);
-            AppDataDir = GetProgramDataPath();
 
             // Subscribe to changes in the TextParts collection
             this.WhenAnyValue(x => x.CurrentProject)
@@ -91,7 +92,7 @@ namespace DocCreator01.ViewModel
                 UpdateWindowTitle();                 // сразу обновляем заголовок
             }
         }
-        public string AppDataDir { get; private set; }
+        public string AppDataDir => _appPathsHelper.AppDataDir;
 
         public Project CurrentProject
         {
@@ -422,25 +423,11 @@ namespace DocCreator01.ViewModel
             CurrentProject = new Project();  // создаём новый пустой проект с именем "New project" и пустым FilePath
         }
 
-        private string GetProgramDataPath()
-        {
-            string company = "RICompany";
-            string product = "DockPartApp";
-
-            string docsDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                company, product);
-
-            Directory.CreateDirectory(docsDir);          // прав администратора не нужно
-            return docsDir;
-        }
-
         private void LoadRecentFiles()
         {
-            string filePath = Path.Combine(AppDataDir, "appdata.docpartsettings");
-            if (File.Exists(filePath))
+            if (File.Exists(_appPathsHelper.SettingsFilePath))
             {
-                var recentFiles = File.ReadAllLines(filePath);
+                var recentFiles = File.ReadAllLines(_appPathsHelper.SettingsFilePath);
                 foreach (var file in recentFiles)
                 {
                     if (!string.IsNullOrWhiteSpace(file))
@@ -451,8 +438,7 @@ namespace DocCreator01.ViewModel
 
         private void SaveRecentFiles()
         {
-            string filePath = Path.Combine(AppDataDir, "appdata.docpartsettings");
-            File.WriteAllLines(filePath, RecentFiles);
+            File.WriteAllLines(_appPathsHelper.SettingsFilePath, RecentFiles);
         }
 
         private void AddRecent(string? path)

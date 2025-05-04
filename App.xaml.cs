@@ -31,6 +31,9 @@ namespace DocCreator01
                 // Register the Python helper
                 services.AddSingleton<IPythonHelper, PythonHelper>();
 
+                // Register the AppPathsHelper
+                services.AddSingleton<IAppPathsHelper, AppPathsHelper>();
+
                 services.AddTransient<MainWindowViewModel>();
                 services.AddTransient<MainWindow>();
 

@@ -15,29 +15,19 @@ namespace DocCreator01.Services
     public class PythonHelper : IPythonHelper
     {
         private readonly string _pythonExecutable;
-        private readonly string _scriptsDirectory;
+        private readonly IAppPathsHelper _appPathsHelper;
         
         /// <summary>
         /// Gets the path to the folder where generated documents are stored
         /// </summary>
-        public string OutputDirectory { get; }
+        public string OutputDirectory => _appPathsHelper.OutputDirectory;
 
-        public PythonHelper()
+        public PythonHelper(IAppPathsHelper appPathsHelper)
         {
+            _appPathsHelper = appPathsHelper ?? throw new ArgumentNullException(nameof(appPathsHelper));
+            
             // Default to system Python - in production, this might come from configuration
             _pythonExecutable = "python";
-            
-            // Script locations relative to the application
-            _scriptsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts");
-            
-            // Create scripts directory if it doesn't exist
-            if (!Directory.Exists(_scriptsDirectory))
-                Directory.CreateDirectory(_scriptsDirectory);
-                
-            // Create output directory for generated documents
-            OutputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "DocCreator", "Generated");
-            if (!Directory.Exists(OutputDirectory))
-                Directory.CreateDirectory(OutputDirectory);
         }
 
         /// <summary>
@@ -51,7 +41,11 @@ namespace DocCreator01.Services
         {
             // Determine which script to run based on document type
             string scriptName = GetScriptNameForDocType(type);
-            string scriptPath = Path.Combine(_scriptsDirectory, scriptName);
+            string scriptPath = Path.Combine(_appPathsHelper.ScriptsDirectory, scriptName);
+            
+            // Check if script exists
+            if (!File.Exists(scriptPath))
+                await CreateDefaultScriptAsync(scriptPath, type);
             
             // Create temporary JSON file with TextPart data
             string tempJsonPath = Path.Combine(Path.GetTempPath(), $"docparts_{Guid.NewGuid()}.json");
@@ -117,6 +111,22 @@ namespace DocCreator01.Services
                 GenerateFileTypeEnum.DOCX => "create_docx.py",
                 _ => throw new NotImplementedException($"Document type {type} is not supported yet.")
             };
+        }
+
+        /// <summary>
+        /// Creates a default script if it does not exist
+        /// </summary>
+        /// <param name="scriptPath">Path to the script</param>
+        /// <param name="type">Type of document</param>
+        private async Task CreateDefaultScriptAsync(string scriptPath, GenerateFileTypeEnum type)
+        {
+            string defaultScriptContent = type switch
+            {
+                GenerateFileTypeEnum.DOCX => "# Default Python script for DOCX generation\nprint('DOCX generation script')",
+                _ => throw new NotImplementedException($"Document type {type} is not supported yet.")
+            };
+
+            await File.WriteAllTextAsync(scriptPath, defaultScriptContent);
         }
     }
 }

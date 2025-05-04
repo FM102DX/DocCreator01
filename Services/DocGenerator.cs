@@ -10,17 +10,16 @@ namespace DocCreator01.Services
     public class DocGenerator : IDocGenerator
     {
         private readonly IPythonHelper _pythonHelper;
+        private readonly IHtmlDocumentCreatorService _htmlDocumentCreator;
 
-        public DocGenerator(IPythonHelper pythonHelper)
+        public DocGenerator(IPythonHelper pythonHelper, IHtmlDocumentCreatorService htmlDocumentCreator)
         {
             _pythonHelper = pythonHelper ?? throw new ArgumentNullException(nameof(pythonHelper));
+            _htmlDocumentCreator = htmlDocumentCreator ?? throw new ArgumentNullException(nameof(htmlDocumentCreator));
         }
 
         public async void Generate(Project project, GenerateFileTypeEnum type)
         {
-            if (project == null)
-                throw new ArgumentNullException(nameof(project));
-                
             try
             {
                 // Only include text parts marked for inclusion
@@ -35,8 +34,22 @@ namespace DocCreator01.Services
                 // Generate a filename based on project name
                 string fileName = $"{project.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.{type.ToString().ToLower()}";
                 
-                // Create the document using Python helper
-                await _pythonHelper.CreateDocumentAsync(type, parts, fileName);
+                // Branch based on document type
+                switch (type)
+                {
+                    case GenerateFileTypeEnum.DOCX:
+                        // Create the document using Python helper for DOCX
+                        await _pythonHelper.CreateDocumentAsync(type, parts, fileName);
+                        break;
+                        
+                    case GenerateFileTypeEnum.HTML:
+                        // Create the document using HTML document creator service
+                        await _htmlDocumentCreator.CreateDocumentAsync(parts, fileName);
+                        break;
+                        
+                    default:
+                        throw new NotSupportedException($"Document type {type} is not supported.");
+                }
             }
             catch (Exception ex)
             {

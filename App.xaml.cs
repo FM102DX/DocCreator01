@@ -34,6 +34,9 @@ namespace DocCreator01
                 // Register the AppPathsHelper
                 services.AddSingleton<IAppPathsHelper, AppPathsHelper>();
 
+                // Register HTML document creator service
+                services.AddSingleton<IHtmlDocumentCreatorService, HtmlDocumentCreatorService>();
+
                 services.AddTransient<MainWindowViewModel>();
                 services.AddTransient<MainWindow>();
 

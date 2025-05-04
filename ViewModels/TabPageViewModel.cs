@@ -29,6 +29,7 @@ namespace DocCreator01.ViewModels
             this.WhenAnyValue(_ => _.TextPart.Title,
                     _ => _.TextPart.Text,
                     _ => _.TextPart.Name,
+                    _ => _.TextPart.Level,  // Add the Level property to track
                     _ => _.TextPart.IncludeInDocument)
                 .Skip(1)
                 .Subscribe(_ =>

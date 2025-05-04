@@ -42,7 +42,7 @@
         <!-- DataGrid updated to use TextPartViewModels -->
         <DataGrid x:Name="PartsGrid"
                   ItemsSource="{Binding MainGridLines}"
-                  SelectedItem="{Binding SelectedTextPartListViewModel, Mode=TwoWay}"
+                  SelectedItem="{Binding SelectedMainGridItemViewModel, Mode=TwoWay}"
                   AutoGenerateColumns="False"
                   HeadersVisibility="None"
                   GridLinesVisibility="None"

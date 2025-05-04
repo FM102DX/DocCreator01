@@ -5,11 +5,11 @@ using System.Reactive.Linq;
 
 namespace DocCreator01.ViewModels
 {
-    public sealed class MainGridLineViewModel : ReactiveObject
+    public sealed class MainGridItemViewModel : ReactiveObject
     {
         private readonly TextPart _textPart;
         
-        public MainGridLineViewModel(TextPart textPart)
+        public MainGridItemViewModel(TextPart textPart)
         {
             _textPart = textPart;
             

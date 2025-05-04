@@ -26,6 +26,7 @@ namespace DocCreator01
 
                 services.AddSingleton<IProjectRepository, JsonProjectRepository>();
                 services.AddSingleton<IDocGenerator, DocGenerator>();
+                services.AddSingleton<ITextPartHelper, TextPartHelper>();
 
                 services.AddTransient<MainWindowViewModel>();
                 services.AddTransient<MainWindow>();

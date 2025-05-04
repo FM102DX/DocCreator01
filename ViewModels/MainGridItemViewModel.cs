@@ -20,6 +20,13 @@ namespace DocCreator01.ViewModels
                     this.RaisePropertyChanged(nameof(Indentation));
                     this.RaisePropertyChanged(nameof(Level));
                 });
+                
+            // Subscribe to changes in the Name property
+            this.WhenAnyValue(x => x._textPart.Name)
+                .Subscribe(_ => 
+                {
+                    this.RaisePropertyChanged(nameof(Name));
+                });
         }
 
         // Reference to the underlying model
@@ -44,6 +51,5 @@ namespace DocCreator01.ViewModels
                 return new string('-', (_textPart.Level - 1) * 2);
             }
         }
-        
     }
 }

@@ -92,7 +92,7 @@ namespace DocCreator01.ViewModel
                 UpdateWindowTitle();                 // сразу обновляем заголовок
             }
         }
-        public string AppDataDir => _appPathsHelper.AppDataDir;
+        public string AppDataDir => _appPathsHelper.AppDataDirectory;
 
         public Project CurrentProject
         {

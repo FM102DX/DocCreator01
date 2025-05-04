@@ -9,10 +9,10 @@ using Newtonsoft.Json;
 
 namespace DocCreator01.Models
 {
-    public sealed class TextPart : ReactiveObject   // ← теперь ReactiveObject
+    public sealed class TextPart : ReactiveObject
     {
-        string _title = "";
         string _text = "";
+        string _html = "";
         string _name = "";
         bool _includeInDocument = true;
         int _level = 1; // Default level is 1
@@ -39,6 +39,12 @@ namespace DocCreator01.Models
         {
             get => _text;
             set => this.RaiseAndSetIfChanged(ref _text, value);
+        }
+        
+        public string Html
+        {
+            get => _html;
+            set => this.RaiseAndSetIfChanged(ref _html, value);
         }
 
         [JsonProperty]

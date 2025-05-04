@@ -14,7 +14,7 @@ namespace DocCreator01.Contracts
         /// <summary>
         /// Gets the application data directory
         /// </summary>
-        string AppDataDir { get; }
+        string AppDataDirectory { get; }
         
         /// <summary>
         /// Gets the directory where Python scripts are stored
@@ -24,7 +24,7 @@ namespace DocCreator01.Contracts
         /// <summary>
         /// Gets the path to the folder where generated documents are stored
         /// </summary>
-        string OutputDirectory { get; }
+        string DocumentsOutputDirectory { get; }
         
         /// <summary>
         /// Gets the path to the application settings file

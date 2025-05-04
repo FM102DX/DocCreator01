@@ -15,33 +15,33 @@ namespace DocCreator01.Services
         private const string SettingsFileName = "appdata.docpartsettings";
         
         /// <summary>
-        /// Gets the application data directory
+        /// Тут хранятся настройки приложения
         /// </summary>
-        public string AppDataDir { get; }
+        public string AppDataDirectory { get; }
         
         /// <summary>
-        /// Gets the directory where Python scripts are stored
+        /// Тут лежат питон скрипты
         /// </summary>
         public string ScriptsDirectory { get; }
         
         /// <summary>
         /// Gets the path to the folder where generated documents are stored
         /// </summary>
-        public string OutputDirectory { get; }
+        public string DocumentsOutputDirectory { get; }
         
         /// <summary>
         /// Gets the path to the application settings file
         /// </summary>
-        public string SettingsFilePath => Path.Combine(AppDataDir, SettingsFileName);
+        public string SettingsFilePath => Path.Combine(AppDataDirectory, SettingsFileName);
         
         public AppPathsHelper()
         {
             // Initialize paths
-            AppDataDir = GetProgramDataPath();
-            ScriptsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts");
-            OutputDirectory = Path.Combine(
+            AppDataDirectory = GetAppDataPath();
+            ScriptsDirectory = Path.Combine(AppDataDirectory, "Scripts");
+            DocumentsOutputDirectory = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                "DocCreator", "Generated");
+                "DocCreator");
             
             // Ensure directories exist
             EnsureDirectoriesExist();
@@ -52,20 +52,19 @@ namespace DocCreator01.Services
         /// </summary>
         public void EnsureDirectoriesExist()
         {
-            Directory.CreateDirectory(AppDataDir);
+            Directory.CreateDirectory(AppDataDirectory);
             Directory.CreateDirectory(ScriptsDirectory);
-            Directory.CreateDirectory(OutputDirectory);
+            Directory.CreateDirectory(DocumentsOutputDirectory);
         }
         
         /// <summary>
         /// Gets the path to the application data directory
         /// </summary>
-        private string GetProgramDataPath()
+        private string GetAppDataPath()
         {
-            string docsDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                CompanyName, ProductName);
-                
+            string docsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                CompanyName, 
+                ProductName);
             return docsDir;
         }
     }

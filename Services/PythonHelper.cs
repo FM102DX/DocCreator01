@@ -16,11 +16,9 @@ namespace DocCreator01.Services
     {
         private readonly string _pythonExecutable;
         private readonly IAppPathsHelper _appPathsHelper;
-        
-        /// <summary>
-        /// Gets the path to the folder where generated documents are stored
-        /// </summary>
-        public string OutputDirectory => _appPathsHelper.OutputDirectory;
+
+        // Gets the path to the folder where generated documents are stored
+        public string OutputDirectory => _appPathsHelper.DocumentsOutputDirectory;
 
         public PythonHelper(IAppPathsHelper appPathsHelper)
         {
@@ -30,23 +28,13 @@ namespace DocCreator01.Services
             _pythonExecutable = "python";
         }
 
-        /// <summary>
-        /// Creates a document from the collection of TextPart objects
-        /// </summary>
-        /// <param name="type">Type of document to create</param>
-        /// <param name="textParts">Collection of TextPart objects</param>
-        /// <param name="outputFileName">Name of output file</param>
-        /// <returns>Path to the created document</returns>
+        // Creates a document from the collection of TextPart objects
         public async Task<string> CreateDocumentAsync(GenerateFileTypeEnum type, IEnumerable<TextPart> textParts, string outputFileName)
         {
             // Determine which script to run based on document type
             string scriptName = GetScriptNameForDocType(type);
             string scriptPath = Path.Combine(_appPathsHelper.ScriptsDirectory, scriptName);
-            
-            // Check if script exists
-            if (!File.Exists(scriptPath))
-                await CreateDefaultScriptAsync(scriptPath, type);
-            
+           
             // Create temporary JSON file with TextPart data
             string tempJsonPath = Path.Combine(Path.GetTempPath(), $"docparts_{Guid.NewGuid()}.json");
             var jsonData = JsonConvert.SerializeObject(textParts.ToList(), Formatting.Indented);

@@ -8,6 +8,7 @@ namespace DocCreator01.Data.Enums
 {
     public enum GenerateFileTypeEnum
     {
-        DOCX
+        DOCX=1,
+        HTML=2
     }
 }

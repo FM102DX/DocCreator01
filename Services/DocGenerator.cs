@@ -26,13 +26,12 @@ namespace DocCreator01.Services
             _textPartHtmlRenderer = textPartHtmlRenderer ?? throw new ArgumentNullException(nameof(textPartHtmlRenderer));
         }
 
-        public async void Generate(Project project, GenerateFileTypeEnum type)
+        public async Task<string> Generate(Project project, GenerateFileTypeEnum type)
         {
             try
             {
                 // Only include text parts marked for inclusion
                 var parts = project.ProjectData.TextParts.Where(p => p.IncludeInDocument && !string.IsNullOrEmpty(p.Text)).ToList();
-                
                 
                 if (!parts.Any())
                 {
@@ -69,6 +68,27 @@ namespace DocCreator01.Services
                     default:
                         throw new NotSupportedException($"Document type {type} is not supported.");
                 }
+
+                // Create and add generated file record to project if file was successfully created
+                if (!string.IsNullOrEmpty(filePath))
+                {
+                    // Initialize GeneratedFiles collection if null
+                    if (project.ProjectData.GeneratedFiles == null)
+                    {
+                        project.ProjectData.GeneratedFiles = new System.Collections.ObjectModel.ObservableCollection<GeneratedFile>();
+                    }
+
+                    // Create and add the generated file record
+                    var generatedFile = new GeneratedFile
+                    {
+                        FilePath = filePath,
+                        FileType = type
+                    };
+                    
+                    project.ProjectData.GeneratedFiles.Add(generatedFile);
+                }
+
+                return filePath;
             }
             catch (Exception ex)
             {

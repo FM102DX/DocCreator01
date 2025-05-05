@@ -303,7 +303,7 @@ namespace DocCreator01.ViewModel
 
                 // Use the selected document type from settings
                 var docType = CurrentProject.Settings.GenDocType;
-                string outputPath = _docGen.Generate(filteredProject, docType);
+                string outputPath = _docGen.Generate(filteredProject, docType).Result;
                 
                 if (!string.IsNullOrEmpty(outputPath) && File.Exists(outputPath))
                 {

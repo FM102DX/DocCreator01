@@ -20,7 +20,12 @@ namespace DocCreator01.Contracts
         /// Gets the directory where Python scripts are stored
         /// </summary>
         string ScriptsDirectory { get; }
-        
+
+        /// <summary>
+        /// Тут лежат иконки файлов
+        /// </summary>
+        public string IconsDirectory { get; }
+
         /// <summary>
         /// Gets the path to the folder where generated documents are stored
         /// </summary>

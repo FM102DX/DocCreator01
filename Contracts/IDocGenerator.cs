@@ -16,6 +16,6 @@ namespace DocCreator01.Contracts
         /// <param name="project">The project to generate</param>
         /// <param name="type">The type of document to generate</param>
         /// <returns>The path to the generated file</returns>
-        string Generate(Project project, GenerateFileTypeEnum type);
+        Task<string> Generate(Project project, GenerateFileTypeEnum type);
     }
 }

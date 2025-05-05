@@ -11,5 +11,12 @@ namespace DocCreator01.Contracts
         /// <param name="path">Path to the file or URL to open</param>
         /// <returns>True if successfully opened, false otherwise</returns>
         bool OpenInOpera(string path);
+
+        /// <summary>
+        /// Opens a file in Notepad++ editor
+        /// </summary>
+        /// <param name="path">Path to the file to open</param>
+        /// <returns>True if successfully opened, false otherwise</returns>
+        bool OpenInNotepadPlusPlus(string path);
     }
 }

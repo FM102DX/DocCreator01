@@ -59,10 +59,10 @@ namespace DocCreator01.Services
                         // Create the document using HTML document creator service
                         filePath = await _htmlDocumentCreator.CreateDocumentAsync(parts, fileName);
                         
-                        // Open HTML document in Opera browser
+                        // Open HTML document in Notepad++ instead of Opera
                         if (!string.IsNullOrEmpty(filePath))
                         {
-                            _browserService.OpenInOpera(filePath);
+                            _browserService.OpenInNotepadPlusPlus(filePath);
                         }
                         break;
                         

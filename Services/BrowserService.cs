@@ -64,5 +64,60 @@ namespace DocCreator01.Services
                 return false;
             }
         }
+
+        /// <summary>
+        /// Opens a file in Notepad++ editor
+        /// </summary>
+        /// <param name="path">Path to the file to open</param>
+        /// <returns>True if successfully opened, false otherwise</returns>
+        public bool OpenInNotepadPlusPlus(string path)
+        {
+            try
+            {
+                if (!File.Exists(path))
+                {
+                    Debug.WriteLine($"File not found: {path}");
+                    return false;
+                }
+
+                // Common Notepad++ installation paths
+                string[] notepadPlusPlusPaths = new[]
+                {
+                    @"C:\Program Files\Notepad++\notepad++.exe",
+                    @"C:\Program Files (x86)\Notepad++\notepad++.exe"
+                };
+
+                // Try to find Notepad++
+                string notepadPlusPlusPath = Array.Find(notepadPlusPlusPaths, File.Exists);
+
+                if (!string.IsNullOrEmpty(notepadPlusPlusPath))
+                {
+                    // Start Notepad++ with the document
+                    using var process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = notepadPlusPlusPath,
+                        Arguments = $"\"{path}\"", // Quote the path to handle spaces
+                        UseShellExecute = false
+                    });
+                    return true;
+                }
+                else
+                {
+                    // If Notepad++ not found, try using default text editor
+                    Debug.WriteLine("Notepad++ not found in standard locations, using default application");
+                    using var process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = path,
+                        UseShellExecute = true
+                    });
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error opening document in Notepad++: {ex.Message}");
+                return false;
+            }
+        }
     }
 }

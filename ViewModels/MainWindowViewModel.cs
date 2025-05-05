@@ -52,6 +52,9 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> CloseCurrentCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveLeftCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveRightCommand { get; }
+        public ReactiveCommand<Unit, Unit> OpenDocumentsFolderCommand { get; }
+        public ReactiveCommand<Unit, Unit> OpenScriptsFolderCommand { get; }
+        public ReactiveCommand<Unit, Unit> OpenProjectFolderCommand { get; }
 
         public MainWindowViewModel(
             IProjectRepository repo, 
@@ -91,6 +94,9 @@ namespace DocCreator01.ViewModel
             OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent, outputScheduler: Ui);
             MoveLeftCommand = ReactiveCommand.Create(MoveCurrentLeft, outputScheduler: Ui);
             MoveRightCommand = ReactiveCommand.Create(MoveCurrentRight, outputScheduler: Ui);
+            OpenDocumentsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.DocumentsOutputDirectory));
+            OpenScriptsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.ScriptsDirectory));
+            OpenProjectFolderCommand = ReactiveCommand.Create(() => OpenFolder(CurrentProject.FilePath));
 
             // Subscribe to changes in the TextParts collection
             this.WhenAnyValue(x => x.CurrentProject)
@@ -495,6 +501,22 @@ namespace DocCreator01.ViewModel
         private void LoadGeneratedFiles()
         {
             _generatedFilesHelper.RefreshGeneratedFileViewModels(CurrentProject.ProjectData.GeneratedFiles, GeneratedFileViewModels);
+        }
+
+        private void OpenFolder(string folderPath)
+        {
+            if (Directory.Exists(folderPath))
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = folderPath,
+                    UseShellExecute = true,
+                });
+            }
+            else
+            {
+                MessageBox.Show($"Folder not found: {folderPath}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         // Add this property to MainWindowViewModel class

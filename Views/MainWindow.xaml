@@ -191,6 +191,12 @@
                         Background="#0063B1" Foreground="White"
                         DockPanel.Dock="Top"/>
 
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+                    <Button Width="30" Height="30" Background="Purple" Command="{Binding OpenDocumentsFolderCommand}" ToolTip="Open Documents Folder"/>
+                    <Button Width="30" Height="30" Background="Green" Command="{Binding OpenScriptsFolderCommand}" ToolTip="Open Scripts Folder"/>
+                    <Button Width="30" Height="30" Background="Red" Command="{Binding OpenProjectFolderCommand}" ToolTip="Open Project Folder"/>
+                </StackPanel>
+
                 <ListBox ItemsSource="{Binding GeneratedFileViewModels}"
                          Background="#FEFDB0" DockPanel.Dock="Bottom">
                     <ListBox.ItemTemplate>

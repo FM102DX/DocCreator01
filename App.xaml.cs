@@ -40,6 +40,9 @@ namespace DocCreator01
                 // Register browser service
                 services.AddSingleton<IBrowserService, BrowserService>();
 
+                // Add the TextPartHtmlRenderer service
+                services.AddSingleton<ITextPartHtmlRenderer, TextPartHtmlRenderer>();
+
                 services.AddTransient<MainWindowViewModel>();
                 services.AddTransient<MainWindow>();
 

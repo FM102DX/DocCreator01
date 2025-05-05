@@ -12,15 +12,18 @@ namespace DocCreator01.Services
         private readonly IPythonHelper _pythonHelper;
         private readonly IHtmlDocumentCreatorService _htmlDocumentCreator;
         private readonly IBrowserService _browserService;
+        private readonly ITextPartHtmlRenderer _textPartHtmlRenderer;
 
         public DocGenerator(
             IPythonHelper pythonHelper, 
             IHtmlDocumentCreatorService htmlDocumentCreator,
-            IBrowserService browserService)
+            IBrowserService browserService,
+            ITextPartHtmlRenderer textPartHtmlRenderer)
         {
             _pythonHelper = pythonHelper ?? throw new ArgumentNullException(nameof(pythonHelper));
             _htmlDocumentCreator = htmlDocumentCreator ?? throw new ArgumentNullException(nameof(htmlDocumentCreator));
             _browserService = browserService ?? throw new ArgumentNullException(nameof(browserService));
+            _textPartHtmlRenderer = textPartHtmlRenderer ?? throw new ArgumentNullException(nameof(textPartHtmlRenderer));
         }
 
         public async void Generate(Project project, GenerateFileTypeEnum type)
@@ -28,13 +31,17 @@ namespace DocCreator01.Services
             try
             {
                 // Only include text parts marked for inclusion
-                var parts = project.ProjectData.TextParts.Where(p => p.IncludeInDocument).ToList();
+                var parts = project.ProjectData.TextParts.Where(p => p.IncludeInDocument && !string.IsNullOrEmpty(p.Text)).ToList();
+                
                 
                 if (!parts.Any())
                 {
                     // Handle case when no parts are selected for inclusion
                     throw new InvalidOperationException("No text parts are selected for inclusion in the document.");
                 }
+
+                // Render HTML for all text parts
+                _textPartHtmlRenderer.RenderHtml(parts);
 
                 // Generate a filename based on project name
                 string fileName = $"{project.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.{type.ToString().ToLower()}";

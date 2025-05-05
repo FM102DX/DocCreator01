@@ -2,72 +2,25 @@
 using DocCreator01.Data.Enums;
 using DocCreator01.Models;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace DocCreator01.Services
 {
     public class DocGenerator : IDocGenerator
     {
-        private readonly IPythonHelper _pythonHelper;
-        private readonly IHtmlDocumentCreatorService _htmlDocumentCreator;
-        private readonly IBrowserService _browserService;
-        private readonly ITextPartHtmlRenderer _textPartHtmlRenderer;
+        private readonly IGeneratedFilesHelper _generatedFilesHelper;
 
-        public DocGenerator(
-            IPythonHelper pythonHelper, 
-            IHtmlDocumentCreatorService htmlDocumentCreator,
-            IBrowserService browserService,
-            ITextPartHtmlRenderer textPartHtmlRenderer)
+        public DocGenerator(IGeneratedFilesHelper generatedFilesHelper)
         {
-            _pythonHelper = pythonHelper ?? throw new ArgumentNullException(nameof(pythonHelper));
-            _htmlDocumentCreator = htmlDocumentCreator ?? throw new ArgumentNullException(nameof(htmlDocumentCreator));
-            _browserService = browserService ?? throw new ArgumentNullException(nameof(browserService));
-            _textPartHtmlRenderer = textPartHtmlRenderer ?? throw new ArgumentNullException(nameof(textPartHtmlRenderer));
+            _generatedFilesHelper = generatedFilesHelper ?? throw new ArgumentNullException(nameof(generatedFilesHelper));
         }
 
         public async Task<string> Generate(Project project, GenerateFileTypeEnum type)
         {
             try
             {
-                // Only include text parts marked for inclusion
-                var parts = project.ProjectData.TextParts.Where(p => p.IncludeInDocument && !string.IsNullOrEmpty(p.Text)).ToList();
-                
-                if (!parts.Any())
-                {
-                    // Handle case when no parts are selected for inclusion
-                    throw new InvalidOperationException("No text parts are selected for inclusion in the document.");
-                }
-
-                // Render HTML for all text parts
-                _textPartHtmlRenderer.RenderHtml(parts);
-
-                // Generate a filename based on project name
-                string fileName = $"{project.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.{type.ToString().ToLower()}";
-                string filePath = string.Empty;
-                
-                // Branch based on document type
-                switch (type)
-                {
-                    case GenerateFileTypeEnum.DOCX:
-                        // Create the document using Python helper for DOCX
-                        filePath = await _pythonHelper.CreateDocumentAsync(type, parts, fileName);
-                        break;
-                        
-                    case GenerateFileTypeEnum.HTML:
-                        // Create the document using HTML document creator service
-                        filePath = await _htmlDocumentCreator.CreateDocumentAsync(parts, fileName);
-                        
-                        // Open HTML document in Notepad++ instead of Opera
-                        if (!string.IsNullOrEmpty(filePath))
-                        {
-                            _browserService.OpenInNotepadPlusPlus(filePath);
-                        }
-                        break;
-                        
-                    default:
-                        throw new NotSupportedException($"Document type {type} is not supported.");
-                }
+                // Use the GeneratedFilesHelper to generate the file
+                string filePath = await _generatedFilesHelper.GenerateFileAsync(project, type);
 
                 // Create and add generated file record to project if file was successfully created
                 if (!string.IsNullOrEmpty(filePath))

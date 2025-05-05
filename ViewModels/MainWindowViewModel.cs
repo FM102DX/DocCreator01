@@ -23,6 +23,7 @@ namespace DocCreator01.ViewModel
         private readonly IDocGenerator _docGen;
         private readonly ITextPartHelper _textPartHelper;
         private readonly IAppPathsHelper _appPathsHelper;
+        private readonly IGeneratedFilesHelper _generatedFilesHelper;
         private string? _currentPath;
         private bool _isProjectDirty;
         private Project _currentProject = new();
@@ -52,12 +53,18 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> MoveLeftCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveRightCommand { get; }
 
-        public MainWindowViewModel(IProjectRepository repo, IDocGenerator docGen, ITextPartHelper textPartHelper, IAppPathsHelper appPathsHelper)
+        public MainWindowViewModel(
+            IProjectRepository repo, 
+            IDocGenerator docGen, 
+            ITextPartHelper textPartHelper, 
+            IAppPathsHelper appPathsHelper,
+            IGeneratedFilesHelper generatedFilesHelper)
         {
             _repo = repo;
             _docGen = docGen;
             _textPartHelper = textPartHelper;
             _appPathsHelper = appPathsHelper;
+            _generatedFilesHelper = generatedFilesHelper;
 
             // Initialize SettingsViewModel
             SettingsViewModel = new SettingsViewModel(CurrentProject.Settings);
@@ -497,22 +504,7 @@ namespace DocCreator01.ViewModel
 
         private void LoadGeneratedFiles()
         {
-            GeneratedFileViewModels.Clear();
-            
-            // Remove any files that don't exist anymore
-            for (int i = CurrentProject.ProjectData.GeneratedFiles.Count - 1; i >= 0; i--)
-            {
-                if (!CurrentProject.ProjectData.GeneratedFiles[i].Exists)
-                {
-                    CurrentProject.ProjectData.GeneratedFiles.RemoveAt(i);
-                }
-            }
-            
-            // Create view models for the remaining files
-            foreach (var generatedFile in CurrentProject.ProjectData.GeneratedFiles)
-            {
-                GeneratedFileViewModels.Add(new GeneratedFileViewModel(generatedFile, _appPathsHelper));
-            }
+            _generatedFilesHelper.RefreshGeneratedFileViewModels(CurrentProject.ProjectData.GeneratedFiles, GeneratedFileViewModels);
         }
 
         // Add this property to MainWindowViewModel class

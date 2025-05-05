@@ -1,4 +1,6 @@
 using DocCreator01.Contracts;
+// No changes are needed to the BrowserService since the GeneratedFilesHelper
+// will call its methods without modifying its functionality
 using System;
 using System.Diagnostics;
 using System.IO;

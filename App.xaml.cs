@@ -25,6 +25,10 @@ namespace DocCreator01
                 var services = new ServiceCollection();
 
                 services.AddSingleton<IProjectRepository, JsonProjectRepository>();
+
+                // Register the GeneratedFilesHelper service
+                services.AddSingleton<IGeneratedFilesHelper, GeneratedFilesHelper>();
+
                 services.AddSingleton<IDocGenerator, DocGenerator>();
                 services.AddSingleton<ITextPartHelper, TextPartHelper>();
 

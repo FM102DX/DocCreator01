@@ -67,7 +67,8 @@ namespace DocCreator01.Services
                 htmlBuilder.AppendLine("</html>");
                 
                 // Write to file
-                await File.WriteAllTextAsync(outputFilePath, htmlBuilder.ToString());
+                string x = htmlBuilder.ToString();
+                await File.WriteAllTextAsync(outputFilePath, x);
                 
                 return outputFilePath;
             }

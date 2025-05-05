@@ -57,7 +57,7 @@ namespace DocCreator01.Services
                 _textPartHtmlRenderer.RenderHtml(parts);
 
                 // Generate a filename based on project name
-                string fileName = $"{project.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.{type.ToString().ToLower()}";
+                string fileName = $"{project.Name}_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid()}.{type.ToString().ToLower()}";
                 string filePath = string.Empty;
                 
                 // Branch based on document type

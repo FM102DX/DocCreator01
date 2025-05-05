@@ -3,6 +3,7 @@ using DocCreator01.Models;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using DocCreator01.ViewModels;
 
 namespace DocCreator01.Contracts
 {

@@ -123,7 +123,7 @@ namespace DocCreator01.ViewModel
         }
         public ObservableCollection<string> RecentFiles { get; } = new();
         public ObservableCollection<TabPageViewModel> Tabs { get; } = new();
-        public ObservableCollection<string> GeneratedDocs { get; } = new();
+        public ObservableCollection<GeneratedFileViewModel> GeneratedFileViewModels { get; } = new();
         public TabPageViewModel? SelectedTab
         {
             get => _selectedTab;
@@ -236,6 +236,9 @@ namespace DocCreator01.ViewModel
             // Create view models for each text part
             RefreshTextPartViewModels();
 
+            // Load generated files
+            LoadGeneratedFiles();
+
             AddRecent(fileName);
             UpdateWindowTitle();
             foreach (var tp in CurrentProject.ProjectData.TextParts)
@@ -300,11 +303,26 @@ namespace DocCreator01.ViewModel
 
                 // Use the selected document type from settings
                 var docType = CurrentProject.Settings.GenDocType;
-                _docGen.Generate(filteredProject, docType);
-
-                // Add entry to generated docs list with appropriate extension
-                string extension = docType == GenerateFileTypeEnum.HTML ? "html" : "docx";
-                GeneratedDocs.Add($"Doc{GeneratedDocs.Count + 1:D2}.{extension}");
+                string outputPath = _docGen.Generate(filteredProject, docType);
+                
+                if (!string.IsNullOrEmpty(outputPath) && File.Exists(outputPath))
+                {
+                    // Create a new GeneratedFile model
+                    var generatedFile = new GeneratedFile
+                    {
+                        FilePath = outputPath,
+                        FileType = docType
+                    };
+                    
+                    // Add to project data for persistence
+                    CurrentProject.ProjectData.GeneratedFiles.Add(generatedFile);
+                    
+                    // Add to view models collection for display
+                    GeneratedFileViewModels.Add(new GeneratedFileViewModel(generatedFile, _appPathsHelper));
+                    
+                    // Mark project as dirty since we've added a generated file
+                    IsProjectDirty = true;
+                }
             }
             catch (Exception ex)
             {
@@ -432,7 +450,7 @@ namespace DocCreator01.ViewModel
             _currentPath = null;
             UpdateWindowTitle();
             Tabs.Clear();
-            GeneratedDocs.Clear();
+            GeneratedFileViewModels.Clear();
             CurrentProject.ProjectData.TextParts.Clear();
             MainGridLines.Clear();
             SelectedTab = null;
@@ -475,6 +493,26 @@ namespace DocCreator01.ViewModel
                 RecentFiles.RemoveAt(RecentFiles.Count - 1);
 
             SaveRecentFiles(); // Save changes to the file
+        }
+
+        private void LoadGeneratedFiles()
+        {
+            GeneratedFileViewModels.Clear();
+            
+            // Remove any files that don't exist anymore
+            for (int i = CurrentProject.ProjectData.GeneratedFiles.Count - 1; i >= 0; i--)
+            {
+                if (!CurrentProject.ProjectData.GeneratedFiles[i].Exists)
+                {
+                    CurrentProject.ProjectData.GeneratedFiles.RemoveAt(i);
+                }
+            }
+            
+            // Create view models for the remaining files
+            foreach (var generatedFile in CurrentProject.ProjectData.GeneratedFiles)
+            {
+                GeneratedFileViewModels.Add(new GeneratedFileViewModel(generatedFile, _appPathsHelper));
+            }
         }
 
         // Add this property to MainWindowViewModel class

@@ -10,6 +10,12 @@ namespace DocCreator01.Contracts
 {
     public interface IDocGenerator
     {
-        void Generate(Project project, GenerateFileTypeEnum type);
+        /// <summary>
+        /// Generates a document based on the project and returns the path to the generated file
+        /// </summary>
+        /// <param name="project">The project to generate</param>
+        /// <param name="type">The type of document to generate</param>
+        /// <returns>The path to the generated file</returns>
+        string Generate(Project project, GenerateFileTypeEnum type);
     }
 }

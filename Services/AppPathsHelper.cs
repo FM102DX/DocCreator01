@@ -30,7 +30,7 @@ namespace DocCreator01.Services
         public string ScriptsDirectory { get; }
 
         /// <summary>
-        /// Тут лежат питон скрипты
+        /// Тут лежат иконки файлов
         /// </summary>
         public string IconsDirectory { get; }
 
@@ -69,6 +69,7 @@ namespace DocCreator01.Services
             Directory.CreateDirectory(AppDataDirectory);
             Directory.CreateDirectory(ScriptsDirectory);
             Directory.CreateDirectory(DocumentsOutputDirectory);
+            Directory.CreateDirectory(IconsDirectory); // Ensure icons directory exists
         }
         
         /// <summary>

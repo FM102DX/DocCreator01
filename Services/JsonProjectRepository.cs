@@ -6,32 +6,48 @@ using DocCreator01.Models;
 
 namespace DocCreator01.Data
 {
-    public sealed class JsonProjectRepository : IProjectRepository
+    public class JsonProjectRepository : IProjectRepository
     {
-        private static readonly JsonSerializerSettings _json = new()
-        {
-            Formatting = Formatting.Indented,
-            TypeNameHandling = TypeNameHandling.Auto,
-            NullValueHandling = NullValueHandling.Ignore
-        };
+        // Existing code...
 
         public Project Load(string path)
         {
-            if (!File.Exists(path))
-                return new Project();
+            var jsonString = File.ReadAllText(path);
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Ignore
+            };
+            var project = JsonConvert.DeserializeObject<Project>(jsonString, settings) ?? new Project();
 
-            var json = File.ReadAllText(path, Encoding.UTF8);
-            return JsonConvert.DeserializeObject<Project>(json, _json) ?? new Project();
+            // Set the file path on the project
+            project.FilePath = path;
+
+            // Filter out any generated files that no longer exist
+            if (project.ProjectData.GeneratedFiles != null)
+            {
+                for (int i = project.ProjectData.GeneratedFiles.Count - 1; i >= 0; i--)
+                {
+                    if (!project.ProjectData.GeneratedFiles[i].Exists)
+                    {
+                        project.ProjectData.GeneratedFiles.RemoveAt(i);
+                    }
+                }
+            }
+
+            return project;
         }
 
         public void Save(Project project, string path)
         {
-            var dir = Path.GetDirectoryName(path);
-            if (!string.IsNullOrWhiteSpace(dir) && !Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
+            var settings = new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                NullValueHandling = NullValueHandling.Ignore
+            };
 
-            var json = JsonConvert.SerializeObject(project, _json);
-            File.WriteAllText(path, json, Encoding.UTF8);
+            string jsonString = JsonConvert.SerializeObject(project, settings);
+            File.WriteAllText(path, jsonString);
         }
     }
 }

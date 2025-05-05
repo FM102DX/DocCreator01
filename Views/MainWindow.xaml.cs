@@ -10,16 +10,16 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using DocCreator01.Contracts;
 
 namespace DocCreator01.Views
 {
-
     public partial class MainWindow : Window
     {
-        public MainWindow()
+        public MainWindow(MainWindowViewModel viewModel)
         {
             InitializeComponent();
-            DataContext = new MainWindowViewModel();
+            DataContext = viewModel;
         }
 
         void TabItem_RightClick(object sender, MouseButtonEventArgs e)
@@ -42,7 +42,5 @@ namespace DocCreator01.Views
             menu.Items.Add(del);
             menu.IsOpen = true;
         }
-
     }
-
 }

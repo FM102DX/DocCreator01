@@ -47,7 +47,17 @@ namespace DocCreator01
                 // Add the TextPartHtmlRenderer service
                 services.AddSingleton<ITextPartHtmlRenderer, TextPartHtmlRenderer>();
 
-                services.AddTransient<MainWindowViewModel>();
+                // Register MainWindowViewModel correctly with all its dependencies
+                services.AddTransient<MainWindowViewModel>(provider => 
+                    new MainWindowViewModel(
+                        provider.GetRequiredService<IProjectRepository>(),
+                        provider.GetRequiredService<IDocGenerator>(),
+                        provider.GetRequiredService<ITextPartHelper>(),
+                        provider.GetRequiredService<IAppPathsHelper>(),
+                        provider.GetRequiredService<IGeneratedFilesHelper>()
+                    )
+                );
+                
                 services.AddTransient<MainWindow>();
 
                 _provider = services.BuildServiceProvider();

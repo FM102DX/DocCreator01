@@ -18,12 +18,22 @@ namespace DocCreator01.Services
         /// Тут хранятся настройки приложения
         /// </summary>
         public string AppDataDirectory { get; }
-        
+
+        /// <summary>
+        /// Тут хранятся настройки приложения
+        /// </summary>
+        public string ExeFileDirectory { get; }
+
         /// <summary>
         /// Тут лежат питон скрипты
         /// </summary>
         public string ScriptsDirectory { get; }
-        
+
+        /// <summary>
+        /// Тут лежат питон скрипты
+        /// </summary>
+        public string IconsDirectory { get; }
+
         /// <summary>
         /// Gets the path to the folder where generated documents are stored
         /// </summary>
@@ -37,12 +47,16 @@ namespace DocCreator01.Services
         public AppPathsHelper()
         {
             // Initialize paths
+            ExeFileDirectory = AppContext.BaseDirectory; // Set to the application's executable directory
+
             AppDataDirectory = GetAppDataPath();
-            ScriptsDirectory = Path.Combine(AppDataDirectory, "Scripts");
+
+            ScriptsDirectory = Path.Combine(ExeFileDirectory, "Scripts");
+            IconsDirectory = Path.Combine(ExeFileDirectory, "Icons");
             DocumentsOutputDirectory = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 "DocCreator");
-            
+
             // Ensure directories exist
             EnsureDirectoriesExist();
         }

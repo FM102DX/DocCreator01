@@ -19,20 +19,6 @@ namespace DocCreator01.Contracts
         TextPart CreateTextPart(Project project);
 
         /// <summary>
-        /// Loads a project from the specified file path
-        /// </summary>
-        /// <param name="fileName">Path to the project file</param>
-        /// <returns>The loaded Project</returns>
-        Project LoadProject(string fileName);
-
-        /// <summary>
-        /// Saves the current project to the specified file path
-        /// </summary>
-        /// <param name="project">Project to save</param>
-        /// <param name="filePath">Path to save the project to</param>
-        void SaveProject(Project project, string filePath);
-
-        /// <summary>
         /// Refreshes the view models collection based on the TextParts in the project
         /// </summary>
         /// <param name="textParts">Source collection of TextPart objects</param>

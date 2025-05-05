@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using DocCreator01.Contracts;
 using DocCreator01.Models;
@@ -11,11 +10,9 @@ namespace DocCreator01.Services
 {
     public class TextPartHelper : ITextPartHelper
     {
-        private readonly IProjectRepository _repo;
-
-        public TextPartHelper(IProjectRepository repo)
+        // Constructor no longer needs repository
+        public TextPartHelper()
         {
-            _repo = repo;
         }
 
         public TextPart CreateTextPart(Project project)
@@ -27,25 +24,6 @@ namespace DocCreator01.Services
                 Name = project.GetNewTextPartName(),
                 IncludeInDocument = true
             };
-        }
-
-        public Project LoadProject(string fileName)
-        {
-            if (!File.Exists(fileName))
-            {
-                throw new FileNotFoundException($"Project file not found: {fileName}");
-            }
-
-            var project = _repo.Load(fileName);
-            project.FilePath = fileName;
-            
-            return project;
-        }
-
-        public void SaveProject(Project project, string filePath)
-        {
-            _repo.Save(project, filePath);
-            project.FilePath = filePath; // Ensure FilePath is always updated
         }
 
         public void RefreshTextPartViewModels(ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels)

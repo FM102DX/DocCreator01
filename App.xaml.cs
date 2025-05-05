@@ -30,7 +30,9 @@ namespace DocCreator01
                 services.AddSingleton<IGeneratedFilesHelper, GeneratedFilesHelper>();
 
                 services.AddSingleton<IDocGenerator, DocGenerator>();
-                services.AddSingleton<ITextPartHelper, TextPartHelper>();
+
+                // Update the TextPartHelper registration to remove dependency on IProjectRepository
+                services.AddTransient<ITextPartHelper, TextPartHelper>();
 
                 // Register the Python helper
                 services.AddSingleton<IPythonHelper, PythonHelper>();
@@ -47,12 +49,17 @@ namespace DocCreator01
                 // Add the TextPartHtmlRenderer service
                 services.AddSingleton<ITextPartHtmlRenderer, TextPartHtmlRenderer>();
 
+                // Add these lines to your DI container registration
+                services.AddTransient<IProjectHelper, ProjectHelper>();
+
+                // Update the MainWindowViewModel registration in App.xaml.cs
                 // Register MainWindowViewModel correctly with all its dependencies
                 services.AddTransient<MainWindowViewModel>(provider => 
                     new MainWindowViewModel(
                         provider.GetRequiredService<IProjectRepository>(),
                         provider.GetRequiredService<IDocGenerator>(),
                         provider.GetRequiredService<ITextPartHelper>(),
+                        provider.GetRequiredService<IProjectHelper>(),
                         provider.GetRequiredService<IAppPathsHelper>(),
                         provider.GetRequiredService<IGeneratedFilesHelper>()
                     )

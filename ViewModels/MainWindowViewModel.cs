@@ -22,11 +22,11 @@ namespace DocCreator01.ViewModel
         private readonly IProjectRepository _repo;
         private readonly IDocGenerator _docGen;
         private readonly ITextPartHelper _textPartHelper;
+        private readonly IProjectHelper _projectHelper;
         private readonly IAppPathsHelper _appPathsHelper;
         private readonly IGeneratedFilesHelper _generatedFilesHelper;
         private string? _currentPath;
         private bool _isProjectDirty;
-        private Project _currentProject = new();
         private TabPageViewModel? _selectedTab;
 
         private TextPart? _selectedMainGridItem;
@@ -55,26 +55,42 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> OpenDocumentsFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenScriptsFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenProjectFolderCommand { get; }
+
         public MainWindowViewModel(
             IProjectRepository repo, 
             IDocGenerator docGen, 
-            ITextPartHelper textPartHelper, 
+            ITextPartHelper textPartHelper,
+            IProjectHelper projectHelper,
             IAppPathsHelper appPathsHelper,
             IGeneratedFilesHelper generatedFilesHelper)
         {
             _repo = repo;
             _docGen = docGen;
             _textPartHelper = textPartHelper;
+            _projectHelper = projectHelper;
             _appPathsHelper = appPathsHelper;
             _generatedFilesHelper = generatedFilesHelper;
 
             // Initialize SettingsViewModel
-            SettingsViewModel = new SettingsViewModel(CurrentProject.Settings);
+            SettingsViewModel = new SettingsViewModel(_projectHelper.CurrentProject.Settings);
 
             // Subscribe to SettingsViewModel IsDirty property
             this.WhenAnyValue(x => x.SettingsViewModel.IsDirty)
                 .Where(isDirty => isDirty)
                 .Subscribe(_ => IsProjectDirty = true);
+
+            // Subscribe to project changes
+            _projectHelper.ProjectChanged += (s, project) => 
+            {
+                // Update UI when project changes
+                _currentPath = project.FilePath;
+                SettingsViewModel = new SettingsViewModel(project.Settings);
+                this.RaisePropertyChanged(nameof(SettingsViewModel));
+                this.RaisePropertyChanged(nameof(CurrentProject));
+                RefreshTextPartViewModels();
+                UpdateWindowTitle();
+                IsProjectDirty = false;
+            };
 
             OpenCommand = ReactiveCommand.Create(OpenFile, outputScheduler: Ui);
             SaveCommand = ReactiveCommand.Create(Save, outputScheduler: Ui);
@@ -110,16 +126,13 @@ namespace DocCreator01.ViewModel
             private set
             {
                 this.RaiseAndSetIfChanged(ref _isProjectDirty, value);
-                UpdateWindowTitle();                 // сразу обновляем заголовок
+                UpdateWindowTitle(); // сразу обновляем заголовок
             }
         }
+        
         public string AppDataDir => _appPathsHelper.AppDataDirectory;
 
-        public Project CurrentProject
-        {
-            get => _currentProject;
-            private set => this.RaiseAndSetIfChanged(ref _currentProject, value);
-        }
+        public Project CurrentProject => _projectHelper.CurrentProject;
 
         public MainGridItemViewModel? SelectedMainGridItemViewModel
         {
@@ -133,14 +146,17 @@ namespace DocCreator01.ViewModel
                     SelectedMainGridItem = null;
             }
         }
+        
         public ObservableCollection<string> RecentFiles { get; } = new();
         public ObservableCollection<TabPageViewModel> Tabs { get; } = new();
         public ObservableCollection<GeneratedFileViewModel> GeneratedFileViewModels { get; } = new();
+        
         public TabPageViewModel? SelectedTab
         {
             get => _selectedTab;
             set => this.RaiseAndSetIfChanged(ref _selectedTab, value);
         }
+        
         public TextPart? SelectedMainGridItem
         {
             get => _selectedMainGridItem;
@@ -234,25 +250,21 @@ namespace DocCreator01.ViewModel
         private void LoadProject(string fileName)
         {
             // Clear old state
-            CurrentProject.ProjectData.TextParts.Clear();
-            MainGridLines.Clear();
             Tabs.Clear();
+            MainGridLines.Clear();
+            GeneratedFileViewModels.Clear();
 
-            CurrentProject = _textPartHelper.LoadProject(fileName);
+            // Use ProjectHelper to load project
+            _projectHelper.LoadProject(fileName);
             _currentPath = fileName;
-
-            // Update SettingsViewModel with new project's settings
-            SettingsViewModel = new SettingsViewModel(CurrentProject.Settings);
-            this.RaisePropertyChanged(nameof(SettingsViewModel));
-
-            // Create view models for each text part
-            RefreshTextPartViewModels();
 
             // Load generated files
             LoadGeneratedFiles();
 
+            // Add recent files entry
             AddRecent(fileName);
-            UpdateWindowTitle();
+            
+            // Create tabs for opened tabs in project
             foreach (var tp in CurrentProject.ProjectData.TextParts)
             {
                 if (CurrentProject.OpenedTabs.Contains(tp.Id))
@@ -262,6 +274,7 @@ namespace DocCreator01.ViewModel
                     Tabs.Add(vm);
                 }
             }
+            
             SelectedTab = Tabs.FirstOrDefault();
             IsProjectDirty = false;
         }
@@ -284,15 +297,18 @@ namespace DocCreator01.ViewModel
                 }
                 else return;
             }
+            
             CurrentProject.OpenedTabs = Tabs.Select(x => x.TextPart.Id).ToList();
-            _textPartHelper.SaveProject(CurrentProject, _currentPath!);
+            
+            // Use ProjectHelper to save project
+            _projectHelper.SaveProject(CurrentProject, _currentPath!);
             AddRecent(_currentPath);
+            
+            // Reset dirty flags
             foreach (var tab in Tabs)
                 tab.AcceptChanges();
 
-            // After saving the project, make sure to reset dirty state on SettingsViewModel
             SettingsViewModel.AcceptChanges();
-
             IsProjectDirty = false;
         }
 
@@ -431,36 +447,20 @@ namespace DocCreator01.ViewModel
 
         private void CloseCurrent()
         {
-            // Only ask about saving if the project has unsaved changes
-            if (IsProjectDirty)
+            // Delegate to ProjectHelper to handle closing
+            if (_projectHelper.CloseCurrentProject(IsProjectDirty ? null : false))
             {
-                // спрашиваем пользователя, что делать с текущим документом
-                var res = MessageBox.Show(
-                    "Сохранить изменения перед закрытием?",
-                    "Закрыть документ",
-                    MessageBoxButton.YesNoCancel,
-                    MessageBoxImage.Question);
-
-                if (res == MessageBoxResult.Cancel)
-                    return;               //- пользователь передумал закрывать
-
-                if (res == MessageBoxResult.Yes)
-                    Save();               //- сохраняем, затем продолжаем закрытие
+                // ProjectHelper succeeded in closing the project
+                // Clear UI state
+                Tabs.Clear();
+                GeneratedFileViewModels.Clear();
+                MainGridLines.Clear();
+                SelectedTab = null;
+                SelectedMainGridItemViewModel = null;
+                
+                // Current project has already been updated by ProjectHelper
+                _currentPath = CurrentProject.FilePath;
             }
-
-            // ------------------ «обычное» закрытие ------------------
-            _currentPath = null;
-            UpdateWindowTitle();
-            Tabs.Clear();
-            GeneratedFileViewModels.Clear();
-            CurrentProject.ProjectData.TextParts.Clear();
-            MainGridLines.Clear();
-            SelectedTab = null;
-            SelectedMainGridItemViewModel = null;
-            IsProjectDirty = false;
-            CurrentProject = new Project();  // создаём новый пустой проект с именем "New project" и пустым FilePath
-            SettingsViewModel = new SettingsViewModel(CurrentProject.Settings);
-            this.RaisePropertyChanged(nameof(SettingsViewModel));
         }
 
         private void LoadRecentFiles()

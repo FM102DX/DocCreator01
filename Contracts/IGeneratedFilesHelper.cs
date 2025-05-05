@@ -40,12 +40,5 @@ namespace DocCreator01.Contracts
         /// <returns>True if successfully deleted, false otherwise</returns>
         bool DeleteFile(GeneratedFile generatedFile, ObservableCollection<GeneratedFile> generatedFiles);
 
-
-        /// <summary>
-        /// Gets all generated files that exist on disk
-        /// </summary>
-        /// <param name="generatedFiles">Collection of generated files to check</param>
-        /// <returns>List of existing generated files</returns>
-        List<GeneratedFile> GetExistingFiles(ObservableCollection<GeneratedFile> generatedFiles);
     }
 }

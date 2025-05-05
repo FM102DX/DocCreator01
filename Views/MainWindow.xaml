@@ -91,13 +91,13 @@
                         Background="#0063B1" Foreground="White"
                         DockPanel.Dock="Top"/>
 
-                <ListBox ItemsSource="{Binding GeneratedFileViewModels}" DisplayMemberPath="FileName"
+                <ListBox ItemsSource="{Binding GeneratedFileViewModels}"
                          Background="#FEFDB0" DockPanel.Dock="Bottom">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Margin="5">
-                                <Image Source="/Assets/word.png" Width="32" Height="32"/>
-                                <TextBlock Text="{Binding}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                <Image Source="{Binding Icon}" Width="32" Height="32"/>
+                                <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>

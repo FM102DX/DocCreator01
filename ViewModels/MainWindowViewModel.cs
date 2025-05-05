@@ -99,7 +99,7 @@ namespace DocCreator01.ViewModel
             CloseTabCommand = ReactiveCommand.Create<TabPageViewModel>(vm => CloseTab(vm), outputScheduler: Ui);
             CloseAllTabsCommand = ReactiveCommand.Create(CloseAllTabs, outputScheduler: Ui);
             DeleteTabCommand = ReactiveCommand.Create<TabPageViewModel>(DeleteTab, outputScheduler: Ui);
-            GenerateCommand = ReactiveCommand.Create(GenerateProject, outputScheduler: Ui);
+            GenerateCommand = ReactiveCommand.Create(GenerateOutputFile, outputScheduler: Ui);
             AddTextPartCommand = AddTabCommand;
             RemoveTextPartCommand = ReactiveCommand.Create(RemoveCurrent, outputScheduler: Ui);
             MoveUpCommand = ReactiveCommand.Create(MoveCurrentUp, outputScheduler: Ui);
@@ -312,41 +312,41 @@ namespace DocCreator01.ViewModel
             IsProjectDirty = false;
         }
 
-        private async void GenerateProject()
+        private async void GenerateOutputFile()
         {
-            try
-            {
-                // Filter out parts that should not be included
-                var filteredProject = new Project
-                {
-                    Name = CurrentProject.Name,
-                    Settings = CurrentProject.Settings,
-                    FilePath = CurrentProject.FilePath
-                };
+            //try
+            //{
+            //    // Filter out parts that should not be included
+            //    var filteredProject = new Project
+            //    {
+            //        Name = CurrentProject.Name,
+            //        Settings = CurrentProject.Settings,
+            //        FilePath = CurrentProject.FilePath
+            //    };
 
-                foreach (var part in CurrentProject.ProjectData.TextParts.Where(p => p.IncludeInDocument))
-                {
-                    filteredProject.ProjectData.TextParts.Add(part);
-                }
+            //    foreach (var part in CurrentProject.ProjectData.TextParts.Where(p => p.IncludeInDocument))
+            //    {
+            //        filteredProject.ProjectData.TextParts.Add(part);
+            //    }
 
-                // Use the selected document type from settings
-                var docType = CurrentProject.Settings.GenDocType;
-                GeneratedFile outputFile = _docGen.Generate(filteredProject, docType).Result;
+            //    // Use the selected document type from settings
+            //    var docType = CurrentProject.Settings.GenDocType;
+            //    GeneratedFile outputFile = _docGen.Generate(filteredProject, docType).Result;
                 
-                if (!string.IsNullOrEmpty(outputFile.FileName) && File.Exists(outputFile.FileName))
-                {
-                    // Add to view models collection for display
-                    GeneratedFileViewModels.Add(new GeneratedFileViewModel(outputFile, _appPathsHelper));
+            //    if (!string.IsNullOrEmpty(outputFile.FileName) && File.Exists(outputFile.FileName))
+            //    {
+            //        // Add to view models collection for display
+            //        GeneratedFileViewModels.Add(new GeneratedFileViewModel(outputFile, _appPathsHelper));
                     
-                    // Mark project as dirty since we've added a generated file
-                    IsProjectDirty = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Handle any exceptions during document generation
-                MessageBox.Show($"Error generating document: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            //        // Mark project as dirty since we've added a generated file
+            //        IsProjectDirty = true;
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    // Handle any exceptions during document generation
+            //    MessageBox.Show($"Error generating document: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            //}
         }
 
         private void RemoveCurrent()
@@ -499,7 +499,7 @@ namespace DocCreator01.ViewModel
 
         private void LoadGeneratedFiles()
         {
-            _generatedFilesHelper.RefreshGeneratedFileViewModels(CurrentProject.ProjectData.GeneratedFiles, GeneratedFileViewModels);
+            
         }
 
         private void OpenFolder(string folderPath)

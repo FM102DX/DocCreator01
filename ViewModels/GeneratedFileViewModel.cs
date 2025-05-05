@@ -4,14 +4,18 @@ using DocCreator01.Models;
 using ReactiveUI;
 using System;
 using System.IO;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace DocCreator01.ViewModels
 {
     /// <summary>
     /// View model for a generated file that includes UI-specific properties like icons
     /// </summary>
-    public class GeneratedFileViewModel : ReactiveObject
+    public class GeneratedFileViewModel : ReactiveObject, INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler? PropertyChanged;
+
         private readonly IAppPathsHelper _appPathsHelper;
         private readonly GeneratedFile _model;
 
@@ -63,5 +67,10 @@ namespace DocCreator01.ViewModels
         /// Determines if the file exists on disk
         /// </summary>
         public bool Exists => _model.Exists;
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

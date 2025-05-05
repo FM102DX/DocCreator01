@@ -91,7 +91,7 @@
                         Background="#0063B1" Foreground="White"
                         DockPanel.Dock="Top"/>
 
-                <ListBox ItemsSource="{Binding GeneratedFileViewModels}"
+                <ListBox ItemsSource="{Binding GeneratedFileViewModels}" DisplayMemberPath="FileName"
                          Background="#FEFDB0" DockPanel.Dock="Bottom">
                     <ListBox.ItemTemplate>
                         <DataTemplate>

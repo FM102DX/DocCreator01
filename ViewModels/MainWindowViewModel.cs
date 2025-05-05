@@ -55,7 +55,6 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> OpenDocumentsFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenScriptsFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenProjectFolderCommand { get; }
-
         public MainWindowViewModel(
             IProjectRepository repo, 
             IDocGenerator docGen, 

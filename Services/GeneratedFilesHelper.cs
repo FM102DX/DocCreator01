@@ -18,6 +18,8 @@ namespace DocCreator01.Services
         private readonly IHtmlDocumentCreatorService _htmlDocumentCreator;
         private readonly IBrowserService _browserService;
         private readonly ITextPartHtmlRenderer _textPartHtmlRenderer;
+        private Project _project;
+        public ObservableCollection<GeneratedFile> GeneratedFiles { get; set; } = new();
 
         public GeneratedFilesHelper(
             IAppPathsHelper appPathsHelper,
@@ -33,14 +35,13 @@ namespace DocCreator01.Services
             _textPartHtmlRenderer = textPartHtmlRenderer ?? throw new ArgumentNullException(nameof(textPartHtmlRenderer));
         }
 
-        /// <summary>
-        /// Gets the path to the folder where generated documents are stored
-        /// </summary>
+        public void Initialize(Project project)
+        {
+            _project = _project;
+            _project.ProjectData.GeneratedFiles = GetExistingFiles();
+        }
         public string OutputDirectory => _appPathsHelper.DocumentsOutputDirectory;
 
-        /// <summary>
-        /// Generates a file based on the project and file type
-        /// </summary>
         public async Task<string> GenerateFileAsync(Project project, GenerateFileTypeEnum type)
         {
             try
@@ -75,6 +76,7 @@ namespace DocCreator01.Services
                         throw new NotSupportedException($"Document type {type} is not supported.");
                 }
 
+
                 return filePath;
             }
             catch (Exception ex)
@@ -84,9 +86,6 @@ namespace DocCreator01.Services
             }
         }
 
-        /// <summary>
-        /// Opens a generated file using the appropriate application
-        /// </summary>
         public bool OpenFile(GeneratedFile generatedFile)
         {
             if (generatedFile == null || !generatedFile.Exists)
@@ -118,9 +117,6 @@ namespace DocCreator01.Services
             }
         }
 
-        /// <summary>
-        /// Deletes a generated file from disk and removes it from the project
-        /// </summary>
         public bool DeleteFile(GeneratedFile generatedFile, ObservableCollection<GeneratedFile> generatedFiles)
         {
             if (generatedFile == null)
@@ -145,36 +141,19 @@ namespace DocCreator01.Services
             }
         }
 
-        /// <summary>
-        /// Refreshes the list of generated file view models
-        /// </summary>
-        public void RefreshGeneratedFileViewModels(ObservableCollection<GeneratedFile> generatedFiles, ObservableCollection<GeneratedFileViewModel> generatedFileViewModels)
+        public ObservableCollection<GeneratedFile> GetExistingFiles()
         {
-            generatedFileViewModels.Clear();
-            
-            // Create view models for existing files
-            foreach (var generatedFile in GetExistingFiles(generatedFiles))
-            {
-                generatedFileViewModels.Add(new GeneratedFileViewModel(generatedFile, _appPathsHelper));
-            }
-        }
+            ObservableCollection<GeneratedFile> existingFiles = new ObservableCollection<GeneratedFile>();
 
-        /// <summary>
-        /// Gets all generated files that exist on disk
-        /// </summary>
-        public List<GeneratedFile> GetExistingFiles(ObservableCollection<GeneratedFile> generatedFiles)
-        {
-            List<GeneratedFile> existingFiles = new List<GeneratedFile>();
-            
-            foreach (var generatedFile in generatedFiles)
+            foreach (var generatedFile in _project.ProjectData.GeneratedFiles)
             {
                 if (generatedFile.Exists)
                 {
                     existingFiles.Add(generatedFile);
                 }
             }
-            
             return existingFiles;
         }
+
     }
 }

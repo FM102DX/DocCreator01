@@ -40,12 +40,6 @@ namespace DocCreator01.Contracts
         /// <returns>True if successfully deleted, false otherwise</returns>
         bool DeleteFile(GeneratedFile generatedFile, ObservableCollection<GeneratedFile> generatedFiles);
 
-        /// <summary>
-        /// Refreshes the list of generated file view models
-        /// </summary>
-        /// <param name="generatedFiles">Collection of generated file models</param>
-        /// <param name="generatedFileViewModels">Collection of view models to update</param>
-        void RefreshGeneratedFileViewModels(ObservableCollection<GeneratedFile> generatedFiles, ObservableCollection<GeneratedFileViewModel> generatedFileViewModels);
 
         /// <summary>
         /// Gets all generated files that exist on disk

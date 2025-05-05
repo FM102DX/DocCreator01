@@ -19,7 +19,7 @@ namespace DocCreator01.Views
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new MainWindowViewModel(/* dependencies */);
+            DataContext = new MainWindowViewModel();
         }
 
         void TabItem_RightClick(object sender, MouseButtonEventArgs e)

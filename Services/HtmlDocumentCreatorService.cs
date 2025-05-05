@@ -4,10 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace DocCreator01.Services
 {
+    /// <summary>
+    /// Creates HTML documents from a collection of <see cref="TextPart"/> objects.
+    /// </summary>
     public class HtmlDocumentCreatorService : IHtmlDocumentCreatorService
     {
         private readonly IAppPathsHelper _appPathsHelper;
@@ -17,65 +19,67 @@ namespace DocCreator01.Services
             _appPathsHelper = appPathsHelper ?? throw new ArgumentNullException(nameof(appPathsHelper));
         }
 
-        /// <summary>
-        /// Gets the path to the folder where generated documents are stored
-        /// </summary>
+        /// <summary>Папка, куда складываются готовые документы.</summary>
         public string OutputDirectory => _appPathsHelper.DocumentsOutputDirectory;
 
-        /// <summary>
-        /// Creates an HTML document by combining HTML content from TextParts
-        /// </summary>
-        public async Task<string> CreateDocumentAsync(IEnumerable<TextPart> textParts, string outputFileName)
+        /// <inheritdoc />
+        public string CreateDocument(IEnumerable<TextPart> textParts, string outputFileName)
         {
-            try
-            {
-                // Ensure the output directory exists
-                Directory.CreateDirectory(OutputDirectory);
-                
-                // Full path to output file
-                string outputFilePath = Path.Combine(OutputDirectory, outputFileName);
-                
-                // Create HTML document with header and combine all HTML parts
-                var htmlBuilder = new StringBuilder();
-                htmlBuilder.AppendLine("<!DOCTYPE html>");
-                htmlBuilder.AppendLine("<html>");
-                htmlBuilder.AppendLine("<head>");
-                htmlBuilder.AppendLine("<meta charset=\"UTF-8\">");
-                htmlBuilder.AppendLine("<title>Generated Document</title>");
-                htmlBuilder.AppendLine("<style>");
-                htmlBuilder.AppendLine("body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }");
-                htmlBuilder.AppendLine("h1 { color: #333366; }");
-                htmlBuilder.AppendLine("h2 { color: #333366; }");
-                htmlBuilder.AppendLine("h3 { color: #333366; }");
-                htmlBuilder.AppendLine("</style>");
-                htmlBuilder.AppendLine("</head>");
-                htmlBuilder.AppendLine("<body>");
-                
-                // Add each TextPart's HTML content
-                foreach (var part in textParts)
-                {
-                    // Use either the HTML content if available, or convert the Text to basic HTML
-                    string htmlContent = !string.IsNullOrEmpty(part.Html) ? 
-                        part.Html : 
-                        $"<h{part.Level}>{part.Name}</h{part.Level}><div>{part.Text.Replace(Environment.NewLine, "<br>")}</div>";
-                    
-                    htmlBuilder.AppendLine(htmlContent);
-                    htmlBuilder.AppendLine("<hr>");
-                }
-                
-                htmlBuilder.AppendLine("</body>");
-                htmlBuilder.AppendLine("</html>");
-                
-                // Write to file
-                string x = htmlBuilder.ToString();
-                await File.WriteAllTextAsync(outputFilePath, x);
-                
-                return outputFilePath;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error creating HTML document: {ex.Message}", ex);
-            }
+            if (textParts is null) throw new ArgumentNullException(nameof(textParts));
+            if (string.IsNullOrWhiteSpace(outputFileName))
+                throw new ArgumentException("Имя файла обязательно.", nameof(outputFileName));
+
+            Directory.CreateDirectory(OutputDirectory);
+            string outputFilePath = Path.Combine(OutputDirectory, outputFileName);
+
+            // Построение HTML
+            string html = BuildHtml(textParts);
+
+            // Синхронная IO-операция
+            File.WriteAllText(outputFilePath, html, Encoding.UTF8);
+
+            return outputFilePath;
         }
+
+        /// <summary>
+        /// Формирует полный HTML-документ.
+        /// </summary>
+        private static string BuildHtml(IEnumerable<TextPart> parts)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine("<!DOCTYPE html>");
+            sb.AppendLine("<html>");
+            sb.AppendLine("<head>");
+            sb.AppendLine("<meta charset=\"UTF-8\">");
+            sb.AppendLine("<title>Generated Document</title>");
+            sb.AppendLine("<style>");
+            sb.AppendLine("body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }");
+            sb.AppendLine("h1, h2, h3 { color: #333366; }");
+            sb.AppendLine("</style>");
+            sb.AppendLine("</head>");
+            sb.AppendLine("<body>");
+
+            foreach (var part in parts)
+            {
+                string htmlContent = !string.IsNullOrEmpty(part.Html)
+                    ? part.Html
+                    : $"<h{part.Level}>{Escape(part.Name)}</h{part.Level}><div>{Escape(part.Text).Replace(Environment.NewLine, "<br>")}</div>";
+
+                sb.AppendLine(htmlContent);
+                sb.AppendLine("<hr>");
+            }
+
+            sb.AppendLine("</body>");
+            sb.AppendLine("</html>");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// HTML-экранирование пользовательских строк.
+        /// </summary>
+        private static string Escape(string? value) =>
+            System.Net.WebUtility.HtmlEncode(value ?? string.Empty);
     }
 }

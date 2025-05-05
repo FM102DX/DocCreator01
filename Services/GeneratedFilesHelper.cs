@@ -68,7 +68,7 @@ namespace DocCreator01.Services
                         break;
                         
                     case GenerateFileTypeEnum.HTML:
-                        filePath = await _htmlDocumentCreator.CreateDocumentAsync(parts, fileName);
+                        filePath = _htmlDocumentCreator.CreateDocument(parts, fileName);
                         break;
                         
                     default:

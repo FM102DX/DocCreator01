@@ -15,7 +15,7 @@ namespace DocCreator01.Services
             _generatedFilesHelper = generatedFilesHelper ?? throw new ArgumentNullException(nameof(generatedFilesHelper));
         }
 
-        public async Task<string> Generate(Project project, GenerateFileTypeEnum type)
+        public async Task<GeneratedFile> Generate(Project project, GenerateFileTypeEnum type)
         {
             try
             {
@@ -25,23 +25,15 @@ namespace DocCreator01.Services
                 // Create and add generated file record to project if file was successfully created
                 if (!string.IsNullOrEmpty(filePath))
                 {
-                    // Initialize GeneratedFiles collection if null
-                    if (project.ProjectData.GeneratedFiles == null)
-                    {
-                        project.ProjectData.GeneratedFiles = new System.Collections.ObjectModel.ObservableCollection<GeneratedFile>();
-                    }
-
-                    // Create and add the generated file record
                     var generatedFile = new GeneratedFile
                     {
                         FilePath = filePath,
                         FileType = type
                     };
-                    
                     project.ProjectData.GeneratedFiles.Add(generatedFile);
+                    return generatedFile;
                 }
-
-                return filePath;
+                return new GeneratedFile();
             }
             catch (Exception ex)
             {

@@ -310,22 +310,12 @@ namespace DocCreator01.ViewModel
 
                 // Use the selected document type from settings
                 var docType = CurrentProject.Settings.GenDocType;
-                string outputPath = _docGen.Generate(filteredProject, docType).Result;
+                GeneratedFile outputFile = _docGen.Generate(filteredProject, docType).Result;
                 
-                if (!string.IsNullOrEmpty(outputPath) && File.Exists(outputPath))
+                if (!string.IsNullOrEmpty(outputFile.FileName) && File.Exists(outputFile.FileName))
                 {
-                    // Create a new GeneratedFile model
-                    var generatedFile = new GeneratedFile
-                    {
-                        FilePath = outputPath,
-                        FileType = docType
-                    };
-                    
-                    // Add to project data for persistence
-                    CurrentProject.ProjectData.GeneratedFiles.Add(generatedFile);
-                    
                     // Add to view models collection for display
-                    GeneratedFileViewModels.Add(new GeneratedFileViewModel(generatedFile, _appPathsHelper));
+                    GeneratedFileViewModels.Add(new GeneratedFileViewModel(outputFile, _appPathsHelper));
                     
                     // Mark project as dirty since we've added a generated file
                     IsProjectDirty = true;

@@ -115,8 +115,8 @@ namespace DocCreator01.ViewModel
 
             // Subscribe to changes in the TextParts collection
             this.WhenAnyValue(x => x.CurrentProject)
-                .Subscribe(_ => _textPartHelper.RefreshTextPartViewModels(CurrentProject.ProjectData.TextParts, MainGridLines));
-
+                .Subscribe(_ => RefreshMainGridItemsViewModels(CurrentProject.ProjectData.TextParts, MainGridLines));
+            
             LoadRecentFiles(); // Load recent files on startup
         }
 
@@ -192,7 +192,7 @@ namespace DocCreator01.ViewModel
 
         private void RefreshTextPartViewModels()
         {
-            _textPartHelper.RefreshTextPartViewModels(CurrentProject.ProjectData.TextParts, MainGridLines);
+            //RefreshTextPartViewModels(CurrentProject.ProjectData.TextParts, MainGridLines);
         }
 
         private void AddTab()
@@ -312,41 +312,9 @@ namespace DocCreator01.ViewModel
             IsProjectDirty = false;
         }
 
-        private async void GenerateOutputFile()
+        private void GenerateOutputFile()
         {
-            //try
-            //{
-            //    // Filter out parts that should not be included
-            //    var filteredProject = new Project
-            //    {
-            //        Name = CurrentProject.Name,
-            //        Settings = CurrentProject.Settings,
-            //        FilePath = CurrentProject.FilePath
-            //    };
 
-            //    foreach (var part in CurrentProject.ProjectData.TextParts.Where(p => p.IncludeInDocument))
-            //    {
-            //        filteredProject.ProjectData.TextParts.Add(part);
-            //    }
-
-            //    // Use the selected document type from settings
-            //    var docType = CurrentProject.Settings.GenDocType;
-            //    GeneratedFile outputFile = _docGen.Generate(filteredProject, docType).Result;
-                
-            //    if (!string.IsNullOrEmpty(outputFile.FileName) && File.Exists(outputFile.FileName))
-            //    {
-            //        // Add to view models collection for display
-            //        GeneratedFileViewModels.Add(new GeneratedFileViewModel(outputFile, _appPathsHelper));
-                    
-            //        // Mark project as dirty since we've added a generated file
-            //        IsProjectDirty = true;
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    // Handle any exceptions during document generation
-            //    MessageBox.Show($"Error generating document: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            //}
         }
 
         private void RemoveCurrent()
@@ -374,6 +342,7 @@ namespace DocCreator01.ViewModel
             var textPart = SelectedMainGridItemViewModel.Model;
             if (_textPartHelper.MoveTextPartUp(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
             {
+                this.RaisePropertyChanged(nameof(CurrentProject));
                 IsProjectDirty = true;
 
                 // Find and mark the affected tab as dirty
@@ -396,6 +365,7 @@ namespace DocCreator01.ViewModel
             var textPart = SelectedMainGridItemViewModel.Model;
             if (_textPartHelper.MoveTextPartDown(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
             {
+                this.RaisePropertyChanged(nameof(CurrentProject));
                 IsProjectDirty = true;
 
                 // Find and mark the affected tab as dirty
@@ -520,5 +490,25 @@ namespace DocCreator01.ViewModel
 
         // Add this property to MainWindowViewModel class
         public SettingsViewModel SettingsViewModel { get; private set; }
+        public void RefreshMainGridItemsViewModels(ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels)
+        {
+            viewModels.Clear();
+
+            foreach (var textPart in textParts)
+            {
+                viewModels.Add(new MainGridItemViewModel(textPart));
+            }
+
+            // Ensure we stay synchronized with the model collection
+            textParts.CollectionChanged += (s, e) =>
+            {
+                // Re-build the view models collection when the underlying collection changes
+                viewModels.Clear();
+                foreach (var textPart in textParts)
+                {
+                    viewModels.Add(new MainGridItemViewModel(textPart));
+                }
+            };
+        }
     }
 }

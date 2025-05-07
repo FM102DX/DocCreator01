@@ -26,64 +26,25 @@ namespace DocCreator01.Services
             };
         }
 
-        public void RefreshTextPartViewModels(ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels)
-        {
-            viewModels.Clear();
-
-            foreach (var textPart in textParts)
-            {
-                viewModels.Add(new MainGridItemViewModel(textPart));
-            }
-
-            // Ensure we stay synchronized with the model collection
-            textParts.CollectionChanged += (s, e) =>
-            {
-                // Re-build the view models collection when the underlying collection changes
-                viewModels.Clear();
-                foreach (var textPart in textParts)
-                {
-                    viewModels.Add(new MainGridItemViewModel(textPart));
-                }
-            };
-        }
-
         public bool MoveTextPartUp(TextPart textPart, ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels)
         {
             int idx = textParts.IndexOf(textPart);
-
             if (idx > 0)
             {
-                // Move in the model collection
                 textParts.Move(idx, idx - 1);
-
-                // Refresh view model collection to ensure UI is updated
-                RefreshTextPartViewModels(textParts, viewModels);
-                
-                // Find the moved item in the refreshed view models and return it
-                // so the calling code can restore the selection
                 return true;
             }
-
             return false;
         }
 
         public bool MoveTextPartDown(TextPart textPart, ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels)
         {
             int idx = textParts.IndexOf(textPart);
-
             if (idx < textParts.Count - 1 && idx >= 0)
             {
-                // Move in the model collection
                 textParts.Move(idx, idx + 1);
-
-                // Refresh view model collection to ensure UI is updated
-                RefreshTextPartViewModels(textParts, viewModels);
-                
-                // Find the moved item in the refreshed view models and return it
-                // so the calling code can restore the selection
                 return true;
             }
-
             return false;
         }
 

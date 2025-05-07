@@ -18,12 +18,6 @@ namespace DocCreator01.Contracts
         /// <returns>A new TextPart instance</returns>
         TextPart CreateTextPart(Project project);
 
-        /// <summary>
-        /// Refreshes the view models collection based on the TextParts in the project
-        /// </summary>
-        /// <param name="textParts">Source collection of TextPart objects</param>
-        /// <param name="viewModels">Collection of view models to refresh</param>
-        void RefreshTextPartViewModels(ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels);
 
         /// <summary>
         /// Moves a TextPart up in the collection

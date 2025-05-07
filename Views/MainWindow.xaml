@@ -3,9 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:DocCreator01.ViewModels"
         xmlns:views="clr-namespace:DocCreator01.Views"
+        xmlns:converters="clr-namespace:DocCreator01.Converters"
         Title="{Binding WindowTitle}"
         Height="800" 
         Width="1200">
+
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
 
     <Window.InputBindings>
         <KeyBinding Key="S"
@@ -85,7 +90,7 @@
                         Background="#0063B1" Foreground="White"
                         DockPanel.Dock="Top"/>
 
-                <!-- The ListBox will now fill the remaining space -->
+                <!-- The ListBox with context menu -->
                 <Border Background="#FEFDB0" DockPanel.Dock="Bottom" Margin="0,0,0,0">
                     <ListBox ItemsSource="{Binding GeneratedFilesViewModels}"
                              Background="Transparent"
@@ -100,6 +105,31 @@
                                     <TextBlock Text="{Binding DisplayFileName}" 
                                                VerticalAlignment="Center" 
                                                Margin="8,0,0,0"/>
+                                    
+                                    <!-- Context Menu -->
+                                    <StackPanel.ContextMenu>
+                                        <ContextMenu>
+                                            <!-- Common operations for all file types -->
+                                            <MenuItem Header="Переименовать" 
+                                                      Command="{Binding RenameCommand}"/>
+                                            <MenuItem Header="Удалить" 
+                                                      Command="{Binding DeleteCommand}"/>
+                                            <Separator />
+                                            
+                                            <!-- HTML specific operations -->
+                                            <MenuItem Header="Открыть в браузере" 
+                                                      Command="{Binding OpenInBrowserCommand}"
+                                                      Visibility="{Binding IsHtmlFile, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            <MenuItem Header="Открыть в Notepad++" 
+                                                      Command="{Binding OpenInNotepadPlusPlusCommand}"
+                                                      Visibility="{Binding IsNotepadCompatibleFile, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            
+                                            <!-- DOCX specific operations -->
+                                            <MenuItem Header="Открыть в Word" 
+                                                      Command="{Binding OpenInWordCommand}"
+                                                      Visibility="{Binding IsDocxFile, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        </ContextMenu>
+                                    </StackPanel.ContextMenu>
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

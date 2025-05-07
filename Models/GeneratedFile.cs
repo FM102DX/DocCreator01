@@ -33,7 +33,10 @@ namespace DocCreator01.Models
         /// Checks if the file exists on disk
         /// </summary>
         public bool Exists => File.Exists(FilePath);
-
-
+        
+        /// <summary>
+        /// Reference to the parent project (needed for deletion operations)
+        /// </summary>
+        public Project Project { get; set; }
     }
 }

@@ -18,5 +18,19 @@ namespace DocCreator01.Contracts
         /// <param name="path">Path to the file to open</param>
         /// <returns>True if successfully opened, false otherwise</returns>
         bool OpenInNotepadPlusPlus(string path);
+
+        /// <summary>
+        /// Opens a file in default browser
+        /// </summary>
+        /// <param name="path">Path to the file to open</param>
+        /// <returns>True if successfully opened, false otherwise</returns>
+        bool OpenInDefaultBrowser(string path);
+        
+        /// <summary>
+        /// Opens a file in MS Word
+        /// </summary>
+        /// <param name="path">Path to the file to open</param>
+        /// <returns>True if successfully opened, false otherwise</returns>
+        bool OpenInWord(string path);
     }
 }

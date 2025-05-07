@@ -44,7 +44,14 @@ namespace DocCreator01.Contracts
         /// <returns>True if successfully deleted, false otherwise</returns>
         bool DeleteFile(GeneratedFile generatedFile, ObservableCollection<GeneratedFile> generatedFiles);
 
-        void RefreshExistingFiles();
+        /// <summary>
+        /// Renames a generated file
+        /// </summary>
+        /// <param name="generatedFile">The file to rename</param>
+        /// <param name="newName">New file name (without path)</param>
+        /// <returns>True if successfully renamed, false otherwise</returns>
+        bool RenameFile(GeneratedFile generatedFile, string newName);
 
+        void RefreshExistingFiles();
     }
 }

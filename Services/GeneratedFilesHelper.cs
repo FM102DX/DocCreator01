@@ -140,6 +140,48 @@ namespace DocCreator01.Services
             }
         }
 
+        public bool RenameFile(GeneratedFile generatedFile, string newName)
+        {
+            if (generatedFile == null || string.IsNullOrWhiteSpace(newName))
+                return false;
+
+            try
+            {
+                // Get directory and original file extension
+                string directory = Path.GetDirectoryName(generatedFile.FilePath);
+                string extension = Path.GetExtension(generatedFile.FilePath);
+                
+                // Ensure the new name has the proper extension
+                if (!newName.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+                    newName += extension;
+                
+                // Create new full path
+                string newPath = Path.Combine(directory, newName);
+                
+                // Check if file exists
+                if (File.Exists(newPath))
+                    return false;  // Don't overwrite existing file
+                
+                // Rename the file on disk
+                if (File.Exists(generatedFile.FilePath))
+                {
+                    File.Move(generatedFile.FilePath, newPath);
+                    
+                    // Update the model
+                    generatedFile.FilePath = newPath;
+                    
+                    return true;
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error renaming file: {ex.Message}");
+                return false;
+            }
+        }
+
         public void RefreshExistingFiles()
         {
             _project.ProjectData.GeneratedFiles = GetExistingFiles();
@@ -157,6 +199,5 @@ namespace DocCreator01.Services
             }
             return existingFiles;
         }
-
     }
 }

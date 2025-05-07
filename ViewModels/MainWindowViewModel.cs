@@ -24,46 +24,27 @@ namespace DocCreator01.ViewModel
         private readonly IProjectHelper _projectHelper;
         private readonly IAppPathsHelper _appPathsHelper;
         private readonly IGeneratedFilesHelper _generatedFilesHelper;
+        private readonly IBrowserService _browserService;
         private string? _currentPath;
         private bool _isProjectDirty;
         private TabPageViewModel? _selectedTab;
         private TextPart? _selectedMainGridItem;
         private MainGridItemViewModel? _selectedMainGridItemViewModel;
 
-        // Collection of TextPartListViewModels for display in the DataGrid
-        public ReactiveCommand<Unit, Unit> OpenCommand { get; }
-        public ReactiveCommand<Unit, Unit> SaveCommand { get; }
-        public ReactiveCommand<Unit, Unit> ExitCommand { get; }
-        public ReactiveCommand<Unit, Unit> AddTabCommand { get; }
-        public ReactiveCommand<TabPageViewModel, Unit> CloseTabCommand { get; }
-        public ReactiveCommand<Unit, Unit> CloseAllTabsCommand { get; }
-        public ReactiveCommand<TabPageViewModel, Unit> DeleteTabCommand { get; }
-        public ReactiveCommand<Unit, Unit> GenerateCommand { get; }
-        public ReactiveCommand<string, Unit> OpenRecentCommand { get; }
-        public ReactiveCommand<Unit, Unit> AddTextPartCommand { get; }
-        public ReactiveCommand<Unit, Unit> RemoveTextPartCommand { get; }
-        public ReactiveCommand<Unit, Unit> MoveUpCommand { get; }
-        public ReactiveCommand<Unit, Unit> MoveDownCommand { get; }
-        public ReactiveCommand<Unit, Unit> ActivateTabCommand { get; }
-        public ReactiveCommand<Unit, Unit> CloseCurrentCommand { get; }
-        public ReactiveCommand<Unit, Unit> MoveLeftCommand { get; }
-        public ReactiveCommand<Unit, Unit> MoveRightCommand { get; }
-        public ReactiveCommand<Unit, Unit> OpenDocumentsFolderCommand { get; }
-        public ReactiveCommand<Unit, Unit> OpenScriptsFolderCommand { get; }
-        public ReactiveCommand<Unit, Unit> OpenProjectFolderCommand { get; }
-
         public MainWindowViewModel(
             IProjectRepository repo, 
             ITextPartHelper textPartHelper,
             IProjectHelper projectHelper,
             IAppPathsHelper appPathsHelper,
-            IGeneratedFilesHelper generatedFilesHelper)
+            IGeneratedFilesHelper generatedFilesHelper,
+            IBrowserService browserService)
         {
             _repo = repo;
             _textPartHelper = textPartHelper;
             _projectHelper = projectHelper;
             _appPathsHelper = appPathsHelper;
             _generatedFilesHelper = generatedFilesHelper;
+            _browserService = browserService;
 
             // Initialize SettingsViewModel
             SettingsViewModel = new SettingsViewModel(_projectHelper.CurrentProject.Settings);
@@ -121,6 +102,32 @@ namespace DocCreator01.ViewModel
 
             LoadRecentFiles(); // Load recent files on startup
         }
+
+        #region commands
+
+        // Collection of TextPartListViewModels for display in the DataGrid
+        public ReactiveCommand<Unit, Unit> OpenCommand { get; }
+        public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+        public ReactiveCommand<Unit, Unit> ExitCommand { get; }
+        public ReactiveCommand<Unit, Unit> AddTabCommand { get; }
+        public ReactiveCommand<TabPageViewModel, Unit> CloseTabCommand { get; }
+        public ReactiveCommand<Unit, Unit> CloseAllTabsCommand { get; }
+        public ReactiveCommand<TabPageViewModel, Unit> DeleteTabCommand { get; }
+        public ReactiveCommand<Unit, Unit> GenerateCommand { get; }
+        public ReactiveCommand<string, Unit> OpenRecentCommand { get; }
+        public ReactiveCommand<Unit, Unit> AddTextPartCommand { get; }
+        public ReactiveCommand<Unit, Unit> RemoveTextPartCommand { get; }
+        public ReactiveCommand<Unit, Unit> MoveUpCommand { get; }
+        public ReactiveCommand<Unit, Unit> MoveDownCommand { get; }
+        public ReactiveCommand<Unit, Unit> ActivateTabCommand { get; }
+        public ReactiveCommand<Unit, Unit> CloseCurrentCommand { get; }
+        public ReactiveCommand<Unit, Unit> MoveLeftCommand { get; }
+        public ReactiveCommand<Unit, Unit> MoveRightCommand { get; }
+        public ReactiveCommand<Unit, Unit> OpenDocumentsFolderCommand { get; }
+        public ReactiveCommand<Unit, Unit> OpenScriptsFolderCommand { get; }
+        public ReactiveCommand<Unit, Unit> OpenProjectFolderCommand { get; }
+
+        #endregion
 
         public ObservableCollection<MainGridItemViewModel> MainGridLines { get; } = new();
         public bool IsProjectDirty
@@ -539,7 +546,15 @@ namespace DocCreator01.ViewModel
 
             foreach (var item in sourceItems)
             {
-                viewModels.Add(new GeneratedFileViewModel(item, _appPathsHelper));
+                // Make sure Project reference is set
+                item.Project = CurrentProject;
+                
+                // Pass all required dependencies to the view model
+                viewModels.Add(new GeneratedFileViewModel(
+                    item, 
+                    _appPathsHelper,
+                    _generatedFilesHelper, 
+                    _browserService));
             }
 
             // Ensure we stay synchronized with the model collection
@@ -549,7 +564,15 @@ namespace DocCreator01.ViewModel
                 viewModels.Clear();
                 foreach (var item in sourceItems)
                 {
-                    viewModels.Add(new GeneratedFileViewModel(item, _appPathsHelper));
+                    // Make sure Project reference is set
+                    item.Project = CurrentProject;
+                    
+                    // Pass all required dependencies to the view model
+                    viewModels.Add(new GeneratedFileViewModel(
+                        item, 
+                        _appPathsHelper,
+                        _generatedFilesHelper, 
+                        _browserService));
                 }
             };
         }

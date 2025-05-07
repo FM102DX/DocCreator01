@@ -58,7 +58,8 @@ namespace DocCreator01
                         provider.GetRequiredService<ITextPartHelper>(),
                         provider.GetRequiredService<IProjectHelper>(),
                         provider.GetRequiredService<IAppPathsHelper>(),
-                        provider.GetRequiredService<IGeneratedFilesHelper>()
+                        provider.GetRequiredService<IGeneratedFilesHelper>(),
+                        provider.GetRequiredService<IBrowserService>()
                     )
                 );
                 

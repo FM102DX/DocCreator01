@@ -54,12 +54,13 @@ namespace DocCreator01.ViewModels
             {
                 string iconFileName = _model.FileType switch
                 {
-                    GenerateFileTypeEnum.HTML => "html_icon.png",
-                    GenerateFileTypeEnum.DOCX => "docx_icon.png",
-                    _ => "document_icon.png" // Default icon
+                    GenerateFileTypeEnum.HTML => "HtmlIcon.jpg",
+                    GenerateFileTypeEnum.DOCX => "DocxIcon.jpg",
+                    _ => "TxtIcon.jpg" // Default icon
                 };
 
-                return Path.Combine(_appPathsHelper.IconsDirectory, iconFileName);
+                // Fix: Use proper resource URI format for WPF resources
+                return $"/Resources/Icons/{iconFileName}";
             }
         }
 

@@ -7,19 +7,13 @@
         Height="800" 
         Width="1200">
 
-
-
-    
-    
     <Window.InputBindings>
         <KeyBinding Key="S"
                     Modifiers="Control"
                     Command="{Binding SaveCommand}" />
     </Window.InputBindings>
 
-
-
-    <DockPanel>
+    <DockPanel Margin="0,0,10,10">
         <!-- Верхнее меню -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="Файл">
@@ -62,12 +56,11 @@
             </Grid.ColumnDefinitions>
 
             <!-- Левая голубая панель -->
-            <views:TextPartsPanelUserControl Grid.Column="0" DataContext="{Binding}"/>
+            <views:TextPartsPanelUserControl Grid.Column="0" DataContext="{Binding}" Margin="0,0,0,0"/>
 
             <!-- Центральный TabControl -->
-            <views:TabControlPanelUserControl Grid.Column="1" DataContext="{Binding}"/>
+            <views:TabControlPanelUserControl Grid.Column="1" DataContext="{Binding}" Margin="0,0,0,0"/>
 
-            <!-- Правая колонка -->
             <!-- Правая колонка -->
             <DockPanel Grid.Column="2" Margin="10,0,0,0">
                 <Border Background="#E5A100" DockPanel.Dock="Top">
@@ -93,10 +86,11 @@
                         DockPanel.Dock="Top"/>
 
                 <!-- The ListBox will now fill the remaining space -->
-                <Border Background="#FEFDB0" DockPanel.Dock="Bottom">
+                <Border Background="#FEFDB0" DockPanel.Dock="Bottom" Margin="0,0,0,0">
                     <ListBox ItemsSource="{Binding GeneratedFilesViewModels}"
                              Background="Transparent"
                              BorderThickness="0"
+                             Margin="0,0,0,0"
                              ScrollViewer.VerticalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
                             <DataTemplate>

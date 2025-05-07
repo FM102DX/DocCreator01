@@ -18,12 +18,16 @@ namespace DocCreator01.Contracts
         string OutputDirectory { get; }
 
         /// <summary>
+        /// Gets the path to the folder where generated documents are stored
+        /// </summary>
+        void Initialize(Project project);
+
+        /// <summary>
         /// Generates a file based on the project and file type
         /// </summary>
-        /// <param name="project">The project containing text parts to generate file from</param>
         /// <param name="type">The type of file to generate</param>
         /// <returns>Path to the generated file</returns>
-        Task<string> GenerateFileAsync(Project project, GenerateFileTypeEnum type);
+        Task GenerateFileAsync(GenerateFileTypeEnum type);
 
         /// <summary>
         /// Opens a generated file using the appropriate application
@@ -39,6 +43,8 @@ namespace DocCreator01.Contracts
         /// <param name="generatedFiles">Collection of generated files to update</param>
         /// <returns>True if successfully deleted, false otherwise</returns>
         bool DeleteFile(GeneratedFile generatedFile, ObservableCollection<GeneratedFile> generatedFiles);
+
+        void RefreshExistingFiles();
 
     }
 }

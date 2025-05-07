@@ -29,8 +29,6 @@ namespace DocCreator01
                 // Register the GeneratedFilesHelper service
                 services.AddSingleton<IGeneratedFilesHelper, GeneratedFilesHelper>();
 
-                services.AddSingleton<IDocGenerator, DocGenerator>();
-
                 // Update the TextPartHelper registration to remove dependency on IProjectRepository
                 services.AddTransient<ITextPartHelper, TextPartHelper>();
 
@@ -57,7 +55,6 @@ namespace DocCreator01
                 services.AddTransient<MainWindowViewModel>(provider => 
                     new MainWindowViewModel(
                         provider.GetRequiredService<IProjectRepository>(),
-                        provider.GetRequiredService<IDocGenerator>(),
                         provider.GetRequiredService<ITextPartHelper>(),
                         provider.GetRequiredService<IProjectHelper>(),
                         provider.GetRequiredService<IAppPathsHelper>(),

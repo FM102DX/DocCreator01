@@ -33,5 +33,7 @@ namespace DocCreator01.Models
         /// Checks if the file exists on disk
         /// </summary>
         public bool Exists => File.Exists(FilePath);
+
+
     }
 }

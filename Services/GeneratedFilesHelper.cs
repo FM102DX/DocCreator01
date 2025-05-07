@@ -2,6 +2,7 @@ using DocCreator01.Contracts;
 using DocCreator01.Data.Enums;
 using DocCreator01.Models;
 using DocCreator01.ViewModels;
+using DynamicData;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -37,17 +38,19 @@ namespace DocCreator01.Services
 
         public void Initialize(Project project)
         {
-            _project = _project;
-            _project.ProjectData.GeneratedFiles = GetExistingFiles();
+            _project = project;
+            if(_project!=null)
+                _project.ProjectData.GeneratedFiles = GetExistingFiles();
         }
         public string OutputDirectory => _appPathsHelper.DocumentsOutputDirectory;
 
-        public async Task<string> GenerateFileAsync(Project project, GenerateFileTypeEnum type)
+        public async Task GenerateFileAsync(GenerateFileTypeEnum type)
         {
+            if (_project == null) return;
             try
             {
                 // Only include text parts marked for inclusion
-                var parts = project.ProjectData.TextParts.Where(p => p.IncludeInDocument && !string.IsNullOrEmpty(p.Text)).ToList();
+                var parts = _project.ProjectData.TextParts.Where(p => p.IncludeInDocument && !string.IsNullOrEmpty(p.Text)).ToList();
                 
                 if (!parts.Any())
                 {
@@ -58,8 +61,8 @@ namespace DocCreator01.Services
                 _textPartHtmlRenderer.RenderHtml(parts);
 
                 // Generate a filename based on project name
-                string fileName = $"{project.Name}_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid()}.{type.ToString().ToLower()}";
-                string filePath = string.Empty;
+                string fileName = $"{_project.Name}_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid()}.{type.ToString().ToLower()}";
+                string filePath;
                 
                 // Branch based on document type
                 switch (type)
@@ -67,17 +70,13 @@ namespace DocCreator01.Services
                     case GenerateFileTypeEnum.DOCX:
                         filePath = await _pythonHelper.CreateDocumentAsync(type, parts, fileName);
                         break;
-                        
                     case GenerateFileTypeEnum.HTML:
                         filePath = _htmlDocumentCreator.CreateDocument(parts, fileName);
                         break;
-                        
                     default:
                         throw new NotSupportedException($"Document type {type} is not supported.");
                 }
-
-
-                return filePath;
+                _project.ProjectData.GeneratedFiles.Add(new GeneratedFile(){ FilePath = filePath, FileType = type });
             }
             catch (Exception ex)
             {
@@ -141,7 +140,11 @@ namespace DocCreator01.Services
             }
         }
 
-        public ObservableCollection<GeneratedFile> GetExistingFiles()
+        public void RefreshExistingFiles()
+        {
+            _project.ProjectData.GeneratedFiles = GetExistingFiles();
+        }
+         public ObservableCollection<GeneratedFile> GetExistingFiles()
         {
             ObservableCollection<GeneratedFile> existingFiles = new ObservableCollection<GeneratedFile>();
 

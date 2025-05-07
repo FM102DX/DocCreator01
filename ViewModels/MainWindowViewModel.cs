@@ -20,7 +20,6 @@ namespace DocCreator01.ViewModel
     public sealed class MainWindowViewModel : ReactiveObject
     {
         private readonly IProjectRepository _repo;
-        private readonly IDocGenerator _docGen;
         private readonly ITextPartHelper _textPartHelper;
         private readonly IProjectHelper _projectHelper;
         private readonly IAppPathsHelper _appPathsHelper;
@@ -28,13 +27,10 @@ namespace DocCreator01.ViewModel
         private string? _currentPath;
         private bool _isProjectDirty;
         private TabPageViewModel? _selectedTab;
-
         private TextPart? _selectedMainGridItem;
         private MainGridItemViewModel? _selectedMainGridItemViewModel;
 
         // Collection of TextPartListViewModels for display in the DataGrid
-        public ObservableCollection<MainGridItemViewModel> MainGridLines { get; } = new();
-
         public ReactiveCommand<Unit, Unit> OpenCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveCommand { get; }
         public ReactiveCommand<Unit, Unit> ExitCommand { get; }
@@ -58,14 +54,12 @@ namespace DocCreator01.ViewModel
 
         public MainWindowViewModel(
             IProjectRepository repo, 
-            IDocGenerator docGen, 
             ITextPartHelper textPartHelper,
             IProjectHelper projectHelper,
             IAppPathsHelper appPathsHelper,
             IGeneratedFilesHelper generatedFilesHelper)
         {
             _repo = repo;
-            _docGen = docGen;
             _textPartHelper = textPartHelper;
             _projectHelper = projectHelper;
             _appPathsHelper = appPathsHelper;
@@ -113,13 +107,22 @@ namespace DocCreator01.ViewModel
             OpenScriptsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.ScriptsDirectory));
             OpenProjectFolderCommand = ReactiveCommand.Create(() => OpenFolder(CurrentProject.FilePath));
 
-            // Subscribe to changes in the TextParts collection
+            // Обновление строк главного грида
             this.WhenAnyValue(x => x.CurrentProject)
                 .Subscribe(_ => RefreshMainGridItemsViewModels(CurrentProject.ProjectData.TextParts, MainGridLines));
+
+            //пере-инициализация _generatedFilesHelper
+            this.WhenAnyValue(x => x.CurrentProject)
+                .Subscribe(_ => _generatedFilesHelper.Initialize(CurrentProject));
+
+            this.WhenAnyValue(x => x.CurrentProject.ProjectData.GeneratedFiles)
+                .Subscribe(_ => RefreshGeneratedFilesViewModels(CurrentProject.ProjectData.GeneratedFiles, GeneratedFilesViewModels));
             
+
             LoadRecentFiles(); // Load recent files on startup
         }
 
+        public ObservableCollection<MainGridItemViewModel> MainGridLines { get; } = new();
         public bool IsProjectDirty
         {
             get => _isProjectDirty;
@@ -130,8 +133,6 @@ namespace DocCreator01.ViewModel
             }
         }
         
-        public string AppDataDir => _appPathsHelper.AppDataDirectory;
-
         public Project CurrentProject => _projectHelper.CurrentProject;
 
         public MainGridItemViewModel? SelectedMainGridItemViewModel
@@ -149,7 +150,7 @@ namespace DocCreator01.ViewModel
         
         public ObservableCollection<string> RecentFiles { get; } = new();
         public ObservableCollection<TabPageViewModel> Tabs { get; } = new();
-        public ObservableCollection<GeneratedFileViewModel> GeneratedFileViewModels { get; } = new();
+        public ObservableCollection<GeneratedFileViewModel> GeneratedFilesViewModels { get; } = new();
         
         public TabPageViewModel? SelectedTab
         {
@@ -252,7 +253,7 @@ namespace DocCreator01.ViewModel
             // Clear old state
             Tabs.Clear();
             MainGridLines.Clear();
-            GeneratedFileViewModels.Clear();
+            GeneratedFilesViewModels.Clear();
 
             // Use ProjectHelper to load project
             _projectHelper.LoadProject(fileName);
@@ -312,9 +313,30 @@ namespace DocCreator01.ViewModel
             IsProjectDirty = false;
         }
 
-        private void GenerateOutputFile()
+        private async void GenerateOutputFile()
         {
+            try
+            {
+                // Determine which file type to generate based on settings
+                GenerateFileTypeEnum fileType = SettingsViewModel.IsHtmlSelected 
+                    ? GenerateFileTypeEnum.HTML 
+                    : GenerateFileTypeEnum.DOCX;
 
+                _generatedFilesHelper.GenerateFileAsync(fileType);
+
+               
+                // Mark project as dirty since we added a generated file
+                IsProjectDirty = true;
+                
+                // Optional: Open the file immediately
+                //_generatedFilesHelper.OpenFile(generatedFile);
+               
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error generating file: {ex.Message}", 
+                    "Generation Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void RemoveCurrent()
@@ -423,7 +445,7 @@ namespace DocCreator01.ViewModel
                 // ProjectHelper succeeded in closing the project
                 // Clear UI state
                 Tabs.Clear();
-                GeneratedFileViewModels.Clear();
+                GeneratedFilesViewModels.Clear();
                 MainGridLines.Clear();
                 SelectedTab = null;
                 SelectedMainGridItemViewModel = null;
@@ -507,6 +529,27 @@ namespace DocCreator01.ViewModel
                 foreach (var textPart in textParts)
                 {
                     viewModels.Add(new MainGridItemViewModel(textPart));
+                }
+            };
+        }
+
+        public void RefreshGeneratedFilesViewModels(ObservableCollection<GeneratedFile> sourceItems, ObservableCollection<GeneratedFileViewModel> viewModels)
+        {
+            viewModels.Clear();
+
+            foreach (var item in sourceItems)
+            {
+                viewModels.Add(new GeneratedFileViewModel(item, _appPathsHelper));
+            }
+
+            // Ensure we stay synchronized with the model collection
+            sourceItems.CollectionChanged += (s, e) =>
+            {
+                // Re-build the view models collection when the underlying collection changes
+                viewModels.Clear();
+                foreach (var item in sourceItems)
+                {
+                    viewModels.Add(new GeneratedFileViewModel(item, _appPathsHelper));
                 }
             };
         }

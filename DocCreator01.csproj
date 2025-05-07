@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\Icons\DocxIcon.jpg" />
+    <None Remove="Resources\Icons\FolderIcon.jpg" />
+    <None Remove="Resources\Icons\HtmlIcon.jpg" />
+    <None Remove="Resources\Icons\TxtIcon.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Markdig" Version="0.41.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.4" />
@@ -18,11 +25,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Helpers\" />
+    <None Include="Contracts\ITextPartHtmlRenderer.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Contracts\ITextPartHtmlRenderer.cs" />
+    <Resource Include="Resources\Icons\DocxIcon.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Icons\FolderIcon.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Icons\HtmlIcon.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Icons\TxtIcon.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
 </Project>

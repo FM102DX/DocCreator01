@@ -10,8 +10,8 @@
     <UserControl.Resources>
         <!-- Single style for all four toolbar buttons -->
         <Style x:Key="ToolbarButtonStyle" TargetType="Button">
-            <Setter Property="Width"           Value="24"/>
-            <Setter Property="Height"          Value="24"/>
+            <Setter Property="Width"           Value="27"/>
+            <Setter Property="Height"          Value="27"/>
             <Setter Property="Padding"         Value="0"/>
             <Setter Property="Margin"         Value="2"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -21,8 +21,8 @@
 
         <!-- Style for the close button in a tab header -->
         <Style x:Key="ClosableTabButtonStyle" TargetType="Button">
-            <Setter Property="Width"        Value="18"/>
-            <Setter Property="Height"       Value="18"/>
+            <Setter Property="Width"        Value="25"/>
+            <Setter Property="Height"       Value="25"/>
             <Setter Property="FontWeight"   Value="Bold"/>
             <Setter Property="FontSize"     Value="18"/>
             <Setter Property="Background"   Value="Transparent"/>

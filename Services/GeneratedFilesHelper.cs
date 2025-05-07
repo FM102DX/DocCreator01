@@ -1,6 +1,7 @@
 using DocCreator01.Contracts;
 using DocCreator01.Data.Enums;
 using DocCreator01.Models;
+using DocCreator01.Utils;
 using DocCreator01.ViewModels;
 using DynamicData;
 using System;
@@ -147,6 +148,13 @@ namespace DocCreator01.Services
 
             try
             {
+                // Validate the new filename
+                var (isValid, _) = FileNameValidator.Validate(newName);
+                if (!isValid)
+                {
+                    return false;
+                }
+                
                 // Get directory and original file extension
                 string directory = Path.GetDirectoryName(generatedFile.FilePath);
                 string extension = Path.GetExtension(generatedFile.FilePath);
@@ -159,12 +167,16 @@ namespace DocCreator01.Services
                 string newPath = Path.Combine(directory, newName);
                 
                 // Check if file exists
-                if (File.Exists(newPath))
+                if (File.Exists(newPath) && !string.Equals(generatedFile.FilePath, newPath, StringComparison.OrdinalIgnoreCase))
                     return false;  // Don't overwrite existing file
                 
                 // Rename the file on disk
                 if (File.Exists(generatedFile.FilePath))
                 {
+                    // Don't try to rename if it would be the same file
+                    if (string.Equals(generatedFile.FilePath, newPath, StringComparison.OrdinalIgnoreCase))
+                        return true;
+
                     File.Move(generatedFile.FilePath, newPath);
                     
                     // Update the model
@@ -186,7 +198,8 @@ namespace DocCreator01.Services
         {
             _project.ProjectData.GeneratedFiles = GetExistingFiles();
         }
-         public ObservableCollection<GeneratedFile> GetExistingFiles()
+         
+        public ObservableCollection<GeneratedFile> GetExistingFiles()
         {
             ObservableCollection<GeneratedFile> existingFiles = new ObservableCollection<GeneratedFile>();
 

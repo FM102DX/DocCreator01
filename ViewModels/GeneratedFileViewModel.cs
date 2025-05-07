@@ -1,6 +1,8 @@
 using DocCreator01.Contracts;
 using DocCreator01.Data.Enums;
 using DocCreator01.Models;
+using DocCreator01.Utils;
+using DocCreator01.Views;
 using ReactiveUI;
 using System;
 using System.IO;
@@ -96,12 +98,67 @@ namespace DocCreator01.ViewModels
 
         private void RenameFile()
         {
-            // Stub implementation - to be expanded in the future
-            MessageBox.Show(
-                "Функция переименования файла будет реализована в следующей версии.",
-                "Информация",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            try
+            {
+                // Create an input dialog with the current filename
+                var dialog = new InputDialog(
+                    "Переименовать файл", 
+                    "Введите новое имя файла:",
+                    Path.GetFileName(_model.FileName),
+                    ValidateFileName);
+
+                // Show the dialog and check the result
+                bool? result = dialog.ShowDialog();
+                if (result == true && dialog.IsValid)
+                {
+                    // Get the new name from the dialog
+                    string newFileName = dialog.InputValue;
+
+                    // Attempt to rename the file
+                    var projectDataCollection = _model.Project?.ProjectData?.GeneratedFiles;
+                    if (projectDataCollection != null)
+                    {
+                        bool success = _generatedFilesHelper.RenameFile(_model, newFileName);
+                        if (!success)
+                        {
+                            MessageBox.Show(
+                                $"Не удалось переименовать файл. Файл с таким именем может уже существовать.",
+                                "Ошибка",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+                        }
+                        else
+                        {
+                            // Notify UI about property changes
+                            OnPropertyChanged(nameof(FileName));
+                            OnPropertyChanged(nameof(DisplayFileName));
+                            OnPropertyChanged(nameof(FilePath));
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                            "Не удалось переименовать файл - проблема с доступом к коллекции файлов.",
+                            "Ошибка",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Ошибка при переименовании файла: {ex.Message}",
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private (bool isValid, string errorMessage) ValidateFileName(string fileName)
+        {
+            // Use FileNameValidator utility to validate the file name
+            return FileNameValidator.Validate(fileName);
         }
 
         private void OpenInBrowser()

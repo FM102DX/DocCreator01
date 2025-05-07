@@ -96,7 +96,8 @@
                              Background="Transparent"
                              BorderThickness="0"
                              Margin="0,0,0,0"
-                             ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             MouseDoubleClick="ListBox_MouseDoubleClick">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" Margin="5"

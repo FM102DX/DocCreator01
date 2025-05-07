@@ -1,6 +1,7 @@
 using DocCreator01.Data.Enums;
 using System;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace DocCreator01.Models
 {
@@ -33,10 +34,11 @@ namespace DocCreator01.Models
         /// Checks if the file exists on disk
         /// </summary>
         public bool Exists => File.Exists(FilePath);
-        
+
         /// <summary>
         /// Reference to the parent project (needed for deletion operations)
         /// </summary>
+        [JsonIgnore]
         public Project Project { get; set; }
     }
 }

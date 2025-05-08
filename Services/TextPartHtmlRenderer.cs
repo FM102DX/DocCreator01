@@ -9,14 +9,17 @@ using DocCreator01.Models;
 
 namespace DocCreator01.Services
 {
-
-
     /// <summary>
     /// –еализаци€ ITextPartHtmlRenderer.
     /// </summary>
     public sealed class TextPartHtmlRenderer : ITextPartHtmlRenderer
     {
         private readonly MarkdownPipeline _pipeline;
+
+        // Regular expression to extract content between body tags
+        private static readonly Regex _bodyContentRegex =
+            new(@"<body[^>]*>(.*?)</body>",
+                RegexOptions.Singleline | RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public TextPartHtmlRenderer()
         {
@@ -46,13 +49,31 @@ namespace DocCreator01.Services
 
             string body = detected switch
             {
-                TextFormat.Html      => part.Text,                          // уже готовый HTML
+                TextFormat.Html      => ExtractBodyContent(part.Text),     // извлечь только содержимое тегов body
                 TextFormat.Markdown  => Markdown.ToHtml(part.Text, _pipeline),
-                _                    => ConvertPlainText(part.Text)          // обычный текст
+                _                    => ConvertPlainText(part.Text)        // обычный текст
             };
 
             string heading = BuildHeading(part.Name, part.Level);
             return $"{heading}\n{body}".Trim();
+        }
+
+        /// <summary>
+        /// »звлекает содержимое между тегами body из HTML-строки.
+        /// ≈сли теги body отсутствуют, возвращает исходную строку.
+        /// </summary>
+        private static string ExtractBodyContent(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+
+            var match = _bodyContentRegex.Match(html);
+            if (match.Success)
+            {
+                return match.Groups[1].Value.Trim();
+            }
+
+            // ≈сли тегов body нет, возвращаем исходную строку
+            return html;
         }
 
         private static string ConvertPlainText(string text)

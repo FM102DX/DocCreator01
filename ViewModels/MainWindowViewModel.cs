@@ -208,10 +208,6 @@ namespace DocCreator01.ViewModel
             var tp = _textPartHelper.CreateTextPart(CurrentProject);
             CurrentProject.ProjectData.TextParts.Add(tp);
 
-            // Add corresponding view model
-            var listViewModel = new MainGridItemViewModel(tp);
-            MainGridLines.Add(listViewModel);
-
             var vm = new TabPageViewModel(tp);
             SubscribeTab(vm);
             Tabs.Add(vm);

@@ -88,6 +88,13 @@
                     Background="Red"
                     Command="{Binding OpenProjectFolderCommand}"
                     ToolTip="Open Project Folder"/>
+            
+            <Button Style="{StaticResource ToolbarButtonStyle}"
+                    Background="Purple"
+                    Command="{Binding OpenSettingsTabCommand}"
+                    ToolTip="Открыть настройки">
+                <TextBlock Text="⚙" FontSize="16" FontWeight="Bold"/>
+            </Button>
 
             <Button Style="{StaticResource ToolbarButtonStyle}"
                     Content="+"

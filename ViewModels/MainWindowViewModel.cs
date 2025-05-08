@@ -87,6 +87,7 @@ namespace DocCreator01.ViewModel
             OpenDocumentsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.DocumentsOutputDirectory));
             OpenScriptsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.ScriptsDirectory));
             OpenProjectFolderCommand = ReactiveCommand.Create(() => OpenFolder(CurrentProject.ProjectFolder));
+            OpenSettingsTabCommand = ReactiveCommand.Create(OpenSettingsTab, outputScheduler: Ui);
 
             // Обновление строк главного грида
             this.WhenAnyValue(x => x.CurrentProject)
@@ -126,6 +127,7 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> OpenDocumentsFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenScriptsFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenProjectFolderCommand { get; }
+        public ReactiveCommand<Unit, Unit> OpenSettingsTabCommand { get; }
 
         #endregion
 
@@ -511,6 +513,18 @@ namespace DocCreator01.ViewModel
             {
                 MessageBox.Show($"Folder not found: {folderPath}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void OpenSettingsTab()
+        {
+            MessageBox.Show("Функционал настроек будет доступен в следующей версии.", 
+                            "Настройки", 
+                            MessageBoxButton.OK, 
+                            MessageBoxImage.Information);
+            
+            // Placeholder for future implementation:
+            // Here we would create a tab with settings content
+            // or open a settings dialog
         }
 
         // Add this property to MainWindowViewModel class

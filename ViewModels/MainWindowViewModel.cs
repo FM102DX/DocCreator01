@@ -86,7 +86,7 @@ namespace DocCreator01.ViewModel
             MoveRightCommand = ReactiveCommand.Create(MoveCurrentRight, outputScheduler: Ui);
             OpenDocumentsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.DocumentsOutputDirectory));
             OpenScriptsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.ScriptsDirectory));
-            OpenProjectFolderCommand = ReactiveCommand.Create(() => OpenFolder(CurrentProject.FilePath));
+            OpenProjectFolderCommand = ReactiveCommand.Create(() => OpenFolder(CurrentProject.ProjectFolder));
 
             // Обновление строк главного грида
             this.WhenAnyValue(x => x.CurrentProject)

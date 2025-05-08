@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +10,7 @@ using DocCreator01.Models;
 namespace DocCreator01.Services
 {
     /// <summary>
-    /// Реализация ITextPartHtmlRenderer.
+    /// Р РµР°Р»РёР·Р°С†РёСЏ ITextPartHtmlRenderer.
     /// </summary>
     public sealed class TextPartHtmlRenderer : ITextPartHtmlRenderer
     {
@@ -23,7 +23,7 @@ namespace DocCreator01.Services
 
         public TextPartHtmlRenderer()
         {
-            // Таблицы, расширенные ссылки и пр.
+            // РўР°Р±Р»РёС†С‹, СЂР°СЃС€РёСЂРµРЅРЅС‹Рµ СЃСЃС‹Р»РєРё Рё РїСЂ.
             _pipeline = new MarkdownPipelineBuilder()
                             .UseAdvancedExtensions()
                             .Build();
@@ -39,7 +39,7 @@ namespace DocCreator01.Services
             }
         }
 
-        /* ---------- основная «кухня» ---------- */
+        /* ---------- РѕСЃРЅРѕРІРЅР°СЏ В«РєСѓС…РЅСЏВ» ---------- */
 
         private string BuildHtml(TextPart part)
         {
@@ -49,18 +49,67 @@ namespace DocCreator01.Services
 
             string body = detected switch
             {
-                TextFormat.Html      => ExtractBodyContent(part.Text),     // извлечь только содержимое тегов body
+                TextFormat.Html      => TransformHtml(part),     // РёР·РІР»РµС‡СЊ С‚РѕР»СЊРєРѕ СЃРѕРґРµСЂР¶РёРјРѕРµ С‚РµРіРѕРІ body
                 TextFormat.Markdown  => Markdown.ToHtml(part.Text, _pipeline),
-                _                    => ConvertPlainText(part.Text)        // обычный текст
+                _                    => ConvertPlainText(part.Text)        // РѕР±С‹С‡РЅС‹Р№ С‚РµРєСЃС‚
             };
 
             string heading = BuildHeading(part.Name, part.Level);
             return $"{heading}\n{body}".Trim();
         }
 
+        private static string TransformHtml(TextPart part)
+        {
+            var tmp = ExtractBodyContent(part.Text);
+            tmp = ShiftHtmlHeaders(tmp, part.Level);
+            return tmp;
+        }
+
+        
+        //РЎРґРІРёРіР°РµС‚ СѓСЂРѕРІРЅРё HTML-Р·Р°РіРѕР»РѕРІРєРѕРІ С‚Р°Рє, С‡С‚РѕР±С‹ РѕРЅРё Р±С‹Р»Рё РѕРґРЅРѕСЂРѕРґРЅС‹ Рё СЃРѕРѕС‚РІРµС‚СЃС‚РѕРІР°Р»Рё Level
+        private static string ShiftHtmlHeaders(string html, int level)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+                return string.Empty;
+
+            /* 1. РћРїСЂРµРґРµР»СЏРµРј РјРёРЅРёРјР°Р»СЊРЅС‹Р№ СѓСЂРѕРІРµРЅСЊ X СЃСЂРµРґРё РІСЃРµС… Р·Р°РіРѕР»РѕРІРєРѕРІ <hN>. */
+            var headerLevels = Regex.Matches(html, @"(?i)<\s*h([1-9])\b")
+                .Cast<Match>()
+                .Select(m => int.Parse(m.Groups[1].Value))
+                .ToList();
+
+            if (headerLevels.Count == 0)               // Р·Р°РіРѕР»РѕРІРєРѕРІ РЅРµС‚ вЂ“ СЃРґРІРёРі РЅРµ РЅСѓР¶РµРЅ
+                return html;
+
+            int minLevel = headerLevels.Min();         // X
+            int delta = level - minLevel + 1;       // DELTA = Level - X + 1
+
+            if (delta == 0)                            // СѓР¶Рµ РІ РЅСѓР¶РЅРѕР№ РїРѕР·РёС†РёРё
+                return html;
+
+            /* 2. РЎРґРІРёРіР°РµРј СѓСЂРѕРІРЅРё РІРѕ РІСЃРµС… РѕС‚РєСЂС‹РІР°СЋС‰РёС… Рё Р·Р°РєСЂС‹РІР°СЋС‰РёС… С‚РµРіР°С… <hN>/<вЂ‹/hN>. */
+            string shifted = Regex.Replace(
+                html,
+                @"(?i)(</?\s*h)([1-9])(\b[^>]*>)",
+                match =>
+                {
+                    int current = int.Parse(match.Groups[2].Value);
+                    int newLevel = current + delta;
+
+                    // Р“Р°СЂР°РЅС‚РёСЂСѓРµРј РґРёР°РїР°Р·РѕРЅ 1вЂ“9, С‡С‚РѕР±С‹ РїРѕР»СѓС‡РёС‚СЊ РІР°Р»РёРґРЅС‹Р№ С‚РµРі.
+                    newLevel = Math.Clamp(newLevel, 1, 9);
+
+                    return $"{match.Groups[1].Value}{newLevel}{match.Groups[3].Value}";
+                });
+
+            return shifted;
+        }
+
+
+
         /// <summary>
-        /// Извлекает содержимое между тегами body из HTML-строки.
-        /// Если теги body отсутствуют, возвращает исходную строку.
+        /// РР·РІР»РµРєР°РµС‚ СЃРѕРґРµСЂР¶РёРјРѕРµ РјРµР¶РґСѓ С‚РµРіР°РјРё body РёР· HTML-СЃС‚СЂРѕРєРё.
+        /// Р•СЃР»Рё С‚РµРіРё body РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚, РІРѕР·РІСЂР°С‰Р°РµС‚ РёСЃС…РѕРґРЅСѓСЋ СЃС‚СЂРѕРєСѓ.
         /// </summary>
         private static string ExtractBodyContent(string html)
         {
@@ -72,7 +121,7 @@ namespace DocCreator01.Services
                 return match.Groups[1].Value.Trim();
             }
 
-            // Если тегов body нет, возвращаем исходную строку
+            // Р•СЃР»Рё С‚РµРіРѕРІ body РЅРµС‚, РІРѕР·РІСЂР°С‰Р°РµРј РёСЃС…РѕРґРЅСѓСЋ СЃС‚СЂРѕРєСѓ
             return html;
         }
 
@@ -97,17 +146,17 @@ namespace DocCreator01.Services
             return $"<h{lvl}>{System.Net.WebUtility.HtmlEncode(name)}</h{lvl}>";
         }
 
-        /* ---------- определение формата ---------- */
+        /* ---------- РѕРїСЂРµРґРµР»РµРЅРёРµ С„РѕСЂРјР°С‚Р° ---------- */
 
         private static readonly Regex _htmlTagRegex =
             new(@"<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)</\1>|<br\s*/?>|<img\s+[^>]+>",
                 RegexOptions.Singleline | RegexOptions.Compiled);
 
         private static readonly Regex _markdownRegex =
-            new(@"(^|\n)\s{0,3}(#{1,6}\s)|" +      // заголовки # ### 
+            new(@"(^|\n)\s{0,3}(#{1,6}\s)|" +      // Р·Р°РіРѕР»РѕРІРєРё # ### 
                 @"\*{1,2}[^\*]+\*{1,2}|" +          // *italic* **bold**
-                @"(?<!\!)\[[^\]]+\]\([^)]+\)|" +    // ссылки [text](url)
-                @"^\s*\|.*\|\s*$",                  // таблицы | a | b |
+                @"(?<!\!)\[[^\]]+\]\([^)]+\)|" +    // СЃСЃС‹Р»РєРё [text](url)
+                @"^\s*\|.*\|\s*$",                  // С‚Р°Р±Р»РёС†С‹ | a | b |
                 RegexOptions.Multiline | RegexOptions.Compiled);
 
         private static TextFormat DetectFormat(string text)

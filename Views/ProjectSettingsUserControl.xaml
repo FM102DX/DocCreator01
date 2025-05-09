@@ -13,6 +13,24 @@
                        FontWeight="Bold" 
                        Margin="0,0,0,20"/>
             
+            <!-- Project Name Section -->
+            <GroupBox Header="Project Information" Padding="10" Margin="0,0,0,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Project Name:" 
+                               FontWeight="Bold" 
+                               VerticalAlignment="Center" 
+                               Margin="0,0,10,0"/>
+                    <TextBox Grid.Column="1" 
+                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
+                             Padding="5,2"
+                             Margin="0,5,0,5"/>
+                </Grid>
+            </GroupBox>
+            
             <GroupBox Header="Document Generation Options" Padding="10" Margin="0,0,0,20">
                 <local:SettingsUserControl DataContext="{Binding Settings}"/>
             </GroupBox>

@@ -52,7 +52,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="{Binding Header}"
+                <TextBlock Text="{Binding TabHeader}"
                            VerticalAlignment="Center"
                            FontSize="14"
                            Foreground="#333"/>

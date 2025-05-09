@@ -226,19 +226,19 @@ namespace DocCreator01.ViewModel
                             _ => IsProjectDirty = true,
                             ex => // Обработчик ошибок для самой подписки
                             {
-                                System.Diagnostics.Debug.WriteLine($"Error in IsDirty subscription for tab ({vm.Header ?? vm.GetType().Name}): {ex.Message}");
+                                System.Diagnostics.Debug.WriteLine($"Error in IsDirty subscription for tab ({vm.TabHeader ?? vm.GetType().Name}): {ex.Message}");
                                 // Опционально: логирование или другая обработка ошибки
                             }
                         );
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"Could not set up IsDirty subscription for tab ({vm.Header ?? vm.GetType().Name}) as it's not a recognized reactive type or does not implement INotifyPropertyChanged.");
+                    System.Diagnostics.Debug.WriteLine($"Could not set up IsDirty subscription for tab ({vm.TabHeader ?? vm.GetType().Name}) as it's not a recognized reactive type or does not implement INotifyPropertyChanged.");
                 }
             }
             catch (Exception ex) // Обработка ошибок при настройке самой подписки (например, ArgumentException)
             {
-                System.Diagnostics.Debug.WriteLine($"Error setting up tab subscription mechanism for ({vm.Header ?? vm.GetType().Name}): {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error setting up tab subscription mechanism for ({vm.TabHeader ?? vm.GetType().Name}): {ex.Message}");
             }
         }
         private IScheduler Ui => RxApp.MainThreadScheduler;
@@ -578,7 +578,7 @@ namespace DocCreator01.ViewModel
             else
             {
                 // Create a new settings tab
-                var settingsTab = new ProjectSettingsTabViewModel(CurrentProject.Settings);
+                var settingsTab = new ProjectSettingsTabViewModel(CurrentProject);
                 SubscribeTab(settingsTab);
                 Tabs.Add(settingsTab);
                 SelectedTab = settingsTab;

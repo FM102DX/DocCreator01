@@ -21,7 +21,7 @@ namespace DocCreator01.ViewModels
         }
 
         // заголовок для вкладки (с * если IsDirty)
-        public string Header => IsDirty ? $"{TextPart?.Name ?? "Untitled"} *" : TextPart?.Name ?? "Untitled";
+        public string TabHeader => IsDirty ? $"{TextPart?.Name ?? "Untitled"} *" : TextPart?.Name ?? "Untitled";
 
         public TabPageViewModel(TextPart? textPart)
         {
@@ -38,7 +38,7 @@ namespace DocCreator01.ViewModels
                     .Subscribe(_ =>
                     {
                         IsDirty = true;
-                        this.RaisePropertyChanged(nameof(Header));
+                        this.RaisePropertyChanged(nameof(TabHeader));
                     },
                     // Add error handler to prevent unhandled exceptions
                     ex =>
@@ -68,7 +68,7 @@ namespace DocCreator01.ViewModels
                         .Subscribe(_ =>
                         {
                             IsDirty = true;
-                            this.RaisePropertyChanged(nameof(Header));
+                            this.RaisePropertyChanged(nameof(TabHeader));
                         },
                         // Add error handler
                         ex =>
@@ -83,14 +83,14 @@ namespace DocCreator01.ViewModels
         public void AcceptChanges()
         {
             IsDirty = false;
-            this.RaisePropertyChanged(nameof(Header));
+            this.RaisePropertyChanged(nameof(TabHeader));
         }
 
         /// <summary>Manually marks the tab as dirty</summary>
         public void MarkAsDirty()
         {
             IsDirty = true;
-            this.RaisePropertyChanged(nameof(Header));
+            this.RaisePropertyChanged(nameof(TabHeader));
         }
     }
 }

@@ -10,7 +10,7 @@ namespace DocCreator01.ViewModels
         /// <summary>
         /// Gets the header text for the tab
         /// </summary>
-        string Header { get; }
+        string TabHeader { get; }
         
         /// <summary>
         /// Indicates whether the tab has unsaved changes

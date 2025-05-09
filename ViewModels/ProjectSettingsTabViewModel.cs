@@ -8,54 +8,35 @@ namespace DocCreator01.ViewModels
     public class ProjectSettingsTabViewModel : ReactiveObject, ITabViewModel
     {
         private bool _isDirty;
-        private string _name;
         private const string TabName = "Project Settings";
 
-        private readonly Project _project;
-        public SettingsViewModel Settings { get; }
+        public Project Project { get; private set; }
+        public SettingsViewModel SettingsVm { get; private set; }
 
         public ProjectSettingsTabViewModel(Project project)
         {
-            _project = project ?? throw new ArgumentNullException(nameof(project));
-            _name = project.Name;
-            Settings = new SettingsViewModel(project.Settings);
+            Project = project ?? throw new ArgumentNullException(nameof(project));
+            SettingsVm = new SettingsViewModel(project.Settings);
 
-            /* ── dirty-flag propagation ──────────────────────────────── */
-            this.WhenAnyValue(vm => vm.Settings.IsDirty)
+            this.WhenAnyValue(vm => vm.SettingsVm.IsDirty)
                 .Where(isDirty => isDirty)
                 .Subscribe(_ => MarkAsDirty());
 
-            /* ── VM-to-model (Name changed in UI) ───────────────────── */
-            this.WhenAnyValue(vm => vm.Name)
+            this.WhenAnyValue(vm => vm.Project.Name)
                 .Skip(1)
                 .DistinctUntilChanged()
                 .Subscribe(name =>
                 {
-                    if (_project.Name != name)
-                        _project.Name = name;
-
                     MarkAsDirty();
                 });
 
-            /* ── model-to-VM (Name changed elsewhere) ───────────────── */
-            _project.WhenAnyValue(p => p.Name)
+            Project.WhenAnyValue(p => p.Name)
                     .Skip(1)
                     .DistinctUntilChanged()
                     .Subscribe(name =>
                     {
-                        _name = name;
-                        this.RaisePropertyChanged(nameof(Name));
                         MarkAsDirty();
                     });
-        }
-
-        /// <summary>
-        /// Two–way reactive wrapper around <see cref="_project.Name"/>.
-        /// </summary>
-        public string Name
-        {
-            get => _name;
-            set => this.RaiseAndSetIfChanged(ref _name, value);
         }
 
         public bool IsDirty
@@ -68,7 +49,7 @@ namespace DocCreator01.ViewModels
 
         public void AcceptChanges()
         {
-            Settings.AcceptChanges();
+            SettingsVm.AcceptChanges();
             IsDirty = false;
             this.RaisePropertyChanged(nameof(TabHeader));
         }

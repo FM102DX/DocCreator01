@@ -75,6 +75,7 @@ namespace DocCreator01.ViewModels
             }
         }
 
+
         /// <summary>Resets the dirty flag after project is saved</summary>
         public void AcceptChanges()
         {

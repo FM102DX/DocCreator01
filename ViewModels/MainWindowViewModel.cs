@@ -14,6 +14,7 @@ using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Windows.Controls;
 using DocCreator01.Services;
+using System.ComponentModel;
 
 namespace DocCreator01.ViewModel
 {
@@ -192,30 +193,54 @@ namespace DocCreator01.ViewModel
 
         private void SubscribeTab(ITabViewModel vm)
         {
-            // любое IsDirty=true на вкладке делает «грязным» весь проект
-            if (vm is ReactiveObject reactiveVm)
+            try
             {
-                try
+                IObservable<bool>? isDirtyObservable = null;
+                if (vm is TabPageViewModel tabPageVm)
                 {
-                    // Add exception handling to the subscription
-                    reactiveVm.WhenAnyValue(x => ((ITabViewModel)x).IsDirty)
-                        .Where(d => d)                     // интересует только переход в true
-                        .Subscribe(_ => IsProjectDirty = true,
-                        // Add error handler to prevent unhandled exceptions in subscription
-                        ex => 
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Error in IsDirty subscription for tab: {ex.Message}");
-                            // Optionally log or handle the error
-                        });
+                    isDirtyObservable = tabPageVm.WhenAnyValue(x => x.IsDirty);
                 }
-                catch (Exception ex)
+                else if (vm is ProjectSettingsTabViewModel settingsVm)
                 {
-                    // Handle any exceptions that might occur during subscription setup
-                    System.Diagnostics.Debug.WriteLine($"Error setting up tab subscription: {ex.Message}");
+                    isDirtyObservable = settingsVm.WhenAnyValue(x => x.IsDirty);
+                }
+                else if (vm is ReactiveObject && vm is INotifyPropertyChanged npc)
+                {
+                    // Общий случай для ITabViewModel, который является ReactiveObject,
+                    // но не одним из известных конкретных типов.
+                    // Используем Observable.FromEventPattern как более общий механизм.
+                    System.Diagnostics.Debug.WriteLine($"Warning: Using INotifyPropertyChanged fallback for IsDirty subscription on tab type {vm.GetType().Name}. Consider handling this type explicitly.");
+                    isDirtyObservable = Observable.FromEventPattern<PropertyChangedEventHandler, System.ComponentModel.PropertyChangedEventArgs>(
+                                              handler => npc.PropertyChanged += handler,
+                                              handler => npc.PropertyChanged -= handler)
+                                          .Where(args => args.EventArgs.PropertyName == nameof(ITabViewModel.IsDirty))
+                                          .Select(_ => vm.IsDirty) // Получаем текущее значение свойства
+                                          .StartWith(vm.IsDirty);  // Начинаем с начального значения
+                }
+
+                if (isDirtyObservable != null)
+                {
+                    isDirtyObservable
+                        .Where(d => d) // интересует только переход в true
+                        .Subscribe(
+                            _ => IsProjectDirty = true,
+                            ex => // Обработчик ошибок для самой подписки
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error in IsDirty subscription for tab ({vm.Header ?? vm.GetType().Name}): {ex.Message}");
+                                // Опционально: логирование или другая обработка ошибки
+                            }
+                        );
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Could not set up IsDirty subscription for tab ({vm.Header ?? vm.GetType().Name}) as it's not a recognized reactive type or does not implement INotifyPropertyChanged.");
                 }
             }
+            catch (Exception ex) // Обработка ошибок при настройке самой подписки (например, ArgumentException)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error setting up tab subscription mechanism for ({vm.Header ?? vm.GetType().Name}): {ex.Message}");
+            }
         }
-
         private IScheduler Ui => RxApp.MainThreadScheduler;
 
         private void RefreshTextPartViewModels()

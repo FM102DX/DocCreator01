@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:DocCreator01.ViewModels"
              xmlns:views="clr-namespace:DocCreator01.Views"
+             xmlns:local="clr-namespace:DocCreator01"
              mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -64,6 +65,21 @@
                         CommandParameter="{Binding}"/>
             </Grid>
         </DataTemplate>
+
+        <!-- Add DataTemplateSelector -->
+        
+        <!-- Template for TextPart tabs -->
+        <DataTemplate x:Key="TextPartTabTemplate" DataType="{x:Type vm:TabPageViewModel}">
+            <views:TextPartUserControl DataContext="{Binding TextPart}"/>
+        </DataTemplate>
+        
+        <!-- Template for Settings tabs -->
+        <DataTemplate x:Key="SettingsTabTemplate" DataType="{x:Type vm:ProjectSettingsTabViewModel}">
+            <views:ProjectSettingsUserControl/>
+        </DataTemplate>
+        <views:TabContentTemplateSelector x:Key="TabContentTemplateSelector" 
+                                          TextPartTemplate="{StaticResource TextPartTabTemplate}"
+                                          SettingsTemplate="{StaticResource SettingsTabTemplate}"/>
     </UserControl.Resources>
 
     <Grid>
@@ -105,7 +121,10 @@
         </StackPanel>
 
         <!-- Tab control -->
-        <TabControl Grid.Row="1" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}">
+        <TabControl Grid.Row="1" 
+                    ItemsSource="{Binding Tabs}" 
+                    SelectedItem="{Binding SelectedTab}" 
+                    ContentTemplateSelector="{StaticResource TabContentTemplateSelector}">
             <TabControl.ItemContainerStyle>
                 <Style TargetType="TabItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -115,12 +134,6 @@
                     <EventSetter Event="MouseRightButtonUp" Handler="TabItem_RightClick"/>
                 </Style>
             </TabControl.ItemContainerStyle>
-
-            <TabControl.ContentTemplate>
-                <DataTemplate DataType="{x:Type vm:TabPageViewModel}">
-                    <views:TextPartUserControl DataContext="{Binding TextPart}"/>
-                </DataTemplate>
-            </TabControl.ContentTemplate>
         </TabControl>
     </Grid>
 </UserControl>

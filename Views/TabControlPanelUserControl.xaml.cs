@@ -6,6 +6,9 @@ using System.Windows.Input;
 
 namespace DocCreator01.Views
 {
+    /// <summary>
+    /// Interaction logic for TabControlPanelUserControl.xaml
+    /// </summary>
     public partial class TabControlPanelUserControl : UserControl
     {
         public TabControlPanelUserControl()
@@ -13,25 +16,19 @@ namespace DocCreator01.Views
             InitializeComponent();
         }
 
-        void TabItem_RightClick(object sender, MouseButtonEventArgs e)
+        private void TabItem_RightClick(object sender, MouseButtonEventArgs e)
         {
-            if (sender is not TabItem tab || DataContext is not MainWindowViewModel vm) return;
-
-            var tabVm = tab.DataContext as TabPageViewModel;
-            if (tabVm == null) return;
-
-            var menu = new ContextMenu();
-            var closeAll = new MenuItem { Header = "Закрыть все" };
-            var close = new MenuItem { Header = "Закрыть" };
-            var del = new MenuItem { Header = "Удалить" };
-
-            close.Click += (_, _) => vm.CloseTabCommand.Execute(tabVm).Subscribe();
-            del.Click += (_, _) => vm.DeleteTabCommand.Execute(tabVm).Subscribe();
-            closeAll.Click += (_, _) => vm.CloseAllTabsCommand.Execute().Subscribe();
-            menu.Items.Add(close);
-            menu.Items.Add(closeAll);
-            menu.Items.Add(del);
-            menu.IsOpen = true;
+            var item = sender as TabItem;
+            if (item != null && item.DataContext is ITabViewModel)
+            {
+                var cm = Resources["TabContextMenu"] as ContextMenu;
+                if (cm != null)
+                {
+                    cm.DataContext = item.DataContext;
+                    cm.IsOpen = true;
+                    e.Handled = true;
+                }
+            }
         }
     }
 }

@@ -27,7 +27,7 @@ namespace DocCreator01.ViewModel
         private readonly IBrowserService _browserService;
         private string? _currentPath;
         private bool _isProjectDirty;
-        private TabPageViewModel? _selectedTab;
+        private ITabViewModel? _selectedTab;
         private TextPart? _selectedMainGridItem;
         private MainGridItemViewModel? _selectedMainGridItemViewModel;
 
@@ -71,9 +71,9 @@ namespace DocCreator01.ViewModel
             SaveCommand = ReactiveCommand.Create(Save, outputScheduler: Ui);
             ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown(), outputScheduler: Ui);
             AddTabCommand = ReactiveCommand.Create(AddTab, outputScheduler: RxApp.MainThreadScheduler);
-            CloseTabCommand = ReactiveCommand.Create<TabPageViewModel>(vm => CloseTab(vm), outputScheduler: Ui);
+            CloseTabCommand = ReactiveCommand.Create<ITabViewModel>(vm => CloseTab(vm), outputScheduler: Ui);
             CloseAllTabsCommand = ReactiveCommand.Create(CloseAllTabs, outputScheduler: Ui);
-            DeleteTabCommand = ReactiveCommand.Create<TabPageViewModel>(DeleteTab, outputScheduler: Ui);
+            DeleteTabCommand = ReactiveCommand.Create<ITabViewModel>(DeleteTab, outputScheduler: Ui);
             GenerateCommand = ReactiveCommand.Create(GenerateOutputFile, outputScheduler: Ui);
             AddTextPartCommand = AddTabCommand;
             RemoveTextPartCommand = ReactiveCommand.Create(RemoveCurrent, outputScheduler: Ui);
@@ -111,9 +111,9 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> SaveCommand { get; }
         public ReactiveCommand<Unit, Unit> ExitCommand { get; }
         public ReactiveCommand<Unit, Unit> AddTabCommand { get; }
-        public ReactiveCommand<TabPageViewModel, Unit> CloseTabCommand { get; }
+        public ReactiveCommand<ITabViewModel, Unit> CloseTabCommand { get; }
         public ReactiveCommand<Unit, Unit> CloseAllTabsCommand { get; }
-        public ReactiveCommand<TabPageViewModel, Unit> DeleteTabCommand { get; }
+        public ReactiveCommand<ITabViewModel, Unit> DeleteTabCommand { get; }
         public ReactiveCommand<Unit, Unit> GenerateCommand { get; }
         public ReactiveCommand<string, Unit> OpenRecentCommand { get; }
         public ReactiveCommand<Unit, Unit> AddTextPartCommand { get; }
@@ -158,10 +158,10 @@ namespace DocCreator01.ViewModel
         }
         
         public ObservableCollection<string> RecentFiles { get; } = new();
-        public ObservableCollection<TabPageViewModel> Tabs { get; } = new();
+        public ObservableCollection<ITabViewModel> Tabs { get; } = new();
         public ObservableCollection<GeneratedFileViewModel> GeneratedFilesViewModels { get; } = new();
         
-        public TabPageViewModel? SelectedTab
+        public ITabViewModel? SelectedTab
         {
             get => _selectedTab;
             set => this.RaiseAndSetIfChanged(ref _selectedTab, value);
@@ -190,12 +190,30 @@ namespace DocCreator01.ViewModel
 
         private void UpdateWindowTitle() => this.RaisePropertyChanged(nameof(WindowTitle));
 
-        private void SubscribeTab(TabPageViewModel vm)
+        private void SubscribeTab(ITabViewModel vm)
         {
             // любое IsDirty=true на вкладке делает «грязным» весь проект
-            vm.WhenAnyValue(x => x.IsDirty)
-                .Where(d => d)                     // интересует только переход в true
-                .Subscribe(_ => IsProjectDirty = true);
+            if (vm is ReactiveObject reactiveVm)
+            {
+                try
+                {
+                    // Add exception handling to the subscription
+                    reactiveVm.WhenAnyValue(x => ((ITabViewModel)x).IsDirty)
+                        .Where(d => d)                     // интересует только переход в true
+                        .Subscribe(_ => IsProjectDirty = true,
+                        // Add error handler to prevent unhandled exceptions in subscription
+                        ex => 
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error in IsDirty subscription for tab: {ex.Message}");
+                            // Optionally log or handle the error
+                        });
+                }
+                catch (Exception ex)
+                {
+                    // Handle any exceptions that might occur during subscription setup
+                    System.Diagnostics.Debug.WriteLine($"Error setting up tab subscription: {ex.Message}");
+                }
+            }
         }
 
         private IScheduler Ui => RxApp.MainThreadScheduler;
@@ -218,16 +236,20 @@ namespace DocCreator01.ViewModel
             IsProjectDirty = true;          // structure changed
         }
 
-        private void CloseTab(TabPageViewModel? vm) => Tabs.Remove(vm!);
+        private void CloseTab(ITabViewModel? vm) => Tabs.Remove(vm!);
         private void CloseAllTabs() => Tabs.Clear();
 
-        private void DeleteTab(TabPageViewModel? vm)
+        private void DeleteTab(ITabViewModel? vm)
         {
             if (vm == null) return;
 
-            _textPartHelper.RemoveTextPart(vm.TextPart, CurrentProject.ProjectData.TextParts, MainGridLines);
-            CloseTab(vm);
-            IsProjectDirty = true;
+            // Only handle TextPart tabs
+            if (vm is TabPageViewModel textPartVm)
+            {
+                _textPartHelper.RemoveTextPart(textPartVm.TextPart, CurrentProject.ProjectData.TextParts, MainGridLines);
+                CloseTab(vm);
+                IsProjectDirty = true;
+            }
         }
 
         private void OpenFile()
@@ -304,13 +326,16 @@ namespace DocCreator01.ViewModel
                 else return;
             }
             
-            CurrentProject.OpenedTabs = Tabs.Select(x => x.TextPart.Id).ToList();
+            CurrentProject.OpenedTabs = Tabs.OfType<TabPageViewModel>()
+                .Where(t => t.TextPart != null)
+                .Select(x => x.TextPart.Id)
+                .ToList();
             
             // Use ProjectHelper to save project
             _projectHelper.SaveProject(CurrentProject, _currentPath!);
             AddRecent(_currentPath);
             
-            // Reset dirty flags
+            // Reset dirty flags for all tabs
             foreach (var tab in Tabs)
                 tab.AcceptChanges();
 
@@ -349,7 +374,7 @@ namespace DocCreator01.ViewModel
             if (SelectedMainGridItemViewModel == null) return;
 
             var textPart = SelectedMainGridItemViewModel.Model;
-            var tab = Tabs.FirstOrDefault(t => t.TextPart == textPart);
+            var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.TextPart == textPart);
 
             if (tab != null)
                 Tabs.Remove(tab);
@@ -373,7 +398,7 @@ namespace DocCreator01.ViewModel
                 IsProjectDirty = true;
 
                 // Find and mark the affected tab as dirty
-                var tab = Tabs.FirstOrDefault(t => t.TextPart == textPart);
+                var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.TextPart == textPart);
                 if (tab != null)
                 {
                     // This will raise the IsDirty property and update the Header
@@ -396,7 +421,7 @@ namespace DocCreator01.ViewModel
                 IsProjectDirty = true;
 
                 // Find and mark the affected tab as dirty
-                var tab = Tabs.FirstOrDefault(t => t.TextPart == textPart);
+                var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.TextPart == textPart);
                 if (tab != null)
                 {
                     // This will raise the IsDirty property and update the Header
@@ -433,7 +458,7 @@ namespace DocCreator01.ViewModel
         private void ActivateTab()
         {
             var tp = SelectedMainGridItem;
-            var vm = Tabs.FirstOrDefault(t => t.TextPart == tp);
+            var vm = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.TextPart == tp);
             if (vm == null)
             {
                 vm = new TabPageViewModel(tp);
@@ -517,14 +542,22 @@ namespace DocCreator01.ViewModel
 
         private void OpenSettingsTab()
         {
-            MessageBox.Show("Функционал настроек будет доступен в следующей версии.", 
-                            "Настройки", 
-                            MessageBoxButton.OK, 
-                            MessageBoxImage.Information);
+            // Check if settings tab is already open
+            var existingSettingsTab = Tabs.OfType<ProjectSettingsTabViewModel>().FirstOrDefault();
             
-            // Placeholder for future implementation:
-            // Here we would create a tab with settings content
-            // or open a settings dialog
+            if (existingSettingsTab != null)
+            {
+                // If settings tab is already open, just select it
+                SelectedTab = existingSettingsTab;
+            }
+            else
+            {
+                // Create a new settings tab
+                var settingsTab = new ProjectSettingsTabViewModel(CurrentProject.Settings);
+                SubscribeTab(settingsTab);
+                Tabs.Add(settingsTab);
+                SelectedTab = settingsTab;
+            }
         }
 
         // Add this property to MainWindowViewModel class

@@ -6,21 +6,23 @@ using DocCreator01.Data.Enums;
 using System.Reactive.Disposables;
 using System.Reactive;
 using DocCreator01.Contracts;
+using DocCreator01.Services;
 using ReactiveUI.Fody.Helpers;
 
 namespace DocCreator01.ViewModels
 {
-    public sealed class ProjectSettingsTabViewModel : ReactiveObject, ITabViewModel, IDisposable
+    public sealed class ProjectSettingsTabViewModel : ReactiveObject, ITabViewModel, IDisposable, IDirtyTrackable
     {
         private readonly Project _project;
         private readonly CompositeDisposable _cleanup = new();
-
+        private readonly IDirtyStateManager _dirtyStateMgr;
         private const string BaseHeader = "Project settings";
 
         // ──────────────── ctor ────────────────────────────────────────────────
-        public ProjectSettingsTabViewModel(Project project)
+        public ProjectSettingsTabViewModel(Project project, IDirtyStateManager dirtyStateMgr = null)
         {
             _project = project ?? throw new ArgumentNullException(nameof(project));
+            _dirtyStateMgr = dirtyStateMgr ?? new DirtyStateManager();
 
             // начальная загрузка VM из модели
             Name = _project.Name;
@@ -28,40 +30,50 @@ namespace DocCreator01.ViewModels
             DocTitle = _project.Settings.DocTitle;
             DocDescription = _project.Settings.DocDescription;
             DocCreatedBy = _project.Settings.DocCretaedBy;
-             // синхронизация VM → Model
+            
+            // синхронизация VM → Model
             this.WhenAnyValue(vm => vm.Name)
                 .Skip(1)
-                .Subscribe(v => _project.Name = v)
+                .Subscribe(v => {
+                    _project.Name = v;
+                    _dirtyStateMgr.MarkAsDirty();
+                })
                 .DisposeWith(_cleanup);
 
             this.WhenAnyValue(vm => vm.GenDocType)
                 .Skip(1)
-                .Subscribe(v => _project.Settings.GenDocType = v)
+                .Subscribe(v => {
+                    _project.Settings.GenDocType = v;
+                    _dirtyStateMgr.MarkAsDirty();
+                })
                 .DisposeWith(_cleanup);
 
             this.WhenAnyValue(vm => vm.DocTitle)
                 .Skip(1)
-                .Subscribe(v => _project.Settings.DocTitle = v)
+                .Subscribe(v => {
+                    _project.Settings.DocTitle = v;
+                    _dirtyStateMgr.MarkAsDirty();
+                })
                 .DisposeWith(_cleanup);
 
             this.WhenAnyValue(vm => vm.DocDescription)
                 .Skip(1)
-                .Subscribe(v => _project.Settings.DocDescription = v)
+                .Subscribe(v => {
+                    _project.Settings.DocDescription = v;
+                    _dirtyStateMgr.MarkAsDirty();
+                })
                 .DisposeWith(_cleanup);
 
             this.WhenAnyValue(vm => vm.DocCreatedBy)
                 .Skip(1)
-                .Subscribe(v => _project.Settings.DocCretaedBy = v)
-                .DisposeWith(_cleanup);
-
-            // любые изменения (кроме IsDirty) → IsDirty = true
-            this.Changed
-                .Where(e => e.PropertyName != nameof(IsDirty))
-                .Subscribe(_ => IsDirty = true)
+                .Subscribe(v => {
+                    _project.Settings.DocCretaedBy = v;
+                    _dirtyStateMgr.MarkAsDirty();
+                })
                 .DisposeWith(_cleanup);
 
             // TabHeader = BaseHeader или BaseHeader*
-            this.WhenAnyValue(vm => vm.IsDirty)
+            this.WhenAnyValue(x => x.DirtyStateMgr.IsDirty)
                 .Select(d => d ? $"{BaseHeader}*" : BaseHeader)
                 .ToProperty(this, vm => vm.TabHeader, out _tabHeader)
                 .DisposeWith(_cleanup);
@@ -78,11 +90,16 @@ namespace DocCreator01.ViewModels
         private readonly ObservableAsPropertyHelper<string> _tabHeader;
         public string TabHeader => _tabHeader.Value;
 
-        [Reactive] public bool IsDirty { get; private set; }
+        // Get IsDirty directly from the manager
+        public bool IsDirty => DirtyStateMgr.IsDirty;
 
-        public void AcceptChanges() => IsDirty = false;
+        public void AcceptChanges() => DirtyStateMgr.ResetDirtyState();
 
-        public void MarkAsDirty() => IsDirty = true;
+        public void MarkAsDirty() => DirtyStateMgr.MarkAsDirty();
+
+        // IDirtyTrackable implementation
+        public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
+
         // ───────────────────────────────────────────────────────────────────────
 
         public Project Model => _project;

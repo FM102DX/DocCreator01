@@ -18,7 +18,7 @@ using System.ComponentModel;
 
 namespace DocCreator01.ViewModel
 {
-    public sealed class MainWindowViewModel : ReactiveObject
+    public sealed class MainWindowViewModel : ReactiveObject, IDirtyTrackable
     {
         private readonly IProjectRepository _repo;
         private readonly ITextPartHelper _textPartHelper;
@@ -26,9 +26,9 @@ namespace DocCreator01.ViewModel
         private readonly IAppPathsHelper _appPathsHelper;
         private readonly IGeneratedFilesHelper _generatedFilesHelper;
         private readonly IBrowserService _browserService;
+        private readonly IDirtyStateManager _dirtyStateMgr;
         
         private string? _currentPath;
-        private bool _isProjectDirty;
         private ITabViewModel? _selectedTab;
         private TextPart? _selectedMainGridItem;
         private MainGridItemViewModel? _selectedMainGridItemViewModel;
@@ -40,7 +40,6 @@ namespace DocCreator01.ViewModel
             IAppPathsHelper appPathsHelper,
             IGeneratedFilesHelper generatedFilesHelper,
             IBrowserService browserService)
-
         {
             _repo = repo;
             _textPartHelper = textPartHelper;
@@ -48,79 +47,77 @@ namespace DocCreator01.ViewModel
             _appPathsHelper = appPathsHelper;
             _generatedFilesHelper = generatedFilesHelper;
             _browserService = browserService;
+            _dirtyStateMgr = new DirtyStateManager();
 
             // Initialize SettingsViewModel
-            SettingsViewModel = new SettingsViewModel(_projectHelper.CurrentProject.Settings);
-
-            // Subscribe to SettingsViewModel IsDirty property
-            this.WhenAnyValue(x => x.SettingsViewModel.IsDirty)
-                .Where(isDirty => isDirty)
-                .Subscribe(_ => IsProjectDirty = true);
-
-            // Subscribe to global dirty state changes
+            SettingsViewModel = new SettingsViewModel(_projectHelper.CurrentProject.Settings, new DirtyStateManager());
+            _dirtyStateMgr.AddSubscription(SettingsViewModel);
 
             // Subscribe to project changes
             _projectHelper.ProjectChanged += (s, project) => 
             {
                 // Update UI when project changes
-                _currentPath = project.FilePath;
-                SettingsViewModel = new SettingsViewModel(project.Settings);
-                this.RaisePropertyChanged(nameof(SettingsViewModel));
-                this.RaisePropertyChanged(nameof(CurrentProject));
                 RefreshTextPartViewModels();
-                UpdateWindowTitle();
-                IsProjectDirty = false;
+                this.RaisePropertyChanged(nameof(CurrentProject));
+                this.RaisePropertyChanged(nameof(WindowTitle));
+
+                // Reset dirty state when project changes
+                _dirtyStateMgr.ResetDirtyState();
             };
 
-            OpenCommand = ReactiveCommand.Create(OpenFile, outputScheduler: Ui);
-            SaveCommand = ReactiveCommand.Create(Save, outputScheduler: Ui);
-            ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown(), outputScheduler: Ui);
-            AddTabCommand = ReactiveCommand.Create(AddTab, outputScheduler: RxApp.MainThreadScheduler);
-            CloseTabCommand = ReactiveCommand.Create<ITabViewModel>(vm => CloseTab(vm), outputScheduler: Ui);
-            CloseAllTabsCommand = ReactiveCommand.Create(CloseAllTabs, outputScheduler: Ui);
-            DeleteTabCommand = ReactiveCommand.Create<ITabViewModel>(DeleteTab, outputScheduler: Ui);
-            GenerateCommand = ReactiveCommand.Create(GenerateOutputFile, outputScheduler: Ui);
-            AddTextPartCommand = AddTabCommand;
-            RemoveTextPartCommand = ReactiveCommand.Create(RemoveCurrent, outputScheduler: Ui);
-            MoveUpCommand = ReactiveCommand.Create(MoveCurrentUp, outputScheduler: Ui);
-            MoveDownCommand = ReactiveCommand.Create(MoveCurrentDown, outputScheduler: Ui);
-            ActivateTabCommand = ReactiveCommand.Create(ActivateTab, outputScheduler: Ui);
-            CloseCurrentCommand = ReactiveCommand.Create(CloseCurrent, outputScheduler: Ui);
-            OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent, outputScheduler: Ui);
-            MoveLeftCommand = ReactiveCommand.Create(MoveCurrentLeft, outputScheduler: Ui);
-            MoveRightCommand = ReactiveCommand.Create(MoveCurrentRight, outputScheduler: Ui);
+            // Subscribe to dirty state for window title update
+            _dirtyStateMgr.IBecameDirty += (s, isDirty) => 
+                this.RaisePropertyChanged(nameof(WindowTitle));
+
+            // Commands
+            AddTabCommand = ReactiveCommand.Create(AddTab);
+            OpenCommand = ReactiveCommand.Create(OpenFile);
+            OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent);
+            SaveCommand = ReactiveCommand.Create(Save);
+            CloseTabCommand = ReactiveCommand.Create<ITabViewModel>(CloseTab);
+            DeleteTabCommand = ReactiveCommand.Create<ITabViewModel>(DeleteTab);
+            ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown());
+            AddTextPartCommand = ReactiveCommand.Create(AddTab);
+            RemoveTextPartCommand = ReactiveCommand.Create(RemoveCurrent);
+            MoveUpCommand = ReactiveCommand.Create(MoveCurrentUp);
+            MoveDownCommand = ReactiveCommand.Create(MoveCurrentDown);
+            CloseCurrentCommand = ReactiveCommand.Create(CloseCurrent);
+            MoveLeftCommand = ReactiveCommand.Create(MoveCurrentLeft);
+            MoveRightCommand = ReactiveCommand.Create(MoveCurrentRight);
+            ActivateTabCommand = ReactiveCommand.Create(ActivateTab);
+            OpenSettingsTabCommand = ReactiveCommand.Create(OpenSettingsTab);
+            
             OpenDocumentsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.DocumentsOutputDirectory));
             OpenScriptsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.ScriptsDirectory));
-            OpenProjectFolderCommand = ReactiveCommand.Create(() => OpenFolder(CurrentProject.ProjectFolder));
-            OpenSettingsTabCommand = ReactiveCommand.Create(OpenSettingsTab, outputScheduler: Ui);
+            OpenProjectFolderCommand = ReactiveCommand.Create(() => {
+                if (!string.IsNullOrEmpty(CurrentProject.ProjectFolder))
+                    OpenFolder(CurrentProject.ProjectFolder);
+            });
 
-            // Обновление строк главного грида
-            this.WhenAnyValue(x => x.CurrentProject)
-                .Subscribe(_ => RefreshMainGridItemsViewModels(CurrentProject.ProjectData.TextParts, MainGridLines));
+            GenerateFileCommand = ReactiveCommand.Create(GenerateOutputFile);
 
-            //пере-инициализация _generatedFilesHelper
-            this.WhenAnyValue(x => x.CurrentProject)
-                .Subscribe(_ => _generatedFilesHelper.Initialize(CurrentProject));
+            _projectHelper.CurrentProject.ProjectData.TextParts.CollectionChanged += (s, e) =>
+                RefreshTextPartViewModels();
+
+            _generatedFilesHelper.Initialize(CurrentProject);
 
             this.WhenAnyValue(x => x.CurrentProject.ProjectData.GeneratedFiles)
                 .Subscribe(_ => RefreshGeneratedFilesViewModels(CurrentProject.ProjectData.GeneratedFiles, GeneratedFilesViewModels));
             
-
             LoadRecentFiles(); // Load recent files on startup
         }
 
         #region commands
 
         // Collection of TextPartListViewModels for display in the DataGrid
-        public ReactiveCommand<Unit, Unit> OpenCommand { get; }
-        public ReactiveCommand<Unit, Unit> SaveCommand { get; }
-        public ReactiveCommand<Unit, Unit> ExitCommand { get; }
         public ReactiveCommand<Unit, Unit> AddTabCommand { get; }
-        public ReactiveCommand<ITabViewModel, Unit> CloseTabCommand { get; }
-        public ReactiveCommand<Unit, Unit> CloseAllTabsCommand { get; }
-        public ReactiveCommand<ITabViewModel, Unit> DeleteTabCommand { get; }
-        public ReactiveCommand<Unit, Unit> GenerateCommand { get; }
+        public ReactiveCommand<Unit, Unit> OpenCommand { get; }
         public ReactiveCommand<string, Unit> OpenRecentCommand { get; }
+        public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+        public ReactiveCommand<ITabViewModel, Unit> CloseTabCommand { get; }
+        public ReactiveCommand<ITabViewModel, Unit> DeleteTabCommand { get; }
+        public ReactiveCommand<Unit, Unit> ExitCommand { get; }
+        public ReactiveCommand<Unit, Unit> GenerateFileCommand { get; }
         public ReactiveCommand<Unit, Unit> AddTextPartCommand { get; }
         public ReactiveCommand<Unit, Unit> RemoveTextPartCommand { get; }
         public ReactiveCommand<Unit, Unit> MoveUpCommand { get; }
@@ -137,16 +134,10 @@ namespace DocCreator01.ViewModel
         #endregion
 
         public ObservableCollection<MainGridItemViewModel> MainGridLines { get; } = new();
-        public bool IsProjectDirty
-        {
-            get => _isProjectDirty;
-            private set
-            {
-                this.RaiseAndSetIfChanged(ref _isProjectDirty, value);
-                UpdateWindowTitle(); // сразу обновляем заголовок
-            }
-        }
-        
+        public bool IsProjectDirty => DirtyStateMgr.IsDirty;
+
+        public SettingsViewModel SettingsViewModel { get; }
+
         public Project CurrentProject => _projectHelper.CurrentProject;
 
         public MainGridItemViewModel? SelectedMainGridItemViewModel
@@ -197,27 +188,48 @@ namespace DocCreator01.ViewModel
 
         private void SubscribeTab(ITabViewModel vm)
         {
-           
+           if (vm is IDirtyTrackable dirtyTrackable)
+           {
+               _dirtyStateMgr.AddSubscription(dirtyTrackable);
+           }
         }
 
         private IScheduler Ui => RxApp.MainThreadScheduler;
 
         private void RefreshTextPartViewModels()
         {
-            //RefreshTextPartViewModels(CurrentProject.ProjectData.TextParts, MainGridLines);
+            RefreshTextPartViewModels(CurrentProject.ProjectData.TextParts, MainGridLines);
+        }
+
+        private void RefreshTextPartViewModels(
+            ObservableCollection<TextPart> models,
+            ObservableCollection<MainGridItemViewModel> viewModels)
+        {
+            // Execute on UI thread to prevent cross-thread access to UI collections
+            RxApp.MainThreadScheduler.Schedule(() =>
+            {
+                viewModels.Clear();
+
+                if (models == null) return;
+
+                foreach (var model in models)
+                {
+                    var vm = new MainGridItemViewModel(model);
+                    viewModels.Add(vm);
+                }
+            });
         }
 
         private void AddTab()
         {
             var tp = _textPartHelper.CreateTextPart(CurrentProject);
             CurrentProject.ProjectData.TextParts.Add(tp);
-
-            var vm = new TabPageViewModel(tp);
+            var vm = new TabPageViewModel(tp, new DirtyStateManager());
             SubscribeTab(vm);
             Tabs.Add(vm);
             SelectedTab = vm;
-
-            IsProjectDirty = true;          // structure changed
+            _dirtyStateMgr.MarkAsDirty();
+            RefreshTextPartViewModels();
         }
 
         private void CloseTab(ITabViewModel? vm) => Tabs.Remove(vm!);
@@ -232,7 +244,7 @@ namespace DocCreator01.ViewModel
             {
                 _textPartHelper.RemoveTextPart(textPartVm.TextPart, CurrentProject.ProjectData.TextParts, MainGridLines);
                 CloseTab(vm);
-                IsProjectDirty = true;
+                _dirtyStateMgr.MarkAsDirty();
             }
         }
 
@@ -281,14 +293,15 @@ namespace DocCreator01.ViewModel
             {
                 if (CurrentProject.OpenedTabs.Contains(tp.Id))
                 {
-                    var vm = new TabPageViewModel(tp);
+                    var dirtyMgr = new DirtyStateManager();
+                    var vm = new TabPageViewModel(tp, dirtyMgr);
                     SubscribeTab(vm);
                     Tabs.Add(vm);
                 }
             }
             
             SelectedTab = Tabs.FirstOrDefault();
-            IsProjectDirty = false;
+            _dirtyStateMgr.ResetDirtyState();
         }
 
         private void Save()
@@ -320,32 +333,38 @@ namespace DocCreator01.ViewModel
             AddRecent(_currentPath);
             
             // Accept all changes at once
-            IsProjectDirty = false;
+            _dirtyStateMgr.ResetDirtyState();
         }
 
         private async void GenerateOutputFile()
         {
             try
             {
-                // Determine which file type to generate based on settings
-                GenerateFileTypeEnum fileType = SettingsViewModel.IsHtmlSelected 
-                    ? GenerateFileTypeEnum.HTML 
-                    : GenerateFileTypeEnum.DOCX;
-
-                _generatedFilesHelper.GenerateFileAsync(fileType);
-
-               
-                // Mark project as dirty since we added a generated file
-                IsProjectDirty = true;
-                
-                // Optional: Open the file immediately
-                //_generatedFilesHelper.OpenFile(generatedFile);
-               
+                await _generatedFilesHelper.GenerateFileAsync(CurrentProject.Settings.GenDocType);
+                RefreshGeneratedFilesViewModels(CurrentProject.ProjectData.GeneratedFiles, GeneratedFilesViewModels);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error generating file: {ex.Message}", 
-                    "Generation Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(
+                    $"Error generating file: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void RefreshGeneratedFilesViewModels(
+            ObservableCollection<GeneratedFile> models, 
+            ObservableCollection<GeneratedFileViewModel> viewModels)
+        {
+            viewModels.Clear();
+
+            if (models == null) return;
+
+            foreach (var model in models.Where(m => m.Exists))
+            {
+                var vm = new GeneratedFileViewModel(model, _appPathsHelper, _generatedFilesHelper, _browserService);
+                viewModels.Add(vm);
             }
         }
 
@@ -364,7 +383,7 @@ namespace DocCreator01.ViewModel
             SelectedMainGridItemViewModel = MainGridLines.FirstOrDefault();
             SelectedTab = Tabs.FirstOrDefault();
 
-            IsProjectDirty = true;
+            _dirtyStateMgr.MarkAsDirty();
         }
 
         private void MoveCurrentUp()
@@ -375,14 +394,14 @@ namespace DocCreator01.ViewModel
             if (_textPartHelper.MoveTextPartUp(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
             {
                 this.RaisePropertyChanged(nameof(CurrentProject));
-                IsProjectDirty = true;
+                _dirtyStateMgr.MarkAsDirty();
 
                 // Find and mark the affected tab as dirty
                 var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.TextPart == textPart);
-                if (tab != null)
+                if (tab != null && tab is IDirtyTrackable dtr)
                 {
                     // This will raise the IsDirty property and update the Header
-                    tab.MarkAsDirty();
+                    dtr.DirtyStateMgr.MarkAsDirty();
                 }
 
                 // Restore selection after moving
@@ -398,14 +417,13 @@ namespace DocCreator01.ViewModel
             if (_textPartHelper.MoveTextPartDown(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
             {
                 this.RaisePropertyChanged(nameof(CurrentProject));
-                IsProjectDirty = true;
+                _dirtyStateMgr.MarkAsDirty();
 
-                // Find and mark the affected tab as dirty
                 var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.TextPart == textPart);
-                if (tab != null)
+                if (tab != null && tab is IDirtyTrackable dtr)
                 {
                     // This will raise the IsDirty property and update the Header
-                    tab.MarkAsDirty();
+                    dtr.DirtyStateMgr.MarkAsDirty();
                 }
 
                 // Restore selection after moving
@@ -420,7 +438,7 @@ namespace DocCreator01.ViewModel
             var textPart = SelectedMainGridItemViewModel.Model;
             if (_textPartHelper.DecreaseTextPartLevel(textPart))
             {
-                IsProjectDirty = true;
+                _dirtyStateMgr.MarkAsDirty();
             }
         }
 
@@ -431,7 +449,7 @@ namespace DocCreator01.ViewModel
             var textPart = SelectedMainGridItemViewModel.Model;
             if (_textPartHelper.IncreaseTextPartLevel(textPart))
             {
-                IsProjectDirty = true;
+                _dirtyStateMgr.MarkAsDirty();
             }
         }
 
@@ -441,10 +459,33 @@ namespace DocCreator01.ViewModel
             var vm = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.TextPart == tp);
             if (vm == null)
             {
-                vm = new TabPageViewModel(tp);
+                var dirtyMgr = new DirtyStateManager();
+                vm = new TabPageViewModel(tp, dirtyMgr);
+                SubscribeTab(vm);
                 Tabs.Add(vm);
             }
             SelectedTab = vm;
+        }
+
+        private void OpenSettingsTab()
+        {
+            // Look for an existing settings tab
+            var existingTab = Tabs.FirstOrDefault(t => t is ProjectSettingsTabViewModel);
+            
+            if (existingTab == null)
+            {
+                // Create a new tab
+                var dirtyMgr = new DirtyStateManager();
+                var settingsTab = new ProjectSettingsTabViewModel(CurrentProject, dirtyMgr);
+                SubscribeTab(settingsTab);
+                Tabs.Add(settingsTab);
+                SelectedTab = settingsTab;
+            }
+            else
+            {
+                // Select existing tab
+                SelectedTab = existingTab;
+            }
         }
 
         private void CloseCurrent()
@@ -520,84 +561,7 @@ namespace DocCreator01.ViewModel
             }
         }
 
-        private void OpenSettingsTab()
-        {
-            // Check if settings tab is already open
-            var existingSettingsTab = Tabs.OfType<ProjectSettingsTabViewModel>().FirstOrDefault();
-            
-            if (existingSettingsTab != null)
-            {
-                // If settings tab is already open, just select it
-                SelectedTab = existingSettingsTab;
-            }
-            else
-            {
-                // Create a new settings tab
-                var settingsTab = new ProjectSettingsTabViewModel(CurrentProject);
-                SubscribeTab(settingsTab);
-                Tabs.Add(settingsTab);
-                SelectedTab = settingsTab;
-            }
-        }
-
-        // Add this property to MainWindowViewModel class
-        public SettingsViewModel SettingsViewModel { get; private set; }
-        public void RefreshMainGridItemsViewModels(ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels)
-        {
-            viewModels.Clear();
-
-            foreach (var textPart in textParts)
-            {
-                viewModels.Add(new MainGridItemViewModel(textPart));
-            }
-
-            // Ensure we stay synchronized with the model collection
-            textParts.CollectionChanged += (s, e) =>
-            {
-                // Re-build the view models collection when the underlying collection changes
-                viewModels.Clear();
-                foreach (var textPart in textParts)
-                {
-                    viewModels.Add(new MainGridItemViewModel(textPart));
-                }
-            };
-        }
-
-        public void RefreshGeneratedFilesViewModels(ObservableCollection<GeneratedFile> sourceItems, ObservableCollection<GeneratedFileViewModel> viewModels)
-        {
-            viewModels.Clear();
-
-            foreach (var item in sourceItems)
-            {
-                // Make sure Project reference is set
-                item.Project = CurrentProject;
-                
-                // Pass all required dependencies to the view model
-                viewModels.Add(new GeneratedFileViewModel(
-                    item, 
-                    _appPathsHelper,
-                    _generatedFilesHelper, 
-                    _browserService));
-            }
-
-            // Ensure we stay synchronized with the model collection
-            sourceItems.CollectionChanged += (s, e) =>
-            {
-                // Re-build the view models collection when the underlying collection changes
-                viewModels.Clear();
-                foreach (var item in sourceItems)
-                {
-                    // Make sure Project reference is set
-                    item.Project = CurrentProject;
-                    
-                    // Pass all required dependencies to the view model
-                    viewModels.Add(new GeneratedFileViewModel(
-                        item, 
-                        _appPathsHelper,
-                        _generatedFilesHelper, 
-                        _browserService));
-                }
-            };
-        }
+        // IDirtyTrackable implementation
+        public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
     }
 }

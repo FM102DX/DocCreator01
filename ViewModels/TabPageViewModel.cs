@@ -6,27 +6,26 @@ using System.Text;
 using System.Threading.Tasks;
 using DocCreator01.Contracts;
 using DocCreator01.Models;
+using DocCreator01.Services;
 using ReactiveUI;
 
 namespace DocCreator01.ViewModels
 {
-    public sealed class TabPageViewModel : ReactiveObject, ITabViewModel
+    public sealed class TabPageViewModel : ReactiveObject, ITabViewModel, IDirtyTrackable
     {
-        bool _isDirty;
         private TextPart? _textPart;
+        private readonly IDirtyStateManager _dirtyStateMgr;
+
         public string? Name => TextPart?.Name;
-        public bool IsDirty
-        {
-            get => _isDirty;
-            private set => this.RaiseAndSetIfChanged(ref _isDirty, value);
-        }
 
-        // заголовок для вкладки (с * если IsDirty)
-        public string TabHeader => IsDirty ? $"{TextPart?.Name ?? "Untitled"} *" : TextPart?.Name ?? "Untitled";
+       public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
+ 
+        public string TabHeader => DirtyStateMgr.IsDirty ? $"{TextPart?.Name ?? "Untitled"} *" : TextPart?.Name ?? "Untitled";
 
-        public TabPageViewModel(TextPart? textPart)
+        public TabPageViewModel(TextPart? textPart, IDirtyStateManager dirtyStateMgr = null)
         {
             this._textPart = textPart;
+            _dirtyStateMgr = dirtyStateMgr ?? new DirtyStateManager();
 
             // Only subscribe if TextPart is not null
             if (textPart != null)
@@ -38,16 +37,19 @@ namespace DocCreator01.ViewModels
                     .Skip(1)
                     .Subscribe(_ =>
                     {
-                        IsDirty = true;
+                        _dirtyStateMgr.MarkAsDirty();
                         this.RaisePropertyChanged(nameof(TabHeader));
                     },
                     // Add error handler to prevent unhandled exceptions
                     ex =>
                     {
                         System.Diagnostics.Debug.WriteLine($"Error in TabPageViewModel subscription: {ex.Message}");
-                        // Optionally handle the error or log it
                     });
             }
+
+            // Subscribe to dirty state changes to update header
+            _dirtyStateMgr.IBecameDirty += (sender, isDirty) => 
+                this.RaisePropertyChanged(nameof(TabHeader));
         }
 
         public TextPart? TextPart
@@ -55,10 +57,8 @@ namespace DocCreator01.ViewModels
             get => _textPart;
             set
             {
-                // Unsubscribe from old TextPart if needed (could implement IDisposable pattern)
                 this.RaiseAndSetIfChanged(ref _textPart, value);
 
-                // If TextPart changed to a non-null value, we might want to re-subscribe
                 if (value != null)
                 {
                     this.WhenAnyValue(_ => _.TextPart.Name,
@@ -68,30 +68,15 @@ namespace DocCreator01.ViewModels
                         .Skip(1)
                         .Subscribe(_ =>
                         {
-                            IsDirty = true;
+                            _dirtyStateMgr.MarkAsDirty();
                             this.RaisePropertyChanged(nameof(TabHeader));
                         },
-                        // Add error handler
                         ex =>
                         {
                             System.Diagnostics.Debug.WriteLine($"Error in TextPart subscription: {ex.Message}");
                         });
                 }
             }
-        }
-
-        /// <summary>Вызывается после успешного сохранения проекта.</summary>
-        public void AcceptChanges()
-        {
-            IsDirty = false;
-            this.RaisePropertyChanged(nameof(TabHeader));
-        }
-
-        /// <summary>Manually marks the tab as dirty</summary>
-        public void MarkAsDirty()
-        {
-            IsDirty = true;
-            this.RaisePropertyChanged(nameof(TabHeader));
         }
     }
 }

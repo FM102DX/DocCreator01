@@ -11,12 +11,6 @@ namespace DocCreator01.Models
 {
     public sealed class TextPart : ReactiveObject
     {
-        string _text = "";
-        string _html = "";
-        string _name = "";
-        bool _includeInDocument = true;
-        int _level = 1; // Default level is 1
-        
         public TextPart()
         {
             
@@ -35,37 +29,21 @@ namespace DocCreator01.Models
 
 
         [JsonProperty]
-        public string Text
-        {
-            get => _text;
-            set => this.RaiseAndSetIfChanged(ref _text, value);
-        }
-        
-        public string Html
-        {
-            get => _html;
-            set => this.RaiseAndSetIfChanged(ref _html, value);
-        }
+        public string Text { get; set; }
+
+        [JsonIgnore]
+        public string Html { get; set; }
 
         [JsonProperty]
-        public string Name
-        {
-            get => _name;
-            set => this.RaiseAndSetIfChanged(ref _name, value);
-        }
+        public string Name { get; set; }
 
         [JsonProperty]
-        public bool IncludeInDocument
-        {
-            get => _includeInDocument;
-            set => this.RaiseAndSetIfChanged(ref _includeInDocument, value);
-        }
-        
+        public bool IncludeInDocument { get; set; }
+
+        [JsonProperty] public int Level { get; set; }
+
         [JsonProperty]
-        public int Level
-        {
-            get => _level;
-            set => this.RaiseAndSetIfChanged(ref _level, Math.Clamp(value, 1, 5)); // Ensure level is between 1 and 5
-        }
+        public int ParagraphNo { get; set; }
+
     }
 }

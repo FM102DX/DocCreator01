@@ -18,7 +18,6 @@ namespace DocCreator01.ViewModels
         private readonly IDirtyStateManager _dirtyStateMgr;
         private const string BaseHeader = "Project settings";
 
-        // ──────────────── ctor ────────────────────────────────────────────────
         public ProjectSettingsTabViewModel(Project project, IDirtyStateManager dirtyStateMgr = null)
         {
             _project = project ?? throw new ArgumentNullException(nameof(project));
@@ -72,35 +71,33 @@ namespace DocCreator01.ViewModels
                 })
                 .DisposeWith(_cleanup);
 
-            // TabHeader = BaseHeader или BaseHeader*
             this.WhenAnyValue(x => x.DirtyStateMgr.IsDirty)
                 .Select(d => d ? $"{BaseHeader}*" : BaseHeader)
                 .ToProperty(this, vm => vm.TabHeader, out _tabHeader)
                 .DisposeWith(_cleanup);
+
+            _dirtyStateMgr.IBecameDirty += () =>
+                this.RaisePropertyChanged(nameof(TabHeader));
+            _dirtyStateMgr.DirtryStateWasReset += () =>
+                this.RaisePropertyChanged(nameof(TabHeader));
         }
 
-        // ─────────── редактируемые reactive-поля ──────────────────────────────
         [Reactive] public string Name { get; set; } = string.Empty;
         [Reactive] public GenerateFileTypeEnum GenDocType { get; set; }
         [Reactive] public string DocTitle { get; set; } = string.Empty;
         [Reactive] public string DocDescription { get; set; } = string.Empty;
         [Reactive] public string DocCreatedBy { get; set; } = string.Empty;
 
-        // ──────────── ITabViewModel implementation ────────────────────────────
         private readonly ObservableAsPropertyHelper<string> _tabHeader;
         public string TabHeader => _tabHeader.Value;
 
-        // Get IsDirty directly from the manager
         public bool IsDirty => DirtyStateMgr.IsDirty;
 
         public void AcceptChanges() => DirtyStateMgr.ResetDirtyState();
 
         public void MarkAsDirty() => DirtyStateMgr.MarkAsDirty();
 
-        // IDirtyTrackable implementation
         public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
-
-        // ───────────────────────────────────────────────────────────────────────
 
         public Project Model => _project;
 

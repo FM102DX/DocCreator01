@@ -66,7 +66,9 @@ namespace DocCreator01.ViewModel
             };
 
             // Subscribe to dirty state for window title update
-            _dirtyStateMgr.IBecameDirty += (s, isDirty) => 
+            _dirtyStateMgr.IBecameDirty += () => 
+                this.RaisePropertyChanged(nameof(WindowTitle));
+            _dirtyStateMgr.DirtryStateWasReset += () =>
                 this.RaisePropertyChanged(nameof(WindowTitle));
 
             // Commands

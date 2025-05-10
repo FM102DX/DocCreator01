@@ -22,7 +22,9 @@ namespace DocCreator01.Services
         /// <summary>
         /// Occurs when the dirty state changes
         /// </summary>
-        public event EventHandler<bool> IBecameDirty;
+        public event Action IBecameDirty;
+        public event Action DirtryStateWasReset;
+        
 
         /// <summary>
         /// Accepts all changes and resets the dirty state to false
@@ -36,6 +38,7 @@ namespace DocCreator01.Services
             {
                 subscription.DirtyStateMgr.ResetDirtyState();
             }
+            DirtryStateWasReset?.Invoke();
         }
 
         /// <summary>
@@ -43,20 +46,15 @@ namespace DocCreator01.Services
         /// </summary>
         public void MarkAsDirty()
         {
-            bool oldIsDirty = IsDirty;
-            _isDirty = true;
-            
-            if (oldIsDirty != true)
+            if (!_isDirty)
             {
-                IBecameDirty?.Invoke(this, true);
+                _isDirty = true;
+                IBecameDirty?.Invoke();
             }
         }
 
         public void AddSubscription(IDirtyTrackable trackable)
         {
-            if (trackable == null)
-                throw new ArgumentNullException(nameof(trackable));
-
             if (!_subscriptions.Contains(trackable))
             {
                 _subscriptions.Add(trackable);
@@ -64,7 +62,7 @@ namespace DocCreator01.Services
             }
         }
 
-        private void OnSubscriptionBecameDirty(object sender, bool isDirty)
+        private void OnSubscriptionBecameDirty()
         {
             // если подписка стала грязной, то и мы грязные
             MarkAsDirty();

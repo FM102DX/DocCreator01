@@ -16,7 +16,8 @@ namespace DocCreator01.Contracts
         /// <summary>
         /// Occurs when the dirty state changes
         /// </summary>
-        event EventHandler<bool> IBecameDirty;
+        event Action IBecameDirty;
+        event Action DirtryStateWasReset;
 
         /// <summary>
         /// Accepts all changes and resets the dirty state to false

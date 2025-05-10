@@ -46,10 +46,11 @@ namespace DocCreator01.ViewModels
                         System.Diagnostics.Debug.WriteLine($"Error in TabPageViewModel subscription: {ex.Message}");
                     });
             }
-
-            // Subscribe to dirty state changes to update header
-            _dirtyStateMgr.IBecameDirty += (sender, isDirty) => 
+            _dirtyStateMgr.IBecameDirty += () =>
                 this.RaisePropertyChanged(nameof(TabHeader));
+            _dirtyStateMgr.DirtryStateWasReset += () =>
+                this.RaisePropertyChanged(nameof(TabHeader));
+
         }
 
         public TextPart? TextPart

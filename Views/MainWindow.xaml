@@ -87,7 +87,7 @@
                 </Border>
 
                 <Button Content="Create"
-                        Command="{Binding GenerateCommand}"
+                        Command="{Binding GenerateFileCommand}"
                         Height="50" Margin="0,10,0,10"
                         Background="#0063B1" Foreground="White"
                         DockPanel.Dock="Top"/>

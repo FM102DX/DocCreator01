@@ -12,52 +12,20 @@ namespace DocCreator01.Models
     using Newtonsoft.Json;
     using ReactiveUI;
 
-    public class Settings : ReactiveObject
+    public class Settings
     {
-        private GenerateFileTypeEnum _genDocType = GenerateFileTypeEnum.DOCX;
-        private string _docTitle;
-        private string _docDescription;
-        private string _docCretaedBy;
 
-        /// <summary>
-        /// Тип создаваемого документа
-        /// </summary>
-        [JsonProperty("genDocType")]
-        public GenerateFileTypeEnum GenDocType
-        {
-            get => _genDocType;
-            set => this.RaiseAndSetIfChanged(ref _genDocType, value);
-        }
+        public GenerateFileTypeEnum GenDocType { get; set; }
 
-        /// <summary>
-        /// Заголовок документа
-        /// </summary>
-        [JsonProperty("docTitle")]
-        public string DocTitle
-        {
-            get => _docTitle;
-            set => this.RaiseAndSetIfChanged(ref _docTitle, value);
-        }
 
-        /// <summary>
-        /// Описание документа
-        /// </summary>
-        [JsonProperty("docDescription")]
-        public string DocDescription
-        {
-            get => _docDescription;
-            set => this.RaiseAndSetIfChanged(ref _docDescription, value);
-        }
+        public string DocTitle { get; set; }=String.Empty;
 
-        /// <summary>
-        /// Автор (создатель) документа
-        /// </summary>
-        [JsonProperty("docCretaedBy")]
-        public string DocCretaedBy
-        {
-            get => _docCretaedBy;
-            set => this.RaiseAndSetIfChanged(ref _docCretaedBy, value);
-        }
+
+        public string DocDescription { get; set; } = String.Empty;
+
+
+        public string DocCretaedBy { get; set; } = String.Empty;
+
     }
 
 }

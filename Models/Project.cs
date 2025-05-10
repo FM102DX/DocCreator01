@@ -25,8 +25,6 @@ namespace DocCreator01.Models
 
         public Project()
         {
-            Name = "New project";
-            FilePath = string.Empty;
         }
 
         public string GetNewTextPartName()

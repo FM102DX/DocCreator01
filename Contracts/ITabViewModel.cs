@@ -1,6 +1,6 @@
 using ReactiveUI;
 
-namespace DocCreator01.ViewModels
+namespace DocCreator01.Contracts
 {
     /// <summary>
     /// Interface for all tab view models to implement common functionality

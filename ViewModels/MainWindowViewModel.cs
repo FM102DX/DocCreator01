@@ -26,6 +26,7 @@ namespace DocCreator01.ViewModel
         private readonly IAppPathsHelper _appPathsHelper;
         private readonly IGeneratedFilesHelper _generatedFilesHelper;
         private readonly IBrowserService _browserService;
+        private readonly IDirtyStateService _dirtyStateService;
         private string? _currentPath;
         private bool _isProjectDirty;
         private ITabViewModel? _selectedTab;
@@ -38,7 +39,8 @@ namespace DocCreator01.ViewModel
             IProjectHelper projectHelper,
             IAppPathsHelper appPathsHelper,
             IGeneratedFilesHelper generatedFilesHelper,
-            IBrowserService browserService)
+            IBrowserService browserService,
+            IDirtyStateService dirtyStateService)
         {
             _repo = repo;
             _textPartHelper = textPartHelper;
@@ -46,6 +48,7 @@ namespace DocCreator01.ViewModel
             _appPathsHelper = appPathsHelper;
             _generatedFilesHelper = generatedFilesHelper;
             _browserService = browserService;
+            _dirtyStateService = dirtyStateService;
 
             // Initialize SettingsViewModel
             SettingsViewModel = new SettingsViewModel(_projectHelper.CurrentProject.Settings);
@@ -54,6 +57,12 @@ namespace DocCreator01.ViewModel
             this.WhenAnyValue(x => x.SettingsViewModel.IsDirty)
                 .Where(isDirty => isDirty)
                 .Subscribe(_ => IsProjectDirty = true);
+
+            // Subscribe to global dirty state changes
+            _dirtyStateService.GlobalDirtyStateChanged += (s, isDirty) => 
+            {
+                IsProjectDirty = isDirty;
+            };
 
             // Subscribe to project changes
             _projectHelper.ProjectChanged += (s, project) => 
@@ -193,54 +202,58 @@ namespace DocCreator01.ViewModel
 
         private void SubscribeTab(ITabViewModel vm)
         {
-            try
+            if (vm is IDirtyStateTracker tracker)
             {
-                IObservable<bool>? isDirtyObservable = null;
-                if (vm is TabPageViewModel tabPageVm)
-                {
-                    isDirtyObservable = tabPageVm.WhenAnyValue(x => x.IsDirty);
-                }
-                else if (vm is ProjectSettingsTabViewModel settingsVm)
-                {
-                    isDirtyObservable = settingsVm.WhenAnyValue(x => x.IsDirty);
-                }
-                else if (vm is ReactiveObject && vm is INotifyPropertyChanged npc)
-                {
-                    // Общий случай для ITabViewModel, который является ReactiveObject,
-                    // но не одним из известных конкретных типов.
-                    // Используем Observable.FromEventPattern как более общий механизм.
-                    System.Diagnostics.Debug.WriteLine($"Warning: Using INotifyPropertyChanged fallback for IsDirty subscription on tab type {vm.GetType().Name}. Consider handling this type explicitly.");
-                    isDirtyObservable = Observable.FromEventPattern<PropertyChangedEventHandler, System.ComponentModel.PropertyChangedEventArgs>(
-                                              handler => npc.PropertyChanged += handler,
-                                              handler => npc.PropertyChanged -= handler)
-                                          .Where(args => args.EventArgs.PropertyName == nameof(ITabViewModel.IsDirty))
-                                          .Select(_ => vm.IsDirty) // Получаем текущее значение свойства
-                                          .StartWith(vm.IsDirty);  // Начинаем с начального значения
-                }
-
-                if (isDirtyObservable != null)
-                {
-                    isDirtyObservable
-                        .Where(d => d) // интересует только переход в true
-                        .Subscribe(
-                            _ => IsProjectDirty = true,
-                            ex => // Обработчик ошибок для самой подписки
-                            {
-                                System.Diagnostics.Debug.WriteLine($"Error in IsDirty subscription for tab ({vm.TabHeader ?? vm.GetType().Name}): {ex.Message}");
-                                // Опционально: логирование или другая обработка ошибки
-                            }
-                        );
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"Could not set up IsDirty subscription for tab ({vm.TabHeader ?? vm.GetType().Name}) as it's not a recognized reactive type or does not implement INotifyPropertyChanged.");
-                }
+                _dirtyStateService.RegisterTracker(tracker);
             }
-            catch (Exception ex) // Обработка ошибок при настройке самой подписки (например, ArgumentException)
+            else
             {
-                System.Diagnostics.Debug.WriteLine($"Error setting up tab subscription mechanism for ({vm.TabHeader ?? vm.GetType().Name}): {ex.Message}");
+                try
+                {
+                    IObservable<bool>? isDirtyObservable = null;
+                    if (vm is TabPageViewModel tabPageVm)
+                    {
+                        isDirtyObservable = tabPageVm.WhenAnyValue(x => x.IsDirty);
+                    }
+                    else if (vm is ProjectSettingsTabViewModel settingsVm)
+                    {
+                        isDirtyObservable = settingsVm.WhenAnyValue(x => x.IsDirty);
+                    }
+                    else if (vm is ReactiveObject && vm is INotifyPropertyChanged npc)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Warning: Using INotifyPropertyChanged fallback for IsDirty subscription on tab type {vm.GetType().Name}. Consider handling this type explicitly.");
+                        isDirtyObservable = Observable.FromEventPattern<PropertyChangedEventHandler, System.ComponentModel.PropertyChangedEventArgs>(
+                                                  handler => npc.PropertyChanged += handler,
+                                                  handler => npc.PropertyChanged -= handler)
+                                              .Where(args => args.EventArgs.PropertyName == nameof(ITabViewModel.IsDirty))
+                                              .Select(_ => vm.IsDirty)
+                                              .StartWith(vm.IsDirty);
+                    }
+
+                    if (isDirtyObservable != null)
+                    {
+                        isDirtyObservable
+                            .Where(d => d)
+                            .Subscribe(
+                                _ => IsProjectDirty = true,
+                                ex =>
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"Error in IsDirty subscription for tab ({vm.TabHeader ?? vm.GetType().Name}): {ex.Message}");
+                                }
+                            );
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Could not set up IsDirty subscription for tab ({vm.TabHeader ?? vm.GetType().Name}) as it's not a recognized reactive type or does not implement INotifyPropertyChanged.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error setting up tab subscription mechanism for ({vm.TabHeader ?? vm.GetType().Name}): {ex.Message}");
+                }
             }
         }
+
         private IScheduler Ui => RxApp.MainThreadScheduler;
 
         private void RefreshTextPartViewModels()
@@ -360,11 +373,8 @@ namespace DocCreator01.ViewModel
             _projectHelper.SaveProject(CurrentProject, _currentPath!);
             AddRecent(_currentPath);
             
-            // Reset dirty flags for all tabs
-            foreach (var tab in Tabs)
-                tab.AcceptChanges();
-
-            SettingsViewModel.AcceptChanges();
+            // Accept all changes at once
+            _dirtyStateService.AcceptAllChanges();
             IsProjectDirty = false;
         }
 

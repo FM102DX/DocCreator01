@@ -2,62 +2,91 @@
 using ReactiveUI;
 using System;
 using System.Reactive.Linq;
+using DocCreator01.Data.Enums;
+using System.Reactive.Disposables;
+using System.Reactive;
+using DocCreator01.Contracts;
+using ReactiveUI.Fody.Helpers;
 
 namespace DocCreator01.ViewModels
 {
-    public class ProjectSettingsTabViewModel : ReactiveObject, ITabViewModel
+    public sealed class ProjectSettingsTabViewModel : ReactiveObject, ITabViewModel, IDisposable
     {
-        private bool _isDirty;
-        private const string TabName = "Project Settings";
+        private readonly Project _project;
+        private readonly CompositeDisposable _cleanup = new();
 
-        public Project Project { get; private set; }
-        public SettingsViewModel SettingsVm { get; private set; }
+        private const string BaseHeader = "Project settings";
 
+        // ──────────────── ctor ────────────────────────────────────────────────
         public ProjectSettingsTabViewModel(Project project)
         {
-            Project = project ?? throw new ArgumentNullException(nameof(project));
-            SettingsVm = new SettingsViewModel(project.Settings);
+            _project = project ?? throw new ArgumentNullException(nameof(project));
 
-            this.WhenAnyValue(vm => vm.SettingsVm.IsDirty)
-                .Where(isDirty => isDirty)
-                .Subscribe(_ => MarkAsDirty());
-
-            this.WhenAnyValue(vm => vm.Project.Name)
+            // начальная загрузка VM из модели
+            Name = _project.Name;
+            GenDocType = _project.Settings.GenDocType;
+            DocTitle = _project.Settings.DocTitle;
+            DocDescription = _project.Settings.DocDescription;
+            DocCreatedBy = _project.Settings.DocCretaedBy;
+             // синхронизация VM → Model
+            this.WhenAnyValue(vm => vm.Name)
                 .Skip(1)
-                .DistinctUntilChanged()
-                .Subscribe(name =>
-                {
-                    MarkAsDirty();
-                });
+                .Subscribe(v => _project.Name = v)
+                .DisposeWith(_cleanup);
 
-            Project.WhenAnyValue(p => p.Name)
-                    .Skip(1)
-                    .DistinctUntilChanged()
-                    .Subscribe(name =>
-                    {
-                        MarkAsDirty();
-                    });
+            this.WhenAnyValue(vm => vm.GenDocType)
+                .Skip(1)
+                .Subscribe(v => _project.Settings.GenDocType = v)
+                .DisposeWith(_cleanup);
+
+            this.WhenAnyValue(vm => vm.DocTitle)
+                .Skip(1)
+                .Subscribe(v => _project.Settings.DocTitle = v)
+                .DisposeWith(_cleanup);
+
+            this.WhenAnyValue(vm => vm.DocDescription)
+                .Skip(1)
+                .Subscribe(v => _project.Settings.DocDescription = v)
+                .DisposeWith(_cleanup);
+
+            this.WhenAnyValue(vm => vm.DocCreatedBy)
+                .Skip(1)
+                .Subscribe(v => _project.Settings.DocCretaedBy = v)
+                .DisposeWith(_cleanup);
+
+            // любые изменения (кроме IsDirty) → IsDirty = true
+            this.Changed
+                .Where(e => e.PropertyName != nameof(IsDirty))
+                .Subscribe(_ => IsDirty = true)
+                .DisposeWith(_cleanup);
+
+            // TabHeader = BaseHeader или BaseHeader*
+            this.WhenAnyValue(vm => vm.IsDirty)
+                .Select(d => d ? $"{BaseHeader}*" : BaseHeader)
+                .ToProperty(this, vm => vm.TabHeader, out _tabHeader)
+                .DisposeWith(_cleanup);
         }
 
-        public bool IsDirty
-        {
-            get => _isDirty;
-            private set => this.RaiseAndSetIfChanged(ref _isDirty, value);
-        }
+        // ─────────── редактируемые reactive-поля ──────────────────────────────
+        [Reactive] public string Name { get; set; } = string.Empty;
+        [Reactive] public GenerateFileTypeEnum GenDocType { get; set; }
+        [Reactive] public string DocTitle { get; set; } = string.Empty;
+        [Reactive] public string DocDescription { get; set; } = string.Empty;
+        [Reactive] public string DocCreatedBy { get; set; } = string.Empty;
 
-        public string TabHeader => IsDirty ? $"{TabName} *" : TabName;
+        // ──────────── ITabViewModel implementation ────────────────────────────
+        private readonly ObservableAsPropertyHelper<string> _tabHeader;
+        public string TabHeader => _tabHeader.Value;
 
-        public void AcceptChanges()
-        {
-            SettingsVm.AcceptChanges();
-            IsDirty = false;
-            this.RaisePropertyChanged(nameof(TabHeader));
-        }
+        [Reactive] public bool IsDirty { get; private set; }
 
-        public void MarkAsDirty()
-        {
-            IsDirty = true;
-            this.RaisePropertyChanged(nameof(TabHeader));
-        }
+        public void AcceptChanges() => IsDirty = false;
+
+        public void MarkAsDirty() => IsDirty = true;
+        // ───────────────────────────────────────────────────────────────────────
+
+        public Project Model => _project;
+
+        public void Dispose() => _cleanup.Dispose();
     }
 }

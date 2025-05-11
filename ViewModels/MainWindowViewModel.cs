@@ -244,7 +244,7 @@ namespace DocCreator01.ViewModel
             // Only handle TextPart tabs
             if (vm is TabPageViewModel textPartVm)
             {
-                _textPartHelper.RemoveTextPart(textPartVm.TextPart, CurrentProject.ProjectData.TextParts, MainGridLines);
+                _textPartHelper.RemoveTextPart(textPartVm.Model, CurrentProject.ProjectData.TextParts, MainGridLines);
                 CloseTab(vm);
                 _dirtyStateMgr.MarkAsDirty();
             }
@@ -303,6 +303,7 @@ namespace DocCreator01.ViewModel
             }
             
             SelectedTab = Tabs.FirstOrDefault();
+            _generatedFilesHelper.Initialize(CurrentProject);
             _dirtyStateMgr.ResetDirtyState();
         }
 
@@ -326,8 +327,7 @@ namespace DocCreator01.ViewModel
             }
             
             CurrentProject.OpenedTabs = Tabs.OfType<TabPageViewModel>()
-                .Where(t => t.TextPart != null)
-                .Select(x => x.TextPart.Id)
+                .Select(x => x.Model.Id)
                 .ToList();
             
             // Use ProjectHelper to save project
@@ -375,7 +375,7 @@ namespace DocCreator01.ViewModel
             if (SelectedMainGridItemViewModel == null) return;
 
             var textPart = SelectedMainGridItemViewModel.Model;
-            var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.TextPart == textPart);
+            var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
 
             if (tab != null)
                 Tabs.Remove(tab);
@@ -399,7 +399,7 @@ namespace DocCreator01.ViewModel
                 _dirtyStateMgr.MarkAsDirty();
 
                 // Find and mark the affected tab as dirty
-                var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.TextPart == textPart);
+                var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
                 if (tab != null && tab is IDirtyTrackable dtr)
                 {
                     // This will raise the IsDirty property and update the Header
@@ -421,7 +421,7 @@ namespace DocCreator01.ViewModel
                 this.RaisePropertyChanged(nameof(CurrentProject));
                 _dirtyStateMgr.MarkAsDirty();
 
-                var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.TextPart == textPart);
+                var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
                 if (tab != null && tab is IDirtyTrackable dtr)
                 {
                     // This will raise the IsDirty property and update the Header
@@ -458,7 +458,7 @@ namespace DocCreator01.ViewModel
         private void ActivateTab()
         {
             var tp = SelectedMainGridItem;
-            var vm = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.TextPart == tp);
+            var vm = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == tp);
             if (vm == null)
             {
                 var dirtyMgr = new DirtyStateManager();

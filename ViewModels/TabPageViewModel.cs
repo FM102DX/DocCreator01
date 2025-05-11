@@ -1,83 +1,61 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reactive.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using DocCreator01.Contracts;
 using DocCreator01.Models;
-using DocCreator01.Services;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 
 namespace DocCreator01.ViewModels
 {
     public sealed class TabPageViewModel : ReactiveObject, ITabViewModel, IDirtyTrackable
     {
-        private TextPart? _textPart;
         private readonly IDirtyStateManager _dirtyStateMgr;
 
-        public string? Name => TextPart?.Name;
-
-       public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
- 
-        public string TabHeader => DirtyStateMgr.IsDirty ? $"{TextPart?.Name ?? "Untitled"} *" : TextPart?.Name ?? "Untitled";
-
-        public TabPageViewModel(TextPart? textPart, IDirtyStateManager dirtyStateMgr = null)
+        public TabPageViewModel(TextPart model, IDirtyStateManager dirtyStateMgr)
         {
-            this._textPart = textPart;
-            _dirtyStateMgr = dirtyStateMgr ?? new DirtyStateManager();
+            Model = model ?? throw new ArgumentNullException(nameof(model));
+            _dirtyStateMgr = dirtyStateMgr ?? throw new ArgumentNullException(nameof(dirtyStateMgr));
 
-            // Only subscribe if TextPart is not null
-            if (textPart != null)
-            {
-                this.WhenAnyValue(_ => _.TextPart.Name,
-                        _ => _.TextPart.Text,
-                        _ => _.TextPart.Level,
-                        _ => _.TextPart.IncludeInDocument)
-                    .Skip(1)
-                    .Subscribe(_ =>
-                    {
-                        _dirtyStateMgr.MarkAsDirty();
-                        this.RaisePropertyChanged(nameof(TabHeader));
-                    },
-                    // Add error handler to prevent unhandled exceptions
-                    ex =>
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error in TabPageViewModel subscription: {ex.Message}");
-                    });
-            }
-            _dirtyStateMgr.IBecameDirty += () =>
-                this.RaisePropertyChanged(nameof(TabHeader));
-            _dirtyStateMgr.DirtryStateWasReset += () =>
-                this.RaisePropertyChanged(nameof(TabHeader));
+            Name = model.Name;
+            Text = model.Text;
+            IncludeInDocument = model.IncludeInDocument;
 
-        }
-
-        public TextPart? TextPart
-        {
-            get => _textPart;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _textPart, value);
-
-                if (value != null)
+            this.WhenAnyValue(vm => vm.Name)
+                .DistinctUntilChanged()
+                .Subscribe(val =>
                 {
-                    this.WhenAnyValue(_ => _.TextPart.Name,
-                            _ => _.TextPart.Text,
-                            _ => _.TextPart.Level,
-                            _ => _.TextPart.IncludeInDocument)
-                        .Skip(1)
-                        .Subscribe(_ =>
-                        {
-                            _dirtyStateMgr.MarkAsDirty();
-                            this.RaisePropertyChanged(nameof(TabHeader));
-                        },
-                        ex =>
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Error in TextPart subscription: {ex.Message}");
-                        });
-                }
-            }
+                    Model.Name = val;
+                    _dirtyStateMgr.MarkAsDirty();
+                });
+
+            this.WhenAnyValue(vm => vm.Text)
+                .DistinctUntilChanged()
+                .Subscribe(val =>
+                {
+                    Model.Text = val;
+                    _dirtyStateMgr.MarkAsDirty();
+                });
+            this.WhenAnyValue(vm => vm.IncludeInDocument)
+                .DistinctUntilChanged()
+                .Subscribe(val =>
+                {
+                    Model.IncludeInDocument = val;
+                    _dirtyStateMgr.MarkAsDirty();
+                });
+
+            _dirtyStateMgr.IBecameDirty += () => this.RaisePropertyChanged(nameof(TabHeader));
+            _dirtyStateMgr.DirtryStateWasReset += () => this.RaisePropertyChanged(nameof(TabHeader));
         }
+
+        public string TabHeader => _dirtyStateMgr.IsDirty ? $"{Name ?? "Untitled"} *" : Name ?? "Untitled";
+
+        public TextPart Model { get; }
+
+        public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
+
+        [Reactive] public string Name { get; set; }
+        [Reactive] public string Text { get; set; }
+        [Reactive] public bool IncludeInDocument { get; set; }
+        
     }
 }

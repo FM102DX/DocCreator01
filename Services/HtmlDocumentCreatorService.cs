@@ -260,25 +260,25 @@ h1,h2,h3  {color:#333366;}";
             // 1. Глобальный CSS
             //--------------------------------------------------
             string css = $@"
-.slim-table {{
-    border-collapse: collapse;
-    width: 100%;
-}}
-.slim-table th,
-.slim-table td {{
-    padding: {padding.top}px {padding.right}px {padding.bottom}px {padding.left}px;
-    vertical-align: top;
-}}
-/* жирный заголовок + нижняя линия */
-.slim-table th {{
-    font-weight: 600;
-    text-align: left;
-    border-bottom: 2px solid #d0d0d0;
-}}
-/* горизонтальные разделители строк, кроме первой */
-.slim-table tbody tr + tr td {{
-    border-top: 1px solid #e5e5e5;
-}}";
+                .slim-table {{
+                    border-collapse: collapse;
+                    width: 100%;
+                }}
+                .slim-table th,
+                .slim-table td {{
+                    padding: {padding.top}px {padding.right}px {padding.bottom}px {padding.left}px;
+                    vertical-align: top;
+                }}
+                /* жирный заголовок + нижняя линия */
+                .slim-table th {{
+                    font-weight: 600;
+                    text-align: left;
+                    border-bottom: 2px solid #d0d0d0;
+                }}
+                /* горизонтальные разделители строк, кроме первой */
+                .slim-table tbody tr + tr td {{
+                    border-top: 1px solid #e5e5e5;
+                }}";
 
             var head = doc.DocumentNode.SelectSingleNode("//head");
             if (head == null)

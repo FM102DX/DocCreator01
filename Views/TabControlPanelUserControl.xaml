@@ -70,7 +70,7 @@
         
         <!-- Template for TextPart tabs -->
         <DataTemplate x:Key="TextPartTabTemplate" DataType="{x:Type vm:TabPageViewModel}">
-            <views:TextPartUserControl DataContext="{Binding TextPart}"/>
+            <views:TextPartUserControl DataContext="{Binding }"/>
         </DataTemplate>
         
         <!-- Template for Settings tabs -->

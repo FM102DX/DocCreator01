@@ -10,7 +10,7 @@ using DocCreator01.Contracts;
 
 namespace DocCreator01.Models
 {
-    public sealed class TextPart : ReactiveObject, INumerableTextPart
+    public sealed class TextPart : INumerableTextPart
     {
         public TextPart()
         {
@@ -51,8 +51,5 @@ namespace DocCreator01.Models
         public string ParagraphNo { get; set; }
 
         #endregion
-
-
-
     }
 }

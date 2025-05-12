@@ -203,16 +203,16 @@ namespace DocCreator01.ViewModel
             ObservableCollection<MainGridItemViewModel> viewModels)
         {
 
-                viewModels.Clear();
+            if (models == null) return;
+            viewModels.Clear();
+            NumerationHelper.ApplyNumeration(models);
+            foreach (var model in models)
+            {
+                var vm = new MainGridItemViewModel(model);
+                viewModels.Add(vm);
+            }
 
-                if (models == null) return;
-
-                foreach (var model in models)
-                {
-                    var vm = new MainGridItemViewModel(model);
-                    viewModels.Add(vm);
-                }
-                NumerationHelper.ApplyNumeration(models);
+            
         }
 
         private void AddTab()

@@ -15,7 +15,7 @@ namespace DocCreator01.Models
     public class Settings
     {
 
-        public GenerateFileTypeEnum GenDocType { get; set; }
+        public GenerateFileTypeEnum GenDocType { get; set; } = GenerateFileTypeEnum.HTML;
 
 
         public string DocTitle { get; set; }=String.Empty;

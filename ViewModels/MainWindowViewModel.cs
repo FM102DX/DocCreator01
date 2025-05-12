@@ -171,13 +171,8 @@ namespace DocCreator01.ViewModel
             set
             {
                 this.RaiseAndSetIfChanged(ref _selectedMainGridItem, value);
-                if (_selectedMainGridItemViewModel == null ||
-                    (_selectedMainGridItem != null && _selectedMainGridItemViewModel.Model != _selectedMainGridItem))
-                {
-                    _selectedMainGridItemViewModel =
-                        MainGridLines.FirstOrDefault(vm => vm.Model == _selectedMainGridItem);
-                    this.RaisePropertyChanged(nameof(SelectedMainGridItemViewModel));
-                }
+                _selectedMainGridItemViewModel = MainGridLines.FirstOrDefault(vm => vm.Model == _selectedMainGridItem);
+                this.RaisePropertyChanged(nameof(SelectedMainGridItemViewModel));
             }
         }
 
@@ -207,9 +202,7 @@ namespace DocCreator01.ViewModel
             ObservableCollection<TextPart> models,
             ObservableCollection<MainGridItemViewModel> viewModels)
         {
-            // Execute on UI thread to prevent cross-thread access to UI collections
-            RxApp.MainThreadScheduler.Schedule(() =>
-            {
+
                 viewModels.Clear();
 
                 if (models == null) return;
@@ -219,7 +212,7 @@ namespace DocCreator01.ViewModel
                     var vm = new MainGridItemViewModel(model);
                     viewModels.Add(vm);
                 }
-            });
+                NumerationHelper.ApplyNumeration(models);
         }
 
         private void AddTab()
@@ -391,46 +384,37 @@ namespace DocCreator01.ViewModel
         private void MoveCurrentUp()
         {
             if (SelectedMainGridItemViewModel == null) return;
-
             var textPart = SelectedMainGridItemViewModel.Model;
             if (_textPartHelper.MoveTextPartUp(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
             {
                 this.RaisePropertyChanged(nameof(CurrentProject));
                 _dirtyStateMgr.MarkAsDirty();
-
-                // Find and mark the affected tab as dirty
                 var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
                 if (tab != null && tab is IDirtyTrackable dtr)
                 {
-                    // This will raise the IsDirty property and update the Header
                     dtr.DirtyStateMgr.MarkAsDirty();
                 }
-
-                // Restore selection after moving
-                SelectedMainGridItem = textPart;
+                RefreshTextPartViewModels();
             }
+            SelectedMainGridItem = textPart;
         }
 
         private void MoveCurrentDown()
         {
             if (SelectedMainGridItemViewModel == null) return;
-
             var textPart = SelectedMainGridItemViewModel.Model;
             if (_textPartHelper.MoveTextPartDown(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
             {
                 this.RaisePropertyChanged(nameof(CurrentProject));
                 _dirtyStateMgr.MarkAsDirty();
-
                 var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
                 if (tab != null && tab is IDirtyTrackable dtr)
                 {
-                    // This will raise the IsDirty property and update the Header
                     dtr.DirtyStateMgr.MarkAsDirty();
                 }
-
-                // Restore selection after moving
-                SelectedMainGridItem = textPart;
+                RefreshTextPartViewModels();
             }
+            SelectedMainGridItem = textPart;
         }
 
         private void MoveCurrentLeft()
@@ -441,7 +425,9 @@ namespace DocCreator01.ViewModel
             if (_textPartHelper.DecreaseTextPartLevel(textPart))
             {
                 _dirtyStateMgr.MarkAsDirty();
+                RefreshTextPartViewModels();
             }
+            SelectedMainGridItem = textPart;
         }
 
         private void MoveCurrentRight()
@@ -452,7 +438,9 @@ namespace DocCreator01.ViewModel
             if (_textPartHelper.IncreaseTextPartLevel(textPart))
             {
                 _dirtyStateMgr.MarkAsDirty();
+                RefreshTextPartViewModels();
             }
+            SelectedMainGridItem = textPart;
         }
 
         private void ActivateTab()

@@ -98,6 +98,11 @@
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
                                 <!-- Отступ формируется во вью-модели -->
+                                <TextBlock Text="{Binding ParagraphNo}"
+                                           Foreground="MediumSeaGreen"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+
                                 <TextBlock Text="{Binding Indentation}"
                                            Foreground="White"
                                            FontFamily="Consolas"

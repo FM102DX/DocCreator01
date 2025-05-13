@@ -25,9 +25,7 @@ namespace DocCreator01.Models
 
 
         public string DocCretaedBy { get; set; } = String.Empty;
-
-        public int HtmlFontSize { get; set; } = 14;
-        public int HtmlH1 { get; set; } = 14;
+        public HtmlGenerationProfile CurrentHtmlGenerationProfile { get; set; }
 
     }
 

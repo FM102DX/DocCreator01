@@ -37,7 +37,7 @@ namespace DocCreator01.Models
         [JsonProperty]
         public bool IncludeInDocument { get; set; }
 
-        [JsonProperty] public int Level { get; set; }
+        [JsonProperty] public int Level { get; set; } = 1;
 
         #region jsonignore
 

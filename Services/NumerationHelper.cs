@@ -9,40 +9,49 @@ using System.Threading.Tasks;
 
 namespace DocCreator01.Services
 {
-        public static class NumerationHelper
+    /// <summary>
+    /// Нумерует элементы прямо в переданной коллекции.
+    /// </summary>
+    public static class NumerationHelper
+    {
+        /// <summary>
+        /// Проставляет Order и ParagraphNo для всех элементов коллекции.
+        ///   – верхним уровнем считается минимальный Level в коллекции;
+        ///   – отсутствующие промежуточные уровни получают номер «1».
+        /// </summary>
+        public static void ApplyNumeration<T>(ObservableCollection<T> parts) where T : INumerableTextPart
         {
-            /// <summary>
-            /// Нумерует элементы прямо в переданной коллекции.
-            /// </summary>
-            public static void ApplyNumeration(ObservableCollection<INumerableTextPart> parts)
+            if (parts == null || parts.Count == 0) return;
+
+            /* 1. какой Level является корневым? */
+            int rootLevel = parts.Min(p => Math.Max(0, p.Level));
+
+            /* 2. счётчики для каждого относительного уровня (root == 0) */
+            var counters = new List<int>();                // 0-й, 1-й, 2-й …
+
+            foreach (var part in parts)
             {
-                if (parts == null || parts.Count == 0) return;
+                int levelAbs = Math.Max(0, part.Level);    // отрицательных не допускаем
+                int levelRel = levelAbs - rootLevel;       // уровень относительно корня
 
-                const int MaxDepth = 32; // при необходимости увеличьте
-                var counters = new int[MaxDepth]; // индекс = уровень, значение = счётчик
+                /* 2.1  расширяем список счётчиков до нужной глубины */
+                while (counters.Count <= levelRel)
+                    counters.Add(0);
 
-                foreach (var part in parts)
-                {
-                    int level = part.Level < 0 ? 0 : part.Level;
-                    if (level >= MaxDepth)
-                        throw new ArgumentOutOfRangeException(nameof(part.Level),
-                            $"Level {level} превышает допустимый предел {MaxDepth - 1}");
+                /* 2.2  обнуляем все уровни глубже текущего */
+                for (int i = levelRel + 1; i < counters.Count; i++)
+                    counters[i] = 0;
 
-                    // 1) сбрасываем счётчики более глубоких уровней
-                    for (int d = level + 1; d < MaxDepth; d++)
-                        counters[d] = 0;
+                /* 2.3  увеличиваем счётчик своего уровня                 */
+                part.Order = ++counters[levelRel];
 
-                    // 2) инкрементируем счётчик своего уровня
-                    counters[level]++;
+                /* 2.4  «заполняем дырки» — все пустые (0) уровни делаем 1 */
+                for (int i = 0; i <= levelRel; i++)
+                    if (counters[i] == 0) counters[i] = 1;
 
-                    // 3) присваиваем Order
-                    part.Order = counters[level];
-
-                    // 4) формируем ParagraphNo:
-                    //    берём все ненулевые значения от 0 до level и соединяем через '.'
-                    part.ParagraphNo = string.Join(".",
-                        counters.Take(level + 1).Where(n => n > 0));
-                }
+                /* 2.5  формируем ParagraphNo                              */
+                part.ParagraphNo = string.Join(".", counters.Take(levelRel + 1));
             }
         }
     }
+}

@@ -25,7 +25,11 @@ namespace DocCreator01.Models
 
 
         public string DocCretaedBy { get; set; } = String.Empty;
-        public HtmlGenerationProfile CurrentHtmlGenerationProfile { get; set; }
+        
+        public int CurrentHtmlGenerationProfileId { get; set; }
+
+        [JsonIgnore]
+        public HtmlGenerationProfile? CurrentHtmlGenerationProfile { get; set; }
 
     }
 

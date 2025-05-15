@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net.WebSockets;
 using System.Windows;
 using Microsoft.Win32;
 using DocCreator01.Contracts;
@@ -31,14 +32,15 @@ namespace DocCreator01.Services
 
             var project = _repo.Load(fileName);
             project.FilePath = fileName;
-            
+
             // Update current project and path
             _currentProject = project;
             _currentPath = fileName;
-            
+            project.Settings.CurrentHtmlGenerationProfile = 
+                GetHtmlGenerationProfiles().FirstOrDefault(p=>p.Id== project.Settings.CurrentHtmlGenerationProfileId);
             // Notify listeners that the project has changed
             ProjectChanged?.Invoke(this, _currentProject);
-            
+
             return project;
         }
 
@@ -54,10 +56,10 @@ namespace DocCreator01.Services
             var newProject = new Project();
             _currentProject = newProject;
             _currentPath = null;
-            
+
             // Notify listeners that the project has changed
             ProjectChanged?.Invoke(this, _currentProject);
-            
+
             return newProject;
         }
 
@@ -73,7 +75,7 @@ namespace DocCreator01.Services
                     MessageBoxImage.Question);
 
                 if (res == MessageBoxResult.Cancel)
-                    return false;  // User canceled closing
+                    return false; // User canceled closing
 
                 if (res == MessageBoxResult.Yes)
                     saveChanges = true;
@@ -95,21 +97,54 @@ namespace DocCreator01.Services
                     DefaultExt = ".docparts",
                     FileName = $"{_currentProject.Name}.docparts"
                 };
-                
+
                 if (dlg.ShowDialog() == true)
                 {
                     SaveProject(_currentProject, dlg.FileName);
                 }
                 else
                 {
-                    return false;  // User canceled save dialog
+                    return false; // User canceled save dialog
                 }
             }
 
             // Create a new blank project
             CreateNewProject();
-            
+
             return true;
+        }
+
+        public List<HtmlGenerationProfile> GetHtmlGenerationProfiles()
+        {
+            var profiles = new List<HtmlGenerationProfile>
+            {
+                new HtmlGenerationProfile
+                {
+                    Id = 1,
+                    Name = "AsGpt",
+                    HtmlFontSize = 16,
+                    HtmlH1Margins = new ElementSpacingInfo { Top = 24, Right = 0, Bottom = 16, Left = 0 },
+                    HtmlH2Margins = new ElementSpacingInfo { Top = 20, Right = 0, Bottom = 14, Left = 0 },
+                    HtmlH3Margins = new ElementSpacingInfo { Top = 16, Right = 0, Bottom = 12, Left = 0 },
+                    HtmlH4Margins = new ElementSpacingInfo { Top = 14, Right = 0, Bottom = 10, Left = 0 },
+                    HtmlH5Margins = new ElementSpacingInfo { Top = 12, Right = 0, Bottom = 8, Left = 0 },
+                    HtmlTableCellPaddings = new ElementSpacingInfo { Top = 8, Right = 8, Bottom = 8, Left = 8 }
+                },
+                new HtmlGenerationProfile
+                {
+                    Id = 2,
+                    Name = "TablesBlueHeaders",
+                    HtmlFontSize = 14,
+                    HtmlH1Margins = new ElementSpacingInfo { Top = 20, Right = 0, Bottom = 12, Left = 0 },
+                    HtmlH2Margins = new ElementSpacingInfo { Top = 16, Right = 0, Bottom = 10, Left = 0 },
+                    HtmlH3Margins = new ElementSpacingInfo { Top = 14, Right = 0, Bottom = 8, Left = 0 },
+                    HtmlH4Margins = new ElementSpacingInfo { Top = 12, Right = 0, Bottom = 6, Left = 0 },
+                    HtmlH5Margins = new ElementSpacingInfo { Top = 10, Right = 0, Bottom = 4, Left = 0 },
+                    HtmlTableCellPaddings = new ElementSpacingInfo { Top = 6, Right = 6, Bottom = 6, Left = 6 }
+                }
+            };
+
+            return profiles;
         }
     }
 }

@@ -44,5 +44,7 @@ namespace DocCreator01.Contracts
         /// <param name="saveChanges">Whether to save changes before closing</param>
         /// <returns>True if project was closed, false if operation was canceled</returns>
         bool CloseCurrentProject(bool? saveChanges = null);
+
+        List<HtmlGenerationProfile> GetHtmlGenerationProfiles();
     }
 }

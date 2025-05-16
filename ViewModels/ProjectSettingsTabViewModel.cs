@@ -71,12 +71,6 @@ namespace DocCreator01.ViewModels
                 })
                 .DisposeWith(_cleanup);
 
-            // Setup tab header with dirty indicator
-            this.WhenAnyValue(x => x.DirtyStateMgr.IsDirty)
-                .Select(d => d ? $"{BaseHeader}*" : BaseHeader)
-                .ToProperty(this, vm => vm.TabHeader, out _tabHeader)
-                .DisposeWith(_cleanup);
-
             _dirtyStateMgr.IBecameDirty += () =>
                 this.RaisePropertyChanged(nameof(TabHeader));
             _dirtyStateMgr.DirtryStateWasReset += () =>
@@ -92,8 +86,7 @@ namespace DocCreator01.ViewModels
         [Reactive] public string DocDescription { get; set; } = string.Empty;
         [Reactive] public string DocCreatedBy { get; set; } = string.Empty;
 
-        private readonly ObservableAsPropertyHelper<string> _tabHeader;
-        public string TabHeader => _tabHeader.Value;
+        public string TabHeader => DirtyStateMgr.IsDirty ? $"{BaseHeader}*" : BaseHeader;
 
         public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
 

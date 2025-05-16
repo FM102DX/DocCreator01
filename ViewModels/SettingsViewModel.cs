@@ -20,40 +20,16 @@ namespace DocCreator01.ViewModels
 
         [Reactive] public IEnumerable<HtmlGenerationProfile> HtmlGenerationProfiles { get; set; }
         [Reactive] public HtmlGenerationProfile? SelectedHtmlGenerationProfile { get; set; }
-
-        public bool IsDocxSelected
-        {
-            get => Model.GenDocType == GenerateFileTypeEnum.DOCX;
-            set
-            {
-                if (value && Model.GenDocType != GenerateFileTypeEnum.DOCX)
-                {
-                    Model.GenDocType = GenerateFileTypeEnum.DOCX;
-                    _dirtyStateMgr.MarkAsDirty();
-                    this.RaisePropertyChanged(nameof(IsHtmlSelected));
-                }
-            }
-        }
-
-        public bool IsHtmlSelected
-        {
-            get => Model.GenDocType == GenerateFileTypeEnum.HTML;
-            set
-            {
-                if (value && Model.GenDocType != GenerateFileTypeEnum.HTML)
-                {
-                    Model.GenDocType = GenerateFileTypeEnum.HTML;
-                    _dirtyStateMgr.MarkAsDirty();
-                    this.RaisePropertyChanged(nameof(IsDocxSelected));
-                }
-            }
-        }
+        [Reactive] public GenerateFileTypeEnum GenDocType { get; set; }
 
         public SettingsViewModel(Settings model, IProjectHelper projectHelper, IDirtyStateManager dirtyStateMgr = null)
         {
             Model = model ?? throw new ArgumentNullException(nameof(model));
             _projectHelper = projectHelper ?? throw new ArgumentNullException(nameof(projectHelper));
             _dirtyStateMgr = dirtyStateMgr ?? new DirtyStateManager();
+
+            // Initialize GenDocType from model
+            GenDocType = Model.GenDocType;
 
             // Load HTML Generation Profiles using the injected IProjectHelper instance
             HtmlGenerationProfiles = _projectHelper.GetHtmlGenerationProfiles();
@@ -81,14 +57,27 @@ namespace DocCreator01.ViewModels
                     }
                 })
                 .DisposeWith(_cleanup);
+            
+            // When GenDocType changes, update the model
+            this.WhenAnyValue(x => x.GenDocType)
+                .Skip(1) // Skip initial set, only react to user changes
+                .Subscribe(type =>
+                {
+                    if (Model.GenDocType != type) // Update only if changed
+                    {
+                        Model.GenDocType = type;
+                        _dirtyStateMgr.MarkAsDirty();
+                    }
+                })
+                .DisposeWith(_cleanup);
 
-            // When Model.GenDocType changes, update radio button states
+            // When Model.GenDocType changes, update the property
             this.WhenAnyValue(x => x.Model.GenDocType)
                 .ObserveOn(RxApp.MainThreadScheduler) // Ensure UI properties are updated on the UI thread
-                .Subscribe(_ =>
+                .Subscribe(type =>
                 {
-                    this.RaisePropertyChanged(nameof(IsDocxSelected));
-                    this.RaisePropertyChanged(nameof(IsHtmlSelected));
+                    if (GenDocType != type)
+                        GenDocType = type;
                 })
                 .DisposeWith(_cleanup);
         }

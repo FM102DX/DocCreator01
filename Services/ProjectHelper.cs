@@ -29,15 +29,15 @@ namespace DocCreator01.Services
             {
                 throw new FileNotFoundException($"Project file not found: {fileName}");
             }
-
             var project = _repo.Load(fileName);
             project.FilePath = fileName;
-
+            
             // Update current project and path
             _currentProject = project;
             _currentPath = fileName;
             project.Settings.CurrentHtmlGenerationProfile = 
                 GetHtmlGenerationProfiles().FirstOrDefault(p=>p.Id== project.Settings.CurrentHtmlGenerationProfileId);
+            
             // Notify listeners that the project has changed
             ProjectChanged?.Invoke(this, _currentProject);
 

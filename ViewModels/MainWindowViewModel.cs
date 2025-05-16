@@ -50,7 +50,7 @@ namespace DocCreator01.ViewModel
             _dirtyStateMgr = new DirtyStateManager();
 
             // Initialize SettingsViewModel
-            SettingsViewModel = new SettingsViewModel(_projectHelper.CurrentProject.Settings, new DirtyStateManager());
+            SettingsViewModel = new SettingsViewModel(_projectHelper.CurrentProject.Settings,_projectHelper, new DirtyStateManager());
             _dirtyStateMgr.AddSubscription(SettingsViewModel);
 
             // Subscribe to project changes

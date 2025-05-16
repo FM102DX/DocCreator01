@@ -91,12 +91,6 @@ namespace DocCreator01.ViewModels
         private readonly ObservableAsPropertyHelper<string> _tabHeader;
         public string TabHeader => _tabHeader.Value;
 
-        public bool IsDirty => DirtyStateMgr.IsDirty;
-
-        public void AcceptChanges() => DirtyStateMgr.ResetDirtyState();
-
-        public void MarkAsDirty() => DirtyStateMgr.MarkAsDirty();
-
         public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
 
         public Project Model => _project;

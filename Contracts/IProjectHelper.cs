@@ -13,6 +13,8 @@ namespace DocCreator01.Contracts
         /// </summary>
         Project CurrentProject { get; }
 
+        List<HtmlGenerationProfile> GetHtmlGenerationProfiles();
+
         /// <summary>
         /// Event that fires when the current project changes
         /// </summary>
@@ -45,6 +47,5 @@ namespace DocCreator01.Contracts
         /// <returns>True if project was closed, false if operation was canceled</returns>
         bool CloseCurrentProject(bool? saveChanges = null);
 
-        List<HtmlGenerationProfile> GetHtmlGenerationProfiles();
     }
 }

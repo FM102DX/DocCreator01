@@ -459,21 +459,18 @@ namespace DocCreator01.ViewModel
 
         private void OpenSettingsTab()
         {
-            // Look for an existing settings tab
             var existingTab = Tabs.FirstOrDefault(t => t is ProjectSettingsTabViewModel);
             
             if (existingTab == null)
             {
-                // Create a new tab
                 var dirtyMgr = new DirtyStateManager();
-                var settingsTab = new ProjectSettingsTabViewModel(CurrentProject, dirtyMgr);
+                var settingsTab = new ProjectSettingsTabViewModel(CurrentProject, dirtyMgr, _projectHelper);
                 SubscribeTab(settingsTab);
                 Tabs.Add(settingsTab);
                 SelectedTab = settingsTab;
             }
             else
             {
-                // Select existing tab
                 SelectedTab = existingTab;
             }
         }

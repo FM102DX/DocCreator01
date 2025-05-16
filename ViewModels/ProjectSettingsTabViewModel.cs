@@ -4,7 +4,6 @@ using System;
 using System.Reactive.Linq;
 using DocCreator01.Data.Enums;
 using System.Reactive.Disposables;
-using System.Reactive;
 using DocCreator01.Contracts;
 using DocCreator01.Services;
 using ReactiveUI.Fody.Helpers;
@@ -18,31 +17,32 @@ namespace DocCreator01.ViewModels
         private readonly IDirtyStateManager _dirtyStateMgr;
         private const string BaseHeader = "Project settings";
 
-        public ProjectSettingsTabViewModel(Project project, IDirtyStateManager dirtyStateMgr = null)
+        public ProjectSettingsTabViewModel(Project project, IDirtyStateManager dirtyStateMgr = null, IProjectHelper projectHelper = null)
         {
             _project = project ?? throw new ArgumentNullException(nameof(project));
             _dirtyStateMgr = dirtyStateMgr ?? new DirtyStateManager();
-
-            // начальная загрузка VM из модели
+            
+            // Create SettingsViewModel with all required dependencies
+            // This will handle all GenDocType and HTML Profile logic
+            SettingsVm = new SettingsViewModel(
+                _project.Settings, 
+                projectHelper ?? throw new ArgumentNullException(nameof(projectHelper)), 
+                new DirtyStateManager()); // Use a separate dirty manager for SettingsViewModel
+            
+            // Register the SettingsViewModel with this VM's dirty state manager
+            _dirtyStateMgr.AddSubscription(SettingsVm);
+            
+            // Initialize remaining project properties
             Name = _project.Name;
-            GenDocType = _project.Settings.GenDocType;
             DocTitle = _project.Settings.DocTitle;
             DocDescription = _project.Settings.DocDescription;
             DocCreatedBy = _project.Settings.DocCretaedBy;
             
-            // синхронизация VM → Model
+            // Synchronize property changes with model
             this.WhenAnyValue(vm => vm.Name)
                 .Skip(1)
                 .Subscribe(v => {
                     _project.Name = v;
-                    _dirtyStateMgr.MarkAsDirty();
-                })
-                .DisposeWith(_cleanup);
-
-            this.WhenAnyValue(vm => vm.GenDocType)
-                .Skip(1)
-                .Subscribe(v => {
-                    _project.Settings.GenDocType = v;
                     _dirtyStateMgr.MarkAsDirty();
                 })
                 .DisposeWith(_cleanup);
@@ -71,6 +71,7 @@ namespace DocCreator01.ViewModels
                 })
                 .DisposeWith(_cleanup);
 
+            // Setup tab header with dirty indicator
             this.WhenAnyValue(x => x.DirtyStateMgr.IsDirty)
                 .Select(d => d ? $"{BaseHeader}*" : BaseHeader)
                 .ToProperty(this, vm => vm.TabHeader, out _tabHeader)
@@ -82,8 +83,11 @@ namespace DocCreator01.ViewModels
                 this.RaisePropertyChanged(nameof(TabHeader));
         }
 
+        // SettingsViewModel to handle GenDocType and HTML profiles
+        [Reactive] public SettingsViewModel SettingsVm { get; set; }
+
+        // Only keep project-specific properties here, HTML generation settings are handled by SettingsVm
         [Reactive] public string Name { get; set; } = string.Empty;
-        [Reactive] public GenerateFileTypeEnum GenDocType { get; set; }
         [Reactive] public string DocTitle { get; set; } = string.Empty;
         [Reactive] public string DocDescription { get; set; } = string.Empty;
         [Reactive] public string DocCreatedBy { get; set; } = string.Empty;
@@ -93,8 +97,10 @@ namespace DocCreator01.ViewModels
 
         public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
 
-        public Project Model => _project;
-
-        public void Dispose() => _cleanup.Dispose();
+        public void Dispose() 
+        {
+            SettingsVm.Dispose();
+            _cleanup.Dispose();
+        }
     }
 }

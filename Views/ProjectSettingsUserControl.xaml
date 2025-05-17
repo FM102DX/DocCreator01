@@ -81,11 +81,6 @@
                 <local:SettingsUserControl DataContext="{Binding SettingsVm}"/>
             </GroupBox>
             
-            <!-- Add more project settings sections as needed -->
-            <TextBlock Text="More settings will be available in future versions." 
-                       Margin="0,20,0,0" 
-                       Foreground="Gray" 
-                       FontStyle="Italic"/>
         </StackPanel>
     </Grid>
 </UserControl>

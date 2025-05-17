@@ -20,17 +20,13 @@
                 <StackPanel>
                     <RadioButton Content="HTML document" 
                                  Margin="0,0,0,5"
-                                 GroupName="OutputFormat"
                                  IsChecked="{Binding GenDocType, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static enums:GenerateFileTypeEnum.HTML}}" />
                     
                     <RadioButton Content="Word document (.docx)" 
                                  Margin="0,0,0,5"
-                                 GroupName="OutputFormat"
                                  IsChecked="{Binding GenDocType, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter={x:Static enums:GenerateFileTypeEnum.DOCX}}" />
 
-                    <Separator Margin="0,5,0,5" />
-                    
-                    <StackPanel Visibility="{Binding GenDocType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static enums:GenerateFileTypeEnum.HTML}}">
+                    <StackPanel>
                         <TextBlock Text="HTML Generation Profile:" Margin="0,0,0,5"/>
                         <ComboBox ItemsSource="{Binding HtmlGenerationProfiles}"
                                   SelectedItem="{Binding SelectedHtmlGenerationProfile, UpdateSourceTrigger=PropertyChanged}"

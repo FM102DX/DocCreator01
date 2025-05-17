@@ -1,3 +1,4 @@
+using DocCreator01.Data.Enums;
 using DocCreator01.Models;
 
 public class HtmlGenerationProfile : IEquatable<HtmlGenerationProfile>
@@ -11,8 +12,9 @@ public class HtmlGenerationProfile : IEquatable<HtmlGenerationProfile>
     public ElementSpacingInfo HtmlH4Margins { get; set; }
     public ElementSpacingInfo HtmlH5Margins { get; set; }
     public ElementSpacingInfo HtmlTableCellPaddings { get; set; }
+    public ElementSpacingInfo HtmlDocumentPaddings { get; set; }
     public string TableHeaderColor { get; set; } = "#F1F3F6";
-
+    public HtmlGenerationPatternEnum HtmlGenerationPattern { get; set; } = HtmlGenerationPatternEnum.PlainBlueHeader;
     public override bool Equals(object obj) => Equals(obj as HtmlGenerationProfile);
 
     public bool Equals(HtmlGenerationProfile other)

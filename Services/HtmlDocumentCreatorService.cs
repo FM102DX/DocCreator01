@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Windows;
+using DocCreator01.Data.Enums;
 using HtmlAgilityPack;
 
 namespace DocCreator01.Services
@@ -21,34 +22,32 @@ namespace DocCreator01.Services
             _appPathsHelper = appPathsHelper ?? throw new ArgumentNullException(nameof(appPathsHelper));
         }
 
-        /// <summary>Папка, куда складываются готовые документы.</summary>
         public string OutputDirectory => _appPathsHelper.DocumentsOutputDirectory;
 
-        /// <inheritdoc />
         public string CreateDocument(IEnumerable<TextPart> textParts, string outputFileName, HtmlGenerationProfile profile = null)
         {
             if (textParts is null) throw new ArgumentNullException(nameof(textParts));
             if (string.IsNullOrWhiteSpace(outputFileName))
                 throw new ArgumentException("Имя файла обязательно.", nameof(outputFileName));
 
-            // Display message box showing the selected profile
-            if (profile != null)
-            {
-                MessageBox.Show($"Используется профиль = {profile.Name}", 
-                    "HTML Generation Profile", 
-                    MessageBoxButton.OK, 
-                    MessageBoxImage.Information);
-            }
-
             Directory.CreateDirectory(OutputDirectory);
             string outputFilePath = Path.Combine(OutputDirectory, outputFileName);
             string html = "";
-            // Построение HTML
             html = BuildHtml(textParts);
-            html = ToCenteredDocument(html);
-            //html = FormatTables(html,(5,5,5,5));
-            html = FormatTablesSlim(html, (5, 5, 5, 5));
-            
+            html = ToCenteredDocument(html, profile);
+            switch (profile.HtmlGenerationPattern)
+            {
+                default:
+                case HtmlGenerationPatternEnum.AsChatGpt:
+                    html = FormatTablesSlim(html, (5, 5, 5, 5));
+                    break;
+                case HtmlGenerationPatternEnum.PlainBlueHeader:
+                    html = FormatTablesClassic(html, (5, 5, 5, 5));
+                    break;
+            }
+
+            html = AjustHtmlFonts(html, profile);
+
             // Синхронная IO-операция
             File.WriteAllText(outputFilePath, html, Encoding.UTF8);
 
@@ -97,9 +96,11 @@ namespace DocCreator01.Services
             System.Net.WebUtility.HtmlEncode(value ?? string.Empty);
 
         /// <summary>
-        /// Приводит «растянутый» HTML к читаемому виду «документа в центре страницы».
+        /// Оборачивает контент в «лист» (.page), выравненный по центру,
+        /// и задаёт его внутренние отступы согласно <see cref="HtmlGenerationProfile.HtmlDocumentPaddings"/>.
+        /// Если профиль не передан – используются значения по умолчанию (40 px × 60 px).
         /// </summary>
-        public static string ToCenteredDocument(string rawHtml)
+        public static string ToCenteredDocument(string rawHtml, HtmlGenerationProfile profile = null)
         {
             var doc = new HtmlDocument
             {
@@ -108,7 +109,9 @@ namespace DocCreator01.Services
             };
             doc.LoadHtml(rawHtml);
 
-            // 1. Гармонично добавляем/находим <head>
+            /*-----------------------------------------------------------------
+             * 1. <head> гарантированно существует
+             *----------------------------------------------------------------*/
             var head = doc.DocumentNode.SelectSingleNode("//head");
             if (head == null)
             {
@@ -116,36 +119,57 @@ namespace DocCreator01.Services
                 doc.DocumentNode.PrependChild(head);
             }
 
-            // 2. Общий стиль + «лист» документа
-            const string readerCss = @"
-html,body {margin:0;padding:0;height:100%;background:#f2f2f2;font-family:Arial, sans-serif;line-height:1.6;}
-body      {padding:40px 0;}                    /* серые поля сверху/снизу              */
-.page     {background:#fff;width:800px;        /* ≈ 210 мм / A4                        */
-           margin:0 auto;padding:40px 60px;
+            /*-----------------------------------------------------------------
+             * 2. Вычисляем значения padding для «листа»
+             *----------------------------------------------------------------*/
+            var pad = profile?.HtmlDocumentPaddings;   // может быть null
+            double pTop = pad?.Top ?? 40;        // сверху
+            double pRight = pad?.Right ?? 60;        // справа
+            double pBottom = pad?.Bottom ?? 40;        // снизу
+            double pLeft = pad?.Left ?? 60;        // слева
+
+            /*-----------------------------------------------------------------
+             * 3. CSS-правила
+             *----------------------------------------------------------------*/
+            string readerCss = $@"
+html,body {{margin:0;padding:0;height:100%;background:#f2f2f2;font-family:Arial, sans-serif;line-height:1.6;}}
+body      {{padding:40px 0;}}                    /* поля сверху/снизу за пределами «листа» */
+.page     {{background:#fff;width:800px;         /* ≈ A4                                 */
+           margin:0 auto;
+           padding:{pTop}px {pRight}px {pBottom}px {pLeft}px;
            border:1px solid #ddd;
-           box-shadow:0 0 10px rgba(0,0,0,.15);}
-h1,h2,h3  {color:#333366;}";
+           box-shadow:0 0 10px rgba(0,0,0,.15);}}
+h1,h2,h3  {{color:#333366;}}";
 
-            var style = doc.CreateElement("style");
-            style.InnerHtml = readerCss;
-            head.AppendChild(style);
+            // удаляем существующий инлайн-стиль, чтобы избежать дубликатов
+            head.SelectSingleNode("./style[@id='center-style']")?.Remove();
 
-            // 3. Оборачиваем содержимое <body> в .page
-            var body = doc.DocumentNode.SelectSingleNode("//body") ?? doc.DocumentNode.AppendChild(doc.CreateElement("body"));
+            var styleNode = doc.CreateElement("style");
+            styleNode.SetAttributeValue("id", "center-style");
+            styleNode.InnerHtml = readerCss;
+            head.AppendChild(styleNode);
+
+            /*-----------------------------------------------------------------
+             * 4. Перемещаем содержимое <body> в .page
+             *----------------------------------------------------------------*/
+            var body = doc.DocumentNode.SelectSingleNode("//body")
+                       ?? doc.DocumentNode.AppendChild(doc.CreateElement("body"));
 
             var wrapper = doc.CreateElement("div");
             wrapper.SetAttributeValue("class", "page");
 
-            // переносим ВСЕ существующие узлы внутрь нового контейнера
             foreach (var node in body.ChildNodes.ToList())
                 wrapper.AppendChild(node);
 
             body.RemoveAllChildren();
             body.AppendChild(wrapper);
 
-            // 4. Возвращаем готовый HTML
+            /*-----------------------------------------------------------------
+             * 5. Готово
+             *----------------------------------------------------------------*/
             return doc.DocumentNode.OuterHtml;
         }
+
 
         /// <summary>
         /// Приводит все таблицы к «табличному» виду: рамки, заголовок, настраиваемые отступы.
@@ -153,7 +177,7 @@ h1,h2,h3  {color:#333366;}";
         /// <param name="rawHtml">Исходный HTML-текст</param>
         /// <param name="padding">Отступы ячейки: (top, right, bottom, left) в пикселях</param>
         /// <returns>Преобразованный HTML-текст</returns>
-        public static string FormatTables(string rawHtml, (int top, int right, int bottom, int left) padding)
+        public static string FormatTablesClassic(string rawHtml, (int top, int right, int bottom, int left) padding)
         {
             var doc = new HtmlDocument
             {
@@ -347,6 +371,86 @@ h1,h2,h3  {color:#333366;}";
             //--------------------------------------------------
             return doc.DocumentNode.OuterHtml;
         }
+
+        /// <summary>
+        /// Корректирует шрифтовые параметры с учётом выбранного <see cref="HtmlGenerationProfile"/>.
+        /// • HtmlFontSize — базовый размер шрифта всего документа (тега <body>);  
+        /// • HtmlH{1–5}Margins — индивидуальные поля (margin) для заголовков h1-h5.
+        /// </summary>
+        /// <param name="rawHtml">Исходный HTML-текст.</param>
+        /// <param name="profile">Профиль генерации HTML; если null, исходный текст возвращается без изменений.</param>
+        /// <returns>Преобразованный HTML-текст.</returns>
+        public static string AjustHtmlFonts(string rawHtml, HtmlGenerationProfile profile)
+        {
+            if (string.IsNullOrWhiteSpace(rawHtml) || profile == null)
+                return rawHtml;
+
+            // ───────────────────────────────────────────────
+            // 1. Загружаем документ и гарантируем наличие <head>
+            // ───────────────────────────────────────────────
+            var doc = new HtmlDocument
+            {
+                OptionFixNestedTags = true,
+                OptionAutoCloseOnEnd = true
+            };
+            doc.LoadHtml(rawHtml);
+
+            var head = doc.DocumentNode.SelectSingleNode("//head");
+            if (head == null)
+            {
+                head = doc.CreateElement("head");
+                doc.DocumentNode.PrependChild(head);
+            }
+
+            // ───────────────────────────────────────────────
+            // 2. Формируем CSS-правила
+            // ───────────────────────────────────────────────
+            var cssBuilder = new StringBuilder();
+
+            // 2.1. Базовый размер шрифта
+            if (profile.HtmlFontSize > 0)
+                cssBuilder.AppendLine($"body {{ font-size: {profile.HtmlFontSize}px; }}");
+
+            // 2.2. Margin-ы для h1-h5
+            string BuildMargin(ElementSpacingInfo info)
+                => info == null
+                    ? null
+                    : $"{info.Top}px {info.Right}px {info.Bottom}px {info.Left}px";
+
+            void AppendHeadingMargins(string selector, ElementSpacingInfo spacing)
+            {
+                var margin = BuildMargin(spacing);
+                if (margin != null)
+                    cssBuilder.AppendLine($"{selector} {{ margin: {margin}; }}");
+            }
+
+            AppendHeadingMargins("h1", profile.HtmlH1Margins);
+            AppendHeadingMargins("h2", profile.HtmlH2Margins);
+            AppendHeadingMargins("h3", profile.HtmlH3Margins);
+            AppendHeadingMargins("h4", profile.HtmlH4Margins);
+            AppendHeadingMargins("h5", profile.HtmlH5Margins);
+
+            if (cssBuilder.Length == 0)
+                return rawHtml;
+
+            // ───────────────────────────────────────────────
+            // 3. Добавляем (или обновляем) узел <style id="font-adjust">
+            // ───────────────────────────────────────────────
+            const string styleId = "font-adjust";
+            var existingStyle = head.SelectSingleNode($"./style[@id='{styleId}']");
+            existingStyle?.Remove();
+
+            var styleNode = doc.CreateElement("style");
+            styleNode.SetAttributeValue("id", styleId);
+            styleNode.InnerHtml = cssBuilder.ToString();
+            head.AppendChild(styleNode);
+
+            // ───────────────────────────────────────────────
+            // 4. Отдаём готовый HTML
+            // ───────────────────────────────────────────────
+            return doc.DocumentNode.OuterHtml;
+        }
+
 
     }
 }

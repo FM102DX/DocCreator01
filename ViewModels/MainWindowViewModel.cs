@@ -477,20 +477,39 @@ namespace DocCreator01.ViewModel
 
         private void CloseCurrent()
         {
-            // Delegate to ProjectHelper to handle closing
             if (_projectHelper.CloseCurrentProject(IsProjectDirty ? null : false))
             {
-                // ProjectHelper succeeded in closing the project
-                // Clear UI state
-                Tabs.Clear();
-                GeneratedFilesViewModels.Clear();
-                MainGridLines.Clear();
-                SelectedTab = null;
-                SelectedMainGridItemViewModel = null;
-                
-                // Current project has already been updated by ProjectHelper
-                _currentPath = CurrentProject.FilePath;
+                // instead of duplicating cleanup logic – reuse the new helper
+                CreateNewProjectUi();
             }
+        }
+
+        private void CreateNewProjectUi()
+        {
+            // delegate real work to the helper
+            _projectHelper.CreateNewProject();
+
+            // clear UI state
+            Tabs.Clear();
+            GeneratedFilesViewModels.Clear();
+            MainGridLines.Clear();
+            SelectedTab = null;
+            SelectedMainGridItemViewModel = null;
+
+            _currentPath = null;            // no file on disk yet
+
+            // rebuild view-models that depend on CurrentProject
+            SettingsViewModel = new SettingsViewModel(
+                _projectHelper.CurrentProject.Settings,
+                _projectHelper,
+                new DirtyStateManager());
+
+            _dirtyStateMgr.AddSubscription(SettingsViewModel);
+            _generatedFilesHelper.Initialize(CurrentProject);
+
+            RefreshTextPartViewModels();
+            LoadGeneratedFiles();
+            UpdateWindowTitle();
         }
 
         private void LoadRecentFiles()

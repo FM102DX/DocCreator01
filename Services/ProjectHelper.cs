@@ -51,16 +51,10 @@ namespace DocCreator01.Services
             _currentPath = filePath;
         }
 
-        public Project CreateNewProject()
+        public void CreateNewProject()
         {
-            var newProject = new Project();
-            _currentProject = newProject;
-            _currentPath = null;
-
-            // Notify listeners that the project has changed
+            _currentProject = new Project();
             ProjectChanged?.Invoke(this, _currentProject);
-
-            return newProject;
         }
 
         public bool CloseCurrentProject(bool? saveChanges = null)
@@ -69,8 +63,8 @@ namespace DocCreator01.Services
             if (saveChanges == null)
             {
                 var res = MessageBox.Show(
-                    "Сохранить изменения перед закрытием?",
-                    "Закрыть документ",
+                    "РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ РїРµСЂРµРґ Р·Р°РєСЂС‹С‚РёРµРј?",
+                    "Р—Р°РєСЂС‹С‚СЊ РґРѕРєСѓРјРµРЅС‚",
                     MessageBoxButton.YesNoCancel,
                     MessageBoxImage.Question);
 

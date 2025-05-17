@@ -21,35 +21,24 @@
     <DockPanel Margin="0,0,10,10">
         <!-- Верхнее меню -->
         <Menu DockPanel.Dock="Top">
-            <MenuItem Header="Файл">
-                <MenuItem Header="Новый проект"
-                          Command="{Binding CloseCurrentCommand}" />
-                <MenuItem Header="Открыть…"
-                          Command="{Binding OpenCommand}" />
-                <MenuItem Header="Сохранить"
-                          Command="{Binding SaveCommand}" />
-                <MenuItem Header="Закрыть"
-                          Command="{Binding CloseCurrentCommand}" />
-
-                <Separator />
-
-                <!-- пункт «Выход» остаётся на своём месте -->
-                <MenuItem Header="Выход"
-                          Command="{Binding ExitCommand}" />
-
-                <!-- разделитель до блока последних файлов -->
-                <Separator />
-
-                <!-- Блок «Последние файлы» автоматически заполняется -->
-                <MenuItem Header="Недавние" x:Name="RecentFilesMenu">
+            <MenuItem Header="_Файл">
+                <MenuItem Header="Новый проект" Command="{Binding NewProjectCommand}"/>
+                <MenuItem Header="Открыть..." Command="{Binding OpenCommand}"/>
+                <MenuItem Header="Сохранить" Command="{Binding SaveCommand}"/>
+                <Separator/>
+                <MenuItem Header="Выход" Command="{Binding ExitCommand}"/>
+                <Separator/>
+                <MenuItem Header="Открыть недавние">
                     <MenuItem.ItemsSource>
                         <Binding Path="RecentFiles" />
                     </MenuItem.ItemsSource>
-                    <MenuItem.ItemTemplate>
-                        <DataTemplate>
-                            <MenuItem Header="{Binding}" Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
-                        </DataTemplate>
-                    </MenuItem.ItemTemplate>
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="MenuItem">
+                            <Setter Property="Header" Value="{Binding}" />
+                            <Setter Property="Command" Value="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=Menu}}" />
+                            <Setter Property="CommandParameter" Value="{Binding}" />
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
                 </MenuItem>
             </MenuItem>
         </Menu>

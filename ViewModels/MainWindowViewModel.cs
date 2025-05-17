@@ -49,8 +49,6 @@ namespace DocCreator01.ViewModel
             _generatedFilesHelper = generatedFilesHelper;
             _browserService = browserService;
             _dirtyStateMgr = new DirtyStateManager();
-
-            // Initialize SettingsViewModel
             
             // Subscribe to project changes
             _projectHelper.ProjectChanged += (s, project) => 
@@ -71,6 +69,7 @@ namespace DocCreator01.ViewModel
                 this.RaisePropertyChanged(nameof(WindowTitle));
 
             // Commands
+            NewProjectCommand = ReactiveCommand.Create(CreateNewProjectUi);
             AddTabCommand = ReactiveCommand.Create(AddTab);
             OpenCommand = ReactiveCommand.Create(OpenFile);
             OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent);
@@ -111,6 +110,7 @@ namespace DocCreator01.ViewModel
         #region commands
 
         // Collection of TextPartListViewModels for display in the DataGrid
+        public ReactiveCommand<Unit, Unit> NewProjectCommand { get; }
         public ReactiveCommand<Unit, Unit> AddTabCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenCommand { get; }
         public ReactiveCommand<string, Unit> OpenRecentCommand { get; }

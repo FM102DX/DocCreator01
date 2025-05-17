@@ -16,7 +16,7 @@ namespace DocCreator01.Contracts
 
         void SaveProject(Project project, string filePath);
 
-        Project CreateNewProject();
+        void CreateNewProject();
 
         bool CloseCurrentProject(bool? saveChanges = null);
     }

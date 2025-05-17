@@ -15,6 +15,7 @@ using System.Reactive.Linq;
 using System.Windows.Controls;
 using DocCreator01.Services;
 using System.ComponentModel;
+using ReactiveUI.Fody.Helpers;
 
 namespace DocCreator01.ViewModel
 {
@@ -50,9 +51,7 @@ namespace DocCreator01.ViewModel
             _dirtyStateMgr = new DirtyStateManager();
 
             // Initialize SettingsViewModel
-            SettingsViewModel = new SettingsViewModel(_projectHelper.CurrentProject.Settings,_projectHelper, new DirtyStateManager());
-            _dirtyStateMgr.AddSubscription(SettingsViewModel);
-
+            
             // Subscribe to project changes
             _projectHelper.ProjectChanged += (s, project) => 
             {
@@ -138,7 +137,7 @@ namespace DocCreator01.ViewModel
         public ObservableCollection<MainGridItemViewModel> MainGridLines { get; } = new();
         public bool IsProjectDirty => DirtyStateMgr.IsDirty;
 
-        public SettingsViewModel SettingsViewModel { get; }
+        [Reactive] public SettingsViewModel SettingsViewModel { get; private set; }
 
         public Project CurrentProject => _projectHelper.CurrentProject;
 
@@ -294,7 +293,8 @@ namespace DocCreator01.ViewModel
                     Tabs.Add(vm);
                 }
             }
-            
+            SettingsViewModel = new SettingsViewModel(_projectHelper.CurrentProject.Settings, _projectHelper, new DirtyStateManager());
+            _dirtyStateMgr.AddSubscription(SettingsViewModel);
             SelectedTab = Tabs.FirstOrDefault();
             _generatedFilesHelper.Initialize(CurrentProject);
             _dirtyStateMgr.ResetDirtyState();

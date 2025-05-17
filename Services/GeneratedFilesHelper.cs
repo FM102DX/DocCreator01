@@ -72,7 +72,11 @@ namespace DocCreator01.Services
                         filePath = await _pythonHelper.CreateDocumentAsync(type, parts, fileName);
                         break;
                     case GenerateFileTypeEnum.HTML:
-                        filePath = _htmlDocumentCreator.CreateDocument(parts, fileName);
+                        // Pass the selected HTML generation profile to the HTML document creator
+                        filePath = _htmlDocumentCreator.CreateDocument(
+                            parts, 
+                            fileName, 
+                            _project.Settings.CurrentHtmlGenerationProfile);
                         break;
                     default:
                         throw new NotSupportedException($"Document type {type} is not supported.");

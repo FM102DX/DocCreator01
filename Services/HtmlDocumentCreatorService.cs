@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Windows;
 using HtmlAgilityPack;
 
 namespace DocCreator01.Services
@@ -24,11 +25,20 @@ namespace DocCreator01.Services
         public string OutputDirectory => _appPathsHelper.DocumentsOutputDirectory;
 
         /// <inheritdoc />
-        public string CreateDocument(IEnumerable<TextPart> textParts, string outputFileName)
+        public string CreateDocument(IEnumerable<TextPart> textParts, string outputFileName, HtmlGenerationProfile profile = null)
         {
             if (textParts is null) throw new ArgumentNullException(nameof(textParts));
             if (string.IsNullOrWhiteSpace(outputFileName))
                 throw new ArgumentException("Имя файла обязательно.", nameof(outputFileName));
+
+            // Display message box showing the selected profile
+            if (profile != null)
+            {
+                MessageBox.Show($"Используется профиль = {profile.Name}", 
+                    "HTML Generation Profile", 
+                    MessageBoxButton.OK, 
+                    MessageBoxImage.Information);
+            }
 
             Directory.CreateDirectory(OutputDirectory);
             string outputFilePath = Path.Combine(OutputDirectory, outputFileName);
@@ -39,7 +49,6 @@ namespace DocCreator01.Services
             //html = FormatTables(html,(5,5,5,5));
             html = FormatTablesSlim(html, (5, 5, 5, 5));
             
-
             // Синхронная IO-операция
             File.WriteAllText(outputFilePath, html, Encoding.UTF8);
 

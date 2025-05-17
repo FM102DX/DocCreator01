@@ -22,23 +22,18 @@ namespace DocCreator01.ViewModels
             _project = project ?? throw new ArgumentNullException(nameof(project));
             _dirtyStateMgr = dirtyStateMgr ?? new DirtyStateManager();
             
-            // Create SettingsViewModel with all required dependencies
-            // This will handle all GenDocType and HTML Profile logic
             SettingsVm = new SettingsViewModel(
                 _project.Settings, 
                 projectHelper ?? throw new ArgumentNullException(nameof(projectHelper)), 
                 new DirtyStateManager()); // Use a separate dirty manager for SettingsViewModel
             
-            // Register the SettingsViewModel with this VM's dirty state manager
             _dirtyStateMgr.AddSubscription(SettingsVm);
             
-            // Initialize remaining project properties
             Name = _project.Name;
             DocTitle = _project.Settings.DocTitle;
             DocDescription = _project.Settings.DocDescription;
             DocCreatedBy = _project.Settings.DocCretaedBy;
             
-            // Synchronize property changes with model
             this.WhenAnyValue(vm => vm.Name)
                 .Skip(1)
                 .Subscribe(v => {

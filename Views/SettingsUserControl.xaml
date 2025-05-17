@@ -33,7 +33,7 @@
                     <StackPanel Visibility="{Binding GenDocType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static enums:GenerateFileTypeEnum.HTML}}">
                         <TextBlock Text="HTML Generation Profile:" Margin="0,0,0,5"/>
                         <ComboBox ItemsSource="{Binding HtmlGenerationProfiles}"
-                                  SelectedItem="{Binding SelectedHtmlGenerationProfile}"
+                                  SelectedItem="{Binding SelectedHtmlGenerationProfile, UpdateSourceTrigger=PropertyChanged}"
                                   DisplayMemberPath="Name"
                                   Margin="0,0,0,5"/>
                     </StackPanel>

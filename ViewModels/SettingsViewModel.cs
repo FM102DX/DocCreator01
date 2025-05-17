@@ -28,23 +28,9 @@ namespace DocCreator01.ViewModels
             _projectHelper = projectHelper ?? throw new ArgumentNullException(nameof(projectHelper));
             _dirtyStateMgr = dirtyStateMgr ?? new DirtyStateManager();
 
-            // Initialize GenDocType from model
             GenDocType = Model.GenDocType;
-
-            // Load HTML Generation Profiles using the injected IProjectHelper instance
             HtmlGenerationProfiles = _projectHelper.GetHtmlGenerationProfiles();
-            
-            // Initialize the selected profile:
-            // 1. If CurrentHtmlGenerationProfile object is already set in the model, use it.
-            // 2. Else, if CurrentHtmlGenerationProfileId is set, try to find the profile in the loaded list.
-            // 3. Else, default to the first profile in the list.
-            if (Model.CurrentHtmlGenerationProfile == null && Model.CurrentHtmlGenerationProfileId != 0 && HtmlGenerationProfiles != null)
-            {
-                Model.CurrentHtmlGenerationProfile = HtmlGenerationProfiles.FirstOrDefault(p => p.Id == Model.CurrentHtmlGenerationProfileId);
-            }
-            SelectedHtmlGenerationProfile = Model.CurrentHtmlGenerationProfile ?? HtmlGenerationProfiles?.FirstOrDefault();
-
-            // When SelectedHtmlGenerationProfile (UI selection) changes, update the model
+            SelectedHtmlGenerationProfile = Model.CurrentHtmlGenerationProfile;
             this.WhenAnyValue(x => x.SelectedHtmlGenerationProfile)
                 .Skip(1) // Skip initial set, only react to user changes
                 .Subscribe(profile =>
@@ -68,16 +54,6 @@ namespace DocCreator01.ViewModels
                         Model.GenDocType = type;
                         _dirtyStateMgr.MarkAsDirty();
                     }
-                })
-                .DisposeWith(_cleanup);
-
-            // When Model.GenDocType changes, update the property
-            this.WhenAnyValue(x => x.Model.GenDocType)
-                .ObserveOn(RxApp.MainThreadScheduler) // Ensure UI properties are updated on the UI thread
-                .Subscribe(type =>
-                {
-                    if (GenDocType != type)
-                        GenDocType = type;
                 })
                 .DisposeWith(_cleanup);
         }

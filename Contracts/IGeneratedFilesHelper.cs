@@ -52,6 +52,7 @@ namespace DocCreator01.Contracts
         /// <returns>True if successfully renamed, false otherwise</returns>
         bool RenameFile(GeneratedFile generatedFile, string newName);
 
+        void DeleteAllFiles();
         void RefreshExistingFiles();
     }
 }

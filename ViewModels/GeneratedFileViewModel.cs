@@ -10,6 +10,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Reactive;
+using DocCreator01.Messages;
 
 namespace DocCreator01.ViewModels
 {
@@ -43,6 +44,7 @@ namespace DocCreator01.ViewModels
             OpenInBrowserCommand = ReactiveCommand.Create(OpenInBrowser);
             OpenInNotepadPlusPlusCommand = ReactiveCommand.Create(OpenInNotepadPlusPlus);
             OpenInWordCommand = ReactiveCommand.Create(OpenInWord);
+            DeleteAllGeneratedFilesCommand = ReactiveCommand.Create(DeleteAllGeneratedFiles);
         }
 
         #region Commands
@@ -51,6 +53,7 @@ namespace DocCreator01.ViewModels
         public ReactiveCommand<Unit, Unit> OpenInBrowserCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenInNotepadPlusPlusCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenInWordCommand { get; }
+        public ReactiveCommand<Unit, Unit> DeleteAllGeneratedFilesCommand { get; }
         #endregion
 
         #region Command Implementations
@@ -302,6 +305,37 @@ namespace DocCreator01.ViewModels
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+        private void DeleteAllGeneratedFiles()
+        {
+            if (_generatedFilesHelper != null)
+            {
+                var result = MessageBox.Show(
+                    "Are you sure you want to delete all generated files?",
+                    "Delete All Files",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        _generatedFilesHelper.DeleteAllFiles();
+                        // After deletion, refresh the UI list of generated files
+
+                        MessageBus.Current.SendMessage(new GeneratedFilesUpdatedMessage());
+
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(
+                            $"Error deleting files: {ex.Message}",
+                            "Error",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                    }
+                }
+            }
         }
     }
 }

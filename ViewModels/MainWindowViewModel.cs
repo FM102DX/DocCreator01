@@ -17,6 +17,7 @@ using DocCreator01.Services;
 using System.ComponentModel;
 using ReactiveUI.Fody.Helpers;
 using System.Reactive.Disposables;
+using System.Runtime.InteropServices.Marshalling;
 using DocCreator01.Messages;
 
 namespace DocCreator01.ViewModel
@@ -89,8 +90,7 @@ namespace DocCreator01.ViewModel
             MoveRightCommand = ReactiveCommand.Create(MoveCurrentRight);
             ActivateTabCommand = ReactiveCommand.Create(ActivateTab);
             OpenSettingsTabCommand = ReactiveCommand.Create(OpenSettingsTab);
-            DeleteAllGeneratedFilesCommand = ReactiveCommand.Create(DeleteAllGeneratedFiles);
-            
+
             OpenDocumentsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.DocumentsOutputDirectory));
             OpenScriptsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.ScriptsDirectory));
             OpenProjectFolderCommand = ReactiveCommand.Create(() => {
@@ -99,45 +99,41 @@ namespace DocCreator01.ViewModel
             });
 
             GenerateFileCommand = ReactiveCommand.Create(GenerateOutputFile);
-
             _projectHelper.CurrentProject.ProjectData.TextParts.CollectionChanged += (s, e) =>
                 RefreshTextPartViewModels();
-
             _generatedFilesHelper.Initialize(CurrentProject);
-
-            //this.WhenAnyValue(x => x.CurrentProject.ProjectData.GeneratedFiles)
-            //    .Subscribe(_ =>
-            //    {
-            //        RefreshGeneratedFilesViewModels(CurrentProject.ProjectData.GeneratedFiles,
-            //            GeneratedFilesViewModels);
-            //    });
-            
-            LoadRecentFiles(); // Load recent files on startup
+            LoadRecentFiles();
 
             // React when generated files are updated
             MessageBus.Current
                 .Listen<GeneratedFilesUpdatedMessage>()
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ =>
-                    RefreshGeneratedFilesViewModels(
-                        CurrentProject.ProjectData.GeneratedFiles,
-                        GeneratedFilesViewModels))
+                .Subscribe(_ => RefreshGeneratedFiles())
                 .DisposeWith(_cleanup);
 
             // React when project is loaded
             MessageBus.Current
                 .Listen<ProjectLoadedMessage>()
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(msg => {
-                    // Handle any necessary UI updates after project is loaded
-                    RefreshGeneratedFilesViewModels(
-                        msg.Project.ProjectData.GeneratedFiles,
-                        GeneratedFilesViewModels);
-                })
+                .Subscribe(msg => RefreshGeneratedFiles())
                 .DisposeWith(_cleanup);
+
+            MessageBus.Current
+                .Listen<AllFilesDeletedMessage>()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(msg => RefreshGeneratedFiles())
+                .DisposeWith(_cleanup);
+
         }
 
         #region commands
+
+        private void RefreshGeneratedFiles()
+        {
+            RefreshGeneratedFilesViewModels(
+                CurrentProject.ProjectData.GeneratedFiles,
+                GeneratedFilesViewModels);
+        }
 
         // Collection of TextPartListViewModels for display in the DataGrid
         public ReactiveCommand<Unit, Unit> NewProjectCommand { get; }
@@ -161,7 +157,7 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> OpenScriptsFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenProjectFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenSettingsTabCommand { get; }
-        public ReactiveCommand<Unit, Unit> DeleteAllGeneratedFilesCommand { get; }
+
 
         #endregion
 
@@ -598,9 +594,8 @@ namespace DocCreator01.ViewModel
             }
         }
 
-        // IDirtyTrackable implementation
-        public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
 
+        public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
         public void Dispose() => _cleanup.Dispose();
     }
 }

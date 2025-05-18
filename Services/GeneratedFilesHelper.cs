@@ -53,7 +53,7 @@ namespace DocCreator01.Services
             try
             {
                 // Only include text parts marked for inclusion
-                var parts = _project.ProjectData.TextParts.Where(p => p.IncludeInDocument && !string.IsNullOrEmpty(p.Text)).ToList();
+                var parts = _project.ProjectData.TextParts.Where(p => p.IncludeInDocument).ToList();
                 
                 if (!parts.Any())
                 {

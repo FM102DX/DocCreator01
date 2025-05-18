@@ -1,0 +1,140 @@
+﻿<UserControl x:Class="DocCreator01.Views.TabControlPanelUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:DocCreator01.ViewModels"
+             xmlns:views="clr-namespace:DocCreator01.Views"
+             xmlns:local="clr-namespace:DocCreator01"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <!-- Single style for all four toolbar buttons -->
+        <Style x:Key="ToolbarButtonStyle" TargetType="Button">
+            <Setter Property="Width"           Value="27"/>
+            <Setter Property="Height"          Value="27"/>
+            <Setter Property="Padding"         Value="0"/>
+            <Setter Property="Margin"         Value="2"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Focusable"       Value="False"/>
+        </Style>
+
+        <!-- Style for the close button in a tab header -->
+        <Style x:Key="ClosableTabButtonStyle" TargetType="Button">
+            <Setter Property="Width"        Value="25"/>
+            <Setter Property="Height"       Value="25"/>
+            <Setter Property="FontWeight"   Value="Bold"/>
+            <Setter Property="FontSize"     Value="18"/>
+            <Setter Property="Background"   Value="Transparent"/>
+            <Setter Property="Foreground"   Value="#666"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Focusable"    Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="Red"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Header template with close button -->
+        <DataTemplate x:Key="ClosableTabHeaderTemplate">
+            <Grid MinHeight="30" MinWidth="70">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding TabHeader}"
+                           VerticalAlignment="Center"
+                           FontSize="14"
+                           Foreground="#333"/>
+
+                <Button Grid.Column="1"
+                        Style="{StaticResource ClosableTabButtonStyle}"
+                        Content="x"
+                        ToolTip="Close tab"
+                        Command="{Binding DataContext.CloseTabCommand, RelativeSource={RelativeSource AncestorType=TabControl}}"
+                        CommandParameter="{Binding}"/>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Add DataTemplateSelector -->
+        
+        <!-- Template for TextPart tabs -->
+        <DataTemplate x:Key="TextPartTabTemplate" DataType="{x:Type vm:TabPageViewModel}">
+            <views:TextPartUserControl DataContext="{Binding }"/>
+        </DataTemplate>
+        
+        <!-- Template for Settings tabs -->
+        <DataTemplate x:Key="SettingsTabTemplate" DataType="{x:Type vm:ProjectSettingsTabViewModel}">
+            <views:ProjectSettingsUserControl/>
+        </DataTemplate>
+        <views:TabContentTemplateSelector x:Key="TabContentTemplateSelector" 
+                                          TextPartTemplate="{StaticResource TextPartTabTemplate}"
+                                          SettingsTemplate="{StaticResource SettingsTabTemplate}"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+            <Button Style="{StaticResource ToolbarButtonStyle}"
+                    Background="Purple"
+                    Command="{Binding OpenDocumentsFolderCommand}"
+                    ToolTip="Open Documents Folder"/>
+
+            <Button Style="{StaticResource ToolbarButtonStyle}"
+                    Background="Green"
+                    Command="{Binding OpenScriptsFolderCommand}"
+                    ToolTip="Open Scripts Folder"/>
+
+            <Button Style="{StaticResource ToolbarButtonStyle}"
+                    Background="Red"
+                    Command="{Binding OpenProjectFolderCommand}"
+                    ToolTip="Open Project Folder"/>
+            
+            <Button Style="{StaticResource ToolbarButtonStyle}"
+                    Background="Purple"
+                    Command="{Binding OpenSettingsTabCommand}"
+                    ToolTip="Открыть настройки">
+                <TextBlock Text="⚙" FontSize="16" FontWeight="Bold"/>
+            </Button>
+
+            <Button Style="{StaticResource ToolbarButtonStyle}"
+                    Content="+"
+                    Background="Red"
+                    Foreground="White"
+                    Command="{Binding AddTabCommand}"
+                    ToolTip="Add Tab"/>
+        </StackPanel>
+
+        <!-- Tab control -->
+        <TabControl Grid.Row="1" 
+                    ItemsSource="{Binding Tabs}" 
+                    SelectedItem="{Binding SelectedTab}" 
+                    ContentTemplateSelector="{StaticResource TabContentTemplateSelector}"
+                    TabStripPlacement="Top">
+            <TabControl.ItemContainerStyle>
+                <Style TargetType="TabItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="HeaderTemplate" Value="{StaticResource ClosableTabHeaderTemplate}"/>
+                    <Setter Property="MinWidth" Value="70"/>
+                    <Setter Property="Height"   Value="30"/>
+                    <EventSetter Event="MouseRightButtonUp" Handler="TabItem_RightClick"/>
+                </Style>
+            </TabControl.ItemContainerStyle>
+        </TabControl>
+    </Grid>
+</UserControl>

@@ -1,0 +1,86 @@
+<UserControl x:Class="DocCreator01.Views.ProjectSettingsUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:DocCreator01.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid Margin="20">
+        <StackPanel>
+            <TextBlock Text="Project Settings" 
+                       FontSize="20" 
+                       FontWeight="Bold" 
+                       Margin="0,0,0,20"/>
+            
+            <!-- Project Name Section -->
+            <GroupBox Header="Project Information" Padding="10" Margin="0,0,0,20">
+                <Grid>
+                    <!-- 2 колонки: подпись + поле ввода -->
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 3 строки под DocTitle / DocDescription / DocCreatedBy -->
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Project Name -->
+                    <TextBlock Grid.Row="0"
+                               Text="Project Name:"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
+                    <TextBox  Grid.Row="0" Grid.Column="1"
+                              Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                              Padding="5,2"
+                              Margin="0,5,0,5"/>
+
+                    <!-- DocTitle -->
+                    <TextBlock Grid.Row="1"
+                               Text="Document Title:"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
+                    <TextBox  Grid.Row="1" Grid.Column="1"
+                              Text="{Binding DocTitle, UpdateSourceTrigger=PropertyChanged}"
+                              Padding="5,2"
+                              Margin="0,5,0,5"/>
+
+                    <!-- DocDescription -->
+                    <TextBlock Grid.Row="2"
+                               Text="Document Description:"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
+                    <TextBox  Grid.Row="2" Grid.Column="1"
+                              Text="{Binding DocDescription, UpdateSourceTrigger=PropertyChanged}"
+                              Padding="5,2"
+                              Margin="0,5,0,5"/>
+
+                    <!-- DocCreatedBy -->
+                    <TextBlock Grid.Row="3"
+                               Text="Created By:"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
+                    <TextBox  Grid.Row="3" Grid.Column="1"
+                              Text="{Binding DocCreatedBy, UpdateSourceTrigger=PropertyChanged}"
+                              Padding="5,2"
+                              Margin="0,5,0,5"/>
+                </Grid>
+            </GroupBox>
+
+
+          <GroupBox Header="Document Generation Options" Padding="10" Margin="0,0,0,20">
+                <local:SettingsUserControl DataContext="{Binding SettingsVm}"/>
+            </GroupBox>
+            
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,10 @@
+﻿<Application x:Class="DocCreator01.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:DocCreator01.Converters">
+    <!-- Убираем StartupUri, используем код для запуска главного окна через DI -->
+    <Application.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <!-- Other resources here... -->
+    </Application.Resources>
+</Application>

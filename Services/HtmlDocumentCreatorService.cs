@@ -35,14 +35,23 @@ namespace DocCreator01.Services
             string html = "";
             html = BuildHtml(textParts);
             html = ToCenteredDocument(html, profile);
-            switch (profile.HtmlGenerationPattern)
+
+            // -------------------------------------------------
+            // Cell paddings come from HtmlTableCellPaddings
+            // -------------------------------------------------
+            var cellInfo = profile?.HtmlTableCellPaddings;
+            var cellPadding = cellInfo == null
+                ? (5, 5, 5, 5)
+                : ((int)cellInfo.Top, (int)cellInfo.Right, (int)cellInfo.Bottom, (int)cellInfo.Left);
+
+            switch (profile?.HtmlGenerationPattern)
             {
                 default:
                 case HtmlGenerationPatternEnum.AsChatGpt:
-                    html = FormatTablesSlim(html, (5, 5, 5, 5));
+                    html = FormatTablesSlim(html, cellPadding);
                     break;
                 case HtmlGenerationPatternEnum.PlainBlueHeader:
-                    html = FormatTablesClassic(html, (5, 5, 5, 5));
+                    html = FormatTablesClassic(html, cellPadding);
                     break;
             }
 
@@ -80,7 +89,6 @@ namespace DocCreator01.Services
                     : $"<h{part.Level}>{Escape(part.Name)}</h{part.Level}><div>{Escape(part.Text).Replace(Environment.NewLine, "<br>")}</div>";
 
                 sb.AppendLine(htmlContent);
-                sb.AppendLine("<hr>");
             }
 
             sb.AppendLine("</body>");

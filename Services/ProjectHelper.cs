@@ -124,7 +124,7 @@ namespace DocCreator01.Services
                     HtmlH4Margins = new ElementSpacingInfo { Top = 14, Right = 0, Bottom = 10, Left = 0 },
                     HtmlH5Margins = new ElementSpacingInfo { Top = 12, Right = 0, Bottom = 8, Left = 0 },
                     HtmlDocumentPaddings = new ElementSpacingInfo { Top = 100, Right = 100, Bottom = 100, Left = 100 },
-                    HtmlTableCellPaddings = new ElementSpacingInfo { Top = 8, Right = 8, Bottom = 8, Left = 8 },
+                    HtmlTableCellPaddings = new ElementSpacingInfo { Top = 10, Right = 12, Bottom = 5, Left = 3 },
                     TableHeaderColor = "#F1F3F6",
                     HtmlGenerationPattern = HtmlGenerationPatternEnum.AsChatGpt
                 },
@@ -138,7 +138,7 @@ namespace DocCreator01.Services
                     HtmlH3Margins = new ElementSpacingInfo { Top = 14, Right = 0, Bottom = 8, Left = 0 },
                     HtmlH4Margins = new ElementSpacingInfo { Top = 12, Right = 0, Bottom = 6, Left = 0 },
                     HtmlH5Margins = new ElementSpacingInfo { Top = 10, Right = 0, Bottom = 4, Left = 0 },
-                    HtmlTableCellPaddings = new ElementSpacingInfo { Top = 6, Right = 6, Bottom = 6, Left = 6 },
+                    HtmlTableCellPaddings = new ElementSpacingInfo { Top = 10, Right = 12, Bottom = 5, Left = 3 },
                     TableHeaderColor = "#F1F3F6",
                     HtmlGenerationPattern = HtmlGenerationPatternEnum.PlainBlueHeader
                 }

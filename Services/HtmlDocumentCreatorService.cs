@@ -86,7 +86,7 @@ namespace DocCreator01.Services
             {
                 string htmlContent = !string.IsNullOrEmpty(part.Html)
                     ? part.Html
-                    : $"<h{part.Level}>{Escape(part.Name)}</h{part.Level}><div>{Escape(part.Text).Replace(Environment.NewLine, "<br>")}</div>";
+                    : BuildDefaultHtml(part);
 
                 sb.AppendLine(htmlContent);
             }
@@ -95,6 +95,16 @@ namespace DocCreator01.Services
             sb.AppendLine("</html>");
 
             return sb.ToString();
+        }
+
+        private static string BuildDefaultHtml(TextPart part)
+        {
+            // Add paragraph number to the heading if available
+            string headingText = !string.IsNullOrWhiteSpace(part.ParagraphNo)
+                ? $"{part.ParagraphNo} {Escape(part.Name)}"
+                : Escape(part.Name);
+                
+            return $"<h{part.Level}>{headingText}</h{part.Level}><div>{Escape(part.Text).Replace(Environment.NewLine, "<br>")}</div>";
         }
 
         /// <summary>

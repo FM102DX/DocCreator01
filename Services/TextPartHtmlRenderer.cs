@@ -54,7 +54,7 @@ namespace DocCreator01.Services
                 _                    => ConvertPlainText(part.Text)        // обычный текст
             };
 
-            string heading = BuildHeading(part.Name, part.Level);
+            string heading = BuildHeading(part.Name, part.Level, part.ParagraphNo);
             return $"{heading}\n{body}".Trim();
         }
 
@@ -138,12 +138,18 @@ namespace DocCreator01.Services
             return string.Join(Environment.NewLine, paragraphs);
         }
 
-        private static string BuildHeading(string name, int level)
+        private static string BuildHeading(string name, int level, string paragraphNo = null)
         {
             if (string.IsNullOrWhiteSpace(name)) return string.Empty;
 
             int lvl = Math.Clamp(level, 1, 5);
-            return $"<h{lvl}>{System.Net.WebUtility.HtmlEncode(name)}</h{lvl}>";
+            
+            // Add paragraph number to the heading if available
+            string headingText = !string.IsNullOrWhiteSpace(paragraphNo)
+                ? $"{paragraphNo} {System.Net.WebUtility.HtmlEncode(name)}"
+                : System.Net.WebUtility.HtmlEncode(name);
+                
+            return $"<h{lvl}>{headingText}</h{lvl}>";
         }
 
         /* ---------- определение формата ---------- */

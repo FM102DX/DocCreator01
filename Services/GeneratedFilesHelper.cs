@@ -4,6 +4,8 @@ using DocCreator01.Models;
 using DocCreator01.Utils;
 using DocCreator01.ViewModels;
 using DynamicData;
+using ReactiveUI;
+using DocCreator01.Messages;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -199,6 +201,7 @@ namespace DocCreator01.Services
         public void RefreshExistingFiles()
         {
             _project.ProjectData.GeneratedFiles = GetExistingFiles();
+            MessageBus.Current.SendMessage(new GeneratedFilesUpdatedMessage());
         }
          
         public ObservableCollection<GeneratedFile> GetExistingFiles()

@@ -16,10 +16,12 @@ using System.Windows.Controls;
 using DocCreator01.Services;
 using System.ComponentModel;
 using ReactiveUI.Fody.Helpers;
+using System.Reactive.Disposables;
+using DocCreator01.Messages;
 
 namespace DocCreator01.ViewModel
 {
-    public sealed class MainWindowViewModel : ReactiveObject, IDirtyTrackable
+    public sealed class MainWindowViewModel : ReactiveObject, IDirtyTrackable, IDisposable
     {
         private readonly IProjectRepository _repo;
         private readonly ITextPartHelper _textPartHelper;
@@ -28,7 +30,8 @@ namespace DocCreator01.ViewModel
         private readonly IGeneratedFilesHelper _generatedFilesHelper;
         private readonly IBrowserService _browserService;
         private readonly IDirtyStateManager _dirtyStateMgr;
-        
+        private readonly CompositeDisposable _cleanup = new();
+
         private string? _currentPath;
         private ITabViewModel? _selectedTab;
         private TextPart? _selectedMainGridItem;
@@ -109,6 +112,28 @@ namespace DocCreator01.ViewModel
             //    });
             
             LoadRecentFiles(); // Load recent files on startup
+
+            // React when generated files are updated
+            MessageBus.Current
+                .Listen<GeneratedFilesUpdatedMessage>()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ =>
+                    RefreshGeneratedFilesViewModels(
+                        CurrentProject.ProjectData.GeneratedFiles,
+                        GeneratedFilesViewModels))
+                .DisposeWith(_cleanup);
+
+            // React when project is loaded
+            MessageBus.Current
+                .Listen<ProjectLoadedMessage>()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(msg => {
+                    // Handle any necessary UI updates after project is loaded
+                    RefreshGeneratedFilesViewModels(
+                        msg.Project.ProjectData.GeneratedFiles,
+                        GeneratedFilesViewModels);
+                })
+                .DisposeWith(_cleanup);
         }
 
         #region commands
@@ -573,5 +598,7 @@ namespace DocCreator01.ViewModel
 
         // IDirtyTrackable implementation
         public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;
+
+        public void Dispose() => _cleanup.Dispose();
     }
 }

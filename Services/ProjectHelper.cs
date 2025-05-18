@@ -6,6 +6,8 @@ using Microsoft.Win32;
 using DocCreator01.Contracts;
 using DocCreator01.Data.Enums;
 using DocCreator01.Models;
+using ReactiveUI;
+using DocCreator01.Messages;
 
 namespace DocCreator01.Services
 {
@@ -42,6 +44,9 @@ namespace DocCreator01.Services
             // Notify listeners that the project has changed
             ProjectChanged?.Invoke(this, _currentProject);
 
+            // Notify the application that a project was loaded
+            MessageBus.Current.SendMessage(new ProjectLoadedMessage(project));
+            
             return project;
         }
 

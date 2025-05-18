@@ -69,20 +69,9 @@ namespace DocCreator01.ViewModels
                 {
                     try
                     {
-                        // Get access to the parent collection
-                        var projectDataCollection = _model.Project?.ProjectData?.GeneratedFiles;
-                        if (projectDataCollection != null)
-                        {
-                            _generatedFilesHelper.DeleteFile(_model, projectDataCollection);
-                        }
-                        else
-                        {
-                            MessageBox.Show(
-                                "Не удалось удалить файл - проблема с коллекцией файлов.",
-                                "Ошибка",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Error);
-                        }
+                        _generatedFilesHelper.DeleteFile(_model, _model.Project?.ProjectData?.GeneratedFiles);
+                        // Notify UI about property changes
+
                     }
                     catch (Exception ex)
                     {

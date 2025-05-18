@@ -101,8 +101,12 @@ namespace DocCreator01.ViewModel
 
             _generatedFilesHelper.Initialize(CurrentProject);
 
-            this.WhenAnyValue(x => x.CurrentProject.ProjectData.GeneratedFiles)
-                .Subscribe(_ => RefreshGeneratedFilesViewModels(CurrentProject.ProjectData.GeneratedFiles, GeneratedFilesViewModels));
+            //this.WhenAnyValue(x => x.CurrentProject.ProjectData.GeneratedFiles)
+            //    .Subscribe(_ =>
+            //    {
+            //        RefreshGeneratedFilesViewModels(CurrentProject.ProjectData.GeneratedFiles,
+            //            GeneratedFilesViewModels);
+            //    });
             
             LoadRecentFiles(); // Load recent files on startup
         }

@@ -81,7 +81,7 @@ namespace DocCreator01.Services
                     default:
                         throw new NotSupportedException($"Document type {type} is not supported.");
                 }
-                _project.ProjectData.GeneratedFiles.Add(new GeneratedFile(){ FilePath = filePath, FileType = type });
+                _project.ProjectData.GeneratedFiles.Add(new GeneratedFile(){ FilePath = filePath, FileType = type, Project = this._project});
             }
             catch (Exception ex)
             {
@@ -128,14 +128,12 @@ namespace DocCreator01.Services
 
             try
             {
-                // Delete file from disk if it exists
                 if (File.Exists(generatedFile.FilePath))
                 {
                     File.Delete(generatedFile.FilePath);
                 }
-
-                // Remove from collection
                 generatedFiles.Remove(generatedFile);
+                RefreshExistingFiles();
                 return true;
             }
             catch (Exception ex)
@@ -211,6 +209,7 @@ namespace DocCreator01.Services
             {
                 if (generatedFile.Exists)
                 {
+                    generatedFile.Project = _project;
                     existingFiles.Add(generatedFile);
                 }
             }

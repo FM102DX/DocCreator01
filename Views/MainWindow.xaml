@@ -107,6 +107,9 @@
                                             <MenuItem Header="Удалить" 
                                                       Command="{Binding DeleteCommand}"/>
                                             <Separator />
+                                            <MenuItem Header="Удалить все"
+                                                      Command="{Binding DataContext.DeleteAllGeneratedFilesCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+                                            <Separator />
                                             
                                             <!-- HTML specific operations -->
                                             <MenuItem Header="Открыть в браузере" 

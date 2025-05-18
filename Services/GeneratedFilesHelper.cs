@@ -200,6 +200,7 @@ namespace DocCreator01.Services
 
         public void RefreshExistingFiles()
         {
+            if (_project == null || _project.ProjectData == null) return;
             _project.ProjectData.GeneratedFiles = GetExistingFiles();
             MessageBus.Current.SendMessage(new GeneratedFilesUpdatedMessage());
         }
@@ -207,6 +208,8 @@ namespace DocCreator01.Services
         public ObservableCollection<GeneratedFile> GetExistingFiles()
         {
             ObservableCollection<GeneratedFile> existingFiles = new ObservableCollection<GeneratedFile>();
+            if (_project == null || _project.ProjectData == null || _project.ProjectData.GeneratedFiles == null)
+                return existingFiles;
 
             foreach (var generatedFile in _project.ProjectData.GeneratedFiles)
             {
@@ -217,6 +220,34 @@ namespace DocCreator01.Services
                 }
             }
             return existingFiles;
+        }
+
+        public void DeleteAllFiles()
+        {
+            if (_project == null || _project.ProjectData == null || _project.ProjectData.GeneratedFiles == null)
+                return;
+
+            // Create a copy of the list to iterate over, as we'll be modifying the original
+            var filesToDelete = new List<GeneratedFile>(_project.ProjectData.GeneratedFiles);
+
+            foreach (var fileModel in filesToDelete)
+            {
+                try
+                {
+                    if (File.Exists(fileModel.FilePath))
+                    {
+                        File.Delete(fileModel.FilePath);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log or handle error for individual file deletion
+                    System.Diagnostics.Debug.WriteLine($"Error deleting file {fileModel.FilePath}: {ex.Message}");
+                }
+            }
+
+            _project.ProjectData.GeneratedFiles.Clear();
+            RefreshExistingFiles(); // This will send the message to update UI
         }
     }
 }

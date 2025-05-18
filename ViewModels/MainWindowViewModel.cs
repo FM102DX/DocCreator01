@@ -89,6 +89,7 @@ namespace DocCreator01.ViewModel
             MoveRightCommand = ReactiveCommand.Create(MoveCurrentRight);
             ActivateTabCommand = ReactiveCommand.Create(ActivateTab);
             OpenSettingsTabCommand = ReactiveCommand.Create(OpenSettingsTab);
+            DeleteAllGeneratedFilesCommand = ReactiveCommand.Create(DeleteAllGeneratedFiles);
             
             OpenDocumentsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.DocumentsOutputDirectory));
             OpenScriptsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.ScriptsDirectory));
@@ -160,6 +161,7 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> OpenScriptsFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenProjectFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenSettingsTabCommand { get; }
+        public ReactiveCommand<Unit, Unit> DeleteAllGeneratedFilesCommand { get; }
 
         #endregion
 

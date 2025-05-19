@@ -28,6 +28,8 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/> <!-- DateCreated -->
+                        <RowDefinition Height="Auto"/> <!-- Version -->
                     </Grid.RowDefinitions>
 
                     <!-- Project Name -->
@@ -71,6 +73,28 @@
                                Margin="0,0,10,0"/>
                     <TextBox  Grid.Row="3" Grid.Column="1"
                               Text="{Binding DocCreatedBy, UpdateSourceTrigger=PropertyChanged}"
+                              Padding="5,2"
+                              Margin="0,5,0,5"/>
+
+                    <!-- DateCreated -->
+                    <TextBlock Grid.Row="4"
+                               Text="Date Created:"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
+                    <TextBox  Grid.Row="4" Grid.Column="1"
+                              Text="{Binding DateCreated, UpdateSourceTrigger=PropertyChanged}"
+                              Padding="5,2"
+                              Margin="0,5,0,5"/>
+
+                    <!-- Version -->
+                    <TextBlock Grid.Row="5"
+                               Text="Version:"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
+                    <TextBox  Grid.Row="5" Grid.Column="1"
+                              Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"
                               Padding="5,2"
                               Margin="0,5,0,5"/>
                 </Grid>

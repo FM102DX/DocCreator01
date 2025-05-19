@@ -69,6 +69,8 @@ namespace DocCreator01.Services
     <tr><td style=""font-weight:600;padding:4px 8px;"">Title</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocTitle)}</td></tr>
     <tr><td style=""font-weight:600;padding:4px 8px;"">Description</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocDescription)}</td></tr>
     <tr><td style=""font-weight:600;padding:4px 8px;"">Created By</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocCretaedBy)}</td></tr>
+    <tr><td style=""font-weight:600;padding:4px 8px;"">Date Created</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DateCreated)}</td></tr>
+    <tr><td style=""font-weight:600;padding:4px 8px;"">Version</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.Version)}</td></tr>
 </table>";
 
                 var headerPart = new TextPart

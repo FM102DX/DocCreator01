@@ -33,6 +33,8 @@ namespace DocCreator01.ViewModels
             DocTitle = _project.Settings.DocTitle;
             DocDescription = _project.Settings.DocDescription;
             DocCreatedBy = _project.Settings.DocCretaedBy;
+            DateCreated = _project.Settings.DateCreated;
+            Version = _project.Settings.Version;
             
             this.WhenAnyValue(vm => vm.Name)
                 .Skip(1)
@@ -66,6 +68,22 @@ namespace DocCreator01.ViewModels
                 })
                 .DisposeWith(_cleanup);
 
+            this.WhenAnyValue(vm => vm.DateCreated)
+                .Skip(1)
+                .Subscribe(v => {
+                    _project.Settings.DateCreated = v;
+                    _dirtyStateMgr.MarkAsDirty();
+                })
+                .DisposeWith(_cleanup);
+
+            this.WhenAnyValue(vm => vm.Version)
+                .Skip(1)
+                .Subscribe(v => {
+                    _project.Settings.Version = v;
+                    _dirtyStateMgr.MarkAsDirty();
+                })
+                .DisposeWith(_cleanup);
+
             _dirtyStateMgr.IBecameDirty += () =>
                 this.RaisePropertyChanged(nameof(TabHeader));
             _dirtyStateMgr.DirtryStateWasReset += () =>
@@ -80,6 +98,8 @@ namespace DocCreator01.ViewModels
         [Reactive] public string DocTitle { get; set; } = string.Empty;
         [Reactive] public string DocDescription { get; set; } = string.Empty;
         [Reactive] public string DocCreatedBy { get; set; } = string.Empty;
+        [Reactive] public string DateCreated  { get; set; } = string.Empty; // new
+        [Reactive] public string Version      { get; set; } = string.Empty; // new
 
         public string TabHeader => DirtyStateMgr.IsDirty ? $"{BaseHeader}*" : BaseHeader;
 

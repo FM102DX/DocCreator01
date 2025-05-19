@@ -25,7 +25,13 @@ namespace DocCreator01.Models
 
 
         public string DocCretaedBy { get; set; } = String.Empty;
-        
+
+        /// <summary>Free-form creation date shown in Project Settings tab.</summary>
+        public string DateCreated { get; set; } = String.Empty;
+
+        /// <summary>Project version shown in Project Settings tab.</summary>
+        public string Version { get; set; } = String.Empty;
+
         public int CurrentHtmlGenerationProfileId { get; set; }
 
         [JsonIgnore]

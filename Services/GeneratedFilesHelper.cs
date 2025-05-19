@@ -64,33 +64,56 @@ namespace DocCreator01.Services
                 // 1. Build header table (no caption) from settings
                 //--------------------------------------------------
                 var s = _project.Settings;
-                string headerTableHtml = $@"
+                
+                // Create a list of table rows, only adding non-empty fields
+                var tableRows = new List<string>();
+                
+                if (!string.IsNullOrEmpty(s.DocTitle))
+                    tableRows.Add($@"<tr><td style=""font-weight:600;padding:4px 8px;"">Title</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocTitle)}</td></tr>");
+                    
+                if (!string.IsNullOrEmpty(s.DocDescription))
+                    tableRows.Add($@"<tr><td style=""font-weight:600;padding:4px 8px;"">Description</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocDescription)}</td></tr>");
+                    
+                if (!string.IsNullOrEmpty(s.DocCretaedBy))
+                    tableRows.Add($@"<tr><td style=""font-weight:600;padding:4px 8px;"">Created By</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocCretaedBy)}</td></tr>");
+                    
+                if (!string.IsNullOrEmpty(s.DateCreated))
+                    tableRows.Add($@"<tr><td style=""font-weight:600;padding:4px 8px;"">Date Created</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DateCreated)}</td></tr>");
+                    
+                if (!string.IsNullOrEmpty(s.Version))
+                    tableRows.Add($@"<tr><td style=""font-weight:600;padding:4px 8px;"">Version</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.Version)}</td></tr>");
+                
+                // Only create header table if there are non-empty fields
+                string headerTableHtml = tableRows.Count > 0 
+                    ? $@"
 <table style=""width:100%;border-collapse:collapse;margin-bottom:30px;"">
-    <tr><td style=""font-weight:600;padding:4px 8px;"">Title</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocTitle)}</td></tr>
-    <tr><td style=""font-weight:600;padding:4px 8px;"">Description</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocDescription)}</td></tr>
-    <tr><td style=""font-weight:600;padding:4px 8px;"">Created By</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocCretaedBy)}</td></tr>
-    <tr><td style=""font-weight:600;padding:4px 8px;"">Date Created</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DateCreated)}</td></tr>
-    <tr><td style=""font-weight:600;padding:4px 8px;"">Version</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.Version)}</td></tr>
-</table>";
+    {string.Join(Environment.NewLine + "    ", tableRows)}
+</table>"
+                    : string.Empty;
 
-                var headerPart = new TextPart
+                // Only add a header part if we have content
+                List<TextPart> allParts = new List<TextPart>();
+                if (!string.IsNullOrEmpty(headerTableHtml))
                 {
-                    Name      = string.Empty,
-                    Text      = headerTableHtml,   // keep same for completeness
-                    Html      = headerTableHtml,   // already-prepared HTML
-                    Level     = 1,
-                    IncludeInDocument = true
-                };
-
+                    var headerPart = new TextPart
+                    {
+                        Name = string.Empty,
+                        Text = headerTableHtml,   // keep same for completeness
+                        Html = headerTableHtml,   // already-prepared HTML
+                        Level = 1,
+                        IncludeInDocument = true
+                    };
+                    allParts.Add(headerPart);
+                }
+                
                 //--------------------------------------------------
                 // 2. Render HTML for all *content* parts
                 //--------------------------------------------------
                 _textPartHtmlRenderer.RenderHtml(contentParts);
-
-                // 3. Merge header + content
-                var allParts = new List<TextPart> { headerPart };
+                
+                // 3. Add content parts to final collection
                 allParts.AddRange(contentParts);
-
+                
                 //--------------------------------------------------
                 // 4. Generate output file
                 //--------------------------------------------------

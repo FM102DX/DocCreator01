@@ -53,37 +53,69 @@ namespace DocCreator01.Services
             try
             {
                 // Only include text parts marked for inclusion
-                var parts = _project.ProjectData.TextParts.Where(p => p.IncludeInDocument).ToList();
-                
-                if (!parts.Any())
-                {
+                var contentParts = _project.ProjectData.TextParts
+                                      .Where(p => p.IncludeInDocument)
+                                      .ToList();
+
+                if (!contentParts.Any())
                     throw new InvalidOperationException("No text parts are selected for inclusion in the document.");
-                }
 
-                // Render HTML for all text parts
-                _textPartHtmlRenderer.RenderHtml(parts);
+                //--------------------------------------------------
+                // 1. Build header table (no caption) from settings
+                //--------------------------------------------------
+                var s = _project.Settings;
+                string headerTableHtml = $@"
+<table style=""width:100%;border-collapse:collapse;margin-bottom:30px;"">
+    <tr><td style=""font-weight:600;padding:4px 8px;"">Title</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocTitle)}</td></tr>
+    <tr><td style=""font-weight:600;padding:4px 8px;"">Description</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocDescription)}</td></tr>
+    <tr><td style=""font-weight:600;padding:4px 8px;"">Created By</td><td style=""padding:4px 8px;"">{System.Net.WebUtility.HtmlEncode(s.DocCretaedBy)}</td></tr>
+</table>";
 
-                // Generate a filename based on project name
+                var headerPart = new TextPart
+                {
+                    Name      = string.Empty,
+                    Text      = headerTableHtml,   // keep same for completeness
+                    Html      = headerTableHtml,   // already-prepared HTML
+                    Level     = 1,
+                    IncludeInDocument = true
+                };
+
+                //--------------------------------------------------
+                // 2. Render HTML for all *content* parts
+                //--------------------------------------------------
+                _textPartHtmlRenderer.RenderHtml(contentParts);
+
+                // 3. Merge header + content
+                var allParts = new List<TextPart> { headerPart };
+                allParts.AddRange(contentParts);
+
+                //--------------------------------------------------
+                // 4. Generate output file
+                //--------------------------------------------------
                 string fileName = $"{_project.Name}_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid()}.{type.ToString().ToLower()}";
                 string filePath;
-                
-                // Branch based on document type
+
                 switch (type)
                 {
                     case GenerateFileTypeEnum.DOCX:
-                        filePath = await _pythonHelper.CreateDocumentAsync(type, parts, fileName);
+                        filePath = await _pythonHelper.CreateDocumentAsync(type, allParts, fileName);
                         break;
                     case GenerateFileTypeEnum.HTML:
-                        // Pass the selected HTML generation profile to the HTML document creator
                         filePath = _htmlDocumentCreator.CreateDocument(
-                            parts, 
-                            fileName, 
-                            _project.Settings.CurrentHtmlGenerationProfile);
+                                       allParts, 
+                                       fileName,
+                                       _project.Settings.CurrentHtmlGenerationProfile);
                         break;
                     default:
                         throw new NotSupportedException($"Document type {type} is not supported.");
                 }
-                _project.ProjectData.GeneratedFiles.Add(new GeneratedFile(){ FilePath = filePath, FileType = type, Project = this._project});
+
+                _project.ProjectData.GeneratedFiles.Add(new GeneratedFile
+                {
+                    FilePath = filePath, 
+                    FileType = type, 
+                    Project  = _project
+                });
             }
             catch (Exception ex)
             {

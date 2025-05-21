@@ -8,6 +8,7 @@ using DocCreator01.Data.Enums;
 using DocCreator01.Models;
 using ReactiveUI;
 using DocCreator01.Messages;
+using System.Linq;
 
 namespace DocCreator01.Services
 {
@@ -41,6 +42,8 @@ namespace DocCreator01.Services
             project.Settings.CurrentHtmlGenerationProfile = 
                 GetHtmlGenerationProfiles().FirstOrDefault(p=>p.Id== project.Settings.CurrentHtmlGenerationProfileId);
             
+            EnsureTextPartChunks(project);          // <-- new fix-up
+
             // Notify listeners that the project has changed
             ProjectChanged?.Invoke(this, _currentProject);
 
@@ -150,6 +153,36 @@ namespace DocCreator01.Services
             };
 
             return profiles;
+        }
+
+        // NEW: make sure chunks collection contains the main text
+        public void EnsureTextPartChunks(Project project)
+        {
+            if (project?.ProjectData?.TextParts == null) return;
+
+            foreach (var tp in project.ProjectData.TextParts)
+            {
+                if (string.IsNullOrWhiteSpace(tp?.Text)) continue;
+
+                // ensure collection exists
+                tp.TextPartChunks ??= new System.Collections.ObjectModel.ObservableCollection<TextPartChunk>();
+
+                // if first chunk missing or empty – create / fill it
+                if (tp.TextPartChunks.Count == 0 ||
+                    string.IsNullOrWhiteSpace(tp.TextPartChunks[0]?.Text))
+                {
+                    var chunk = new TextPartChunk
+                    {
+                        Id   = Guid.NewGuid(),
+                        Text = tp.Text
+                    };
+
+                    if (tp.TextPartChunks.Count == 0)
+                        tp.TextPartChunks.Add(chunk);
+                    else
+                        tp.TextPartChunks[0] = chunk;
+                }
+            }
         }
     }
 }

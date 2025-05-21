@@ -19,5 +19,12 @@ namespace DocCreator01.Contracts
         void CreateNewProject();
 
         bool CloseCurrentProject(bool? saveChanges = null);
+
+        /// <summary>
+        /// Ensures that each TextPart has the first chunk filled with the Text
+        /// (used right after loading a project from file).
+        /// </summary>
+        /// <param name="project">Project to inspect / fix.</param>
+        void EnsureTextPartChunks(Project project);
     }
 }

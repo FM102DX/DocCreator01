@@ -5,7 +5,8 @@ namespace DocCreator01.Contracts
 {
     public interface IHtmlDocumentCreatorService
     {
-        string CreateDocument(IEnumerable<TextPart> textParts, string outputFileName, HtmlGenerationProfile profile = null);
+        string CreateDocument(string outputFileName);
         string OutputDirectory { get; }
+        string GenerateHtml(IEnumerable<TextPart> textParts, Project project, HtmlGenerationProfile profile);
     }
 }

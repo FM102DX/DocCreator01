@@ -483,7 +483,7 @@ h1,h2,h3  {{color:#333366;}}";
             {
                 if (!string.IsNullOrWhiteSpace(value))
                     rows.Add($@"<tr>
-    <td style=""font-weight:600;padding:6px 10px;border:1px solid #c0c0c0;"">{label}</td>
+    <td style=""font-weight:600;padding:6px 10px;border:1px solid #c0c0c0;background-color:#f2f2f2;"">{label}</td>
     <td style=""padding:6px 10px;border:1px solid #c0c0c0;"">{System.Net.WebUtility.HtmlEncode(value)}</td>
 </tr>");
             }

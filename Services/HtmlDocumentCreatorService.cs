@@ -16,50 +16,60 @@ namespace DocCreator01.Services
     public class HtmlDocumentCreatorService : IHtmlDocumentCreatorService
     {
         private readonly IAppPathsHelper _appPathsHelper;
+        private string _html;
+        private ITextPartHtmlRenderer _textPartHtmlRenderer;
+        private Project _project;
+        private HtmlGenerationProfile currentProfile;
 
-        public HtmlDocumentCreatorService(IAppPathsHelper appPathsHelper)
+        public HtmlDocumentCreatorService(IAppPathsHelper appPathsHelper, ITextPartHtmlRenderer textPartHtmlRenderer)
         {
             _appPathsHelper = appPathsHelper ?? throw new ArgumentNullException(nameof(appPathsHelper));
+            _textPartHtmlRenderer = textPartHtmlRenderer;
         }
 
         public string OutputDirectory => _appPathsHelper.DocumentsOutputDirectory;
 
-        public string CreateDocument(IEnumerable<TextPart> textParts, string outputFileName, HtmlGenerationProfile profile = null)
+        public string GenerateHtml(IEnumerable<TextPart> textParts, Project project, HtmlGenerationProfile profile)
         {
-            if (textParts is null) throw new ArgumentNullException(nameof(textParts));
-            if (string.IsNullOrWhiteSpace(outputFileName))
-                throw new ArgumentException("Имя файла обязательно.", nameof(outputFileName));
+            _project = project;
 
-            Directory.CreateDirectory(OutputDirectory);
-            string outputFilePath = Path.Combine(OutputDirectory, outputFileName);
-            string html = "";
-            html = BuildHtml(textParts);
-            html = ToCenteredDocument(html, profile);
+            var allParts = new List<TextPart>();
+            var headerPart = CreateHeaderTable(_project.Settings);
+            allParts.Add(headerPart);
 
-            // -------------------------------------------------
-            // Cell paddings come from HtmlTableCellPaddings
-            // -------------------------------------------------
+            foreach (var part in textParts)
+            {
+                allParts.Add(part);
+            }
+
+            _textPartHtmlRenderer.RenderHtml(allParts);
+            _html = BuildHtml(allParts);
+            _html = ToCenteredDocument(_html, profile);
+
             var cellInfo = profile?.HtmlTableCellPaddings;
             var cellPadding = cellInfo == null
                 ? (5, 5, 5, 5)
                 : ((int)cellInfo.Top, (int)cellInfo.Right, (int)cellInfo.Bottom, (int)cellInfo.Left);
-
+            
             switch (profile?.HtmlGenerationPattern)
             {
                 default:
                 case HtmlGenerationPatternEnum.AsChatGpt:
-                    html = FormatTablesSlim(html, cellPadding);
+                    _html = FormatTablesSlim(_html, cellPadding);
                     break;
                 case HtmlGenerationPatternEnum.PlainBlueHeader:
-                    html = FormatTablesClassic(html, cellPadding);
+                    _html = FormatTablesClassic(_html, cellPadding);
                     break;
             }
+            _html = AjustHtmlFonts(_html, profile);
+            return _html;
+        }
 
-            html = AjustHtmlFonts(html, profile);
-
-            // Синхронная IO-операция
-            File.WriteAllText(outputFilePath, html, Encoding.UTF8);
-
+        public string CreateDocument(string outputFileName)
+        {
+            Directory.CreateDirectory(OutputDirectory);
+            string outputFilePath = Path.Combine(OutputDirectory, outputFileName);
+            File.WriteAllText(outputFilePath, _html, Encoding.UTF8);
             return outputFilePath;
         }
 
@@ -81,20 +91,27 @@ namespace DocCreator01.Services
             sb.AppendLine("</style>");
             sb.AppendLine("</head>");
             sb.AppendLine("<body>");
-
             foreach (var part in parts)
             {
                 string htmlContent = !string.IsNullOrEmpty(part.Html)
                     ? part.Html
-                    : $"<h{part.Level}>{Escape(part.Name)}</h{part.Level}><div>{Escape(part.Text).Replace(Environment.NewLine, "<br>")}</div>";
+                    : BuildDefaultHtml(part);
 
                 sb.AppendLine(htmlContent);
             }
-
             sb.AppendLine("</body>");
             sb.AppendLine("</html>");
-
             return sb.ToString();
+        }
+
+        private static string BuildDefaultHtml(TextPart part)
+        {
+            // Add paragraph number to the heading if available
+            string headingText = !string.IsNullOrWhiteSpace(part.ParagraphNo)
+                ? $"{part.ParagraphNo} {Escape(part.Name)}"
+                : Escape(part.Name);
+                
+            return $"<h{part.Level}>{headingText}</h{part.Level}><div>{Escape(part.Text).Replace(Environment.NewLine, "<br>")}</div>";
         }
 
         /// <summary>
@@ -187,11 +204,7 @@ h1,h2,h3  {{color:#333366;}}";
         /// <returns>Преобразованный HTML-текст</returns>
         public static string FormatTablesClassic(string rawHtml, (int top, int right, int bottom, int left) padding)
         {
-            var doc = new HtmlDocument
-            {
-                OptionFixNestedTags = true,
-                OptionAutoCloseOnEnd = true
-            };
+            var doc = new HtmlDocument { OptionFixNestedTags = true, OptionAutoCloseOnEnd = true };
             doc.LoadHtml(rawHtml);
 
             //--------------------------------------------------
@@ -226,9 +239,9 @@ h1,h2,h3  {{color:#333366;}}";
             head.AppendChild(styleNode);
 
             //--------------------------------------------------
-            // 2. Обрабатываем каждую таблицу
+            // 2. Обрабатываем каждую таблицу, КРОМЕ header-таблицы
             //--------------------------------------------------
-            var tables = doc.DocumentNode.SelectNodes("//table");
+            var tables = doc.DocumentNode.SelectNodes("//table[not(@data-header='1')]");
             if (tables != null)
             {
                 foreach (var table in tables)
@@ -290,11 +303,7 @@ h1,h2,h3  {{color:#333366;}}";
         /// <returns>Преобразованный HTML</returns>
         public static string FormatTablesSlim(string rawHtml, (int top, int right, int bottom, int left) padding)
         {
-            var doc = new HtmlAgilityPack.HtmlDocument
-            {
-                OptionFixNestedTags = true,
-                OptionAutoCloseOnEnd = true
-            };
+            var doc = new HtmlDocument { OptionFixNestedTags = true, OptionAutoCloseOnEnd = true };
             doc.LoadHtml(rawHtml);
 
             //--------------------------------------------------
@@ -333,9 +342,9 @@ h1,h2,h3  {{color:#333366;}}";
             head.AppendChild(styleNode);
 
             //--------------------------------------------------
-            // 2. Обход всех таблиц
+            // 2. Обход всех таблиц, КРОМЕ header-таблицы
             //--------------------------------------------------
-            var tables = doc.DocumentNode.SelectNodes("//table");
+            var tables = doc.DocumentNode.SelectNodes("//table[not(@data-header='1')]");
             if (tables != null)
             {
                 foreach (var table in tables)
@@ -459,6 +468,52 @@ h1,h2,h3  {{color:#333366;}}";
             return doc.DocumentNode.OuterHtml;
         }
 
+        /// <summary>
+        /// Creates a header table from project settings
+        /// </summary>
+        /// <param name="settings">Project settings</param>
+        /// <returns>HTML string with the header table, or empty string if no non-empty fields</returns>
+        public static TextPart CreateHeaderTable(Settings settings)
+        {
+            if (settings == null) return null;
+
+            var rows = new List<string>();
+
+            void AddRow(string label, string value)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                    rows.Add($@"<tr>
+    <td style=""font-weight:600;padding:6px 10px;border:1px solid #c0c0c0;background-color:#f2f2f2;"">{label}</td>
+    <td style=""padding:6px 10px;border:1px solid #c0c0c0;"">{System.Net.WebUtility.HtmlEncode(value)}</td>
+</tr>");
+            }
+
+            AddRow("Title",        settings.DocTitle);
+            AddRow("Description",  settings.DocDescription);
+            AddRow("Created By",   settings.DocCretaedBy);
+            AddRow("Date Created", settings.DateCreated);
+            AddRow("Version",      settings.Version);
+
+            string headerTableHtml = rows.Count == 0
+                ? string.Empty
+                : $@"<table data-header=""1"" style=""width:100%;
+                       border-collapse:collapse;border:1px solid #c0c0c0;
+                       margin-bottom:30px;"">
+    {string.Join(Environment.NewLine, rows)}
+</table>";
+
+            // Only create header part if we have content
+            if (string.IsNullOrEmpty(headerTableHtml))
+                return null;
+
+            return new TextPart {
+                Name = string.Empty,
+                Text = headerTableHtml,
+                Html = headerTableHtml,
+                Level = 1,
+                IncludeInDocument = true
+            };
+        }
 
     }
 }

@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 
 namespace DocCreator01.Services
 {
+        
     public class GeneratedFilesHelper : IGeneratedFilesHelper
     {
         private readonly IAppPathsHelper _appPathsHelper;
@@ -52,38 +53,35 @@ namespace DocCreator01.Services
             if (_project == null) return;
             try
             {
-                // Only include text parts marked for inclusion
-                var parts = _project.ProjectData.TextParts.Where(p => p.IncludeInDocument && !string.IsNullOrEmpty(p.Text)).ToList();
-                
-                if (!parts.Any())
-                {
+                var contentParts = _project.ProjectData.TextParts
+                                      .Where(p => p.IncludeInDocument)
+                                      .ToList();
+
+                if (!contentParts.Any())
                     throw new InvalidOperationException("No text parts are selected for inclusion in the document.");
-                }
-
-                // Render HTML for all text parts
-                _textPartHtmlRenderer.RenderHtml(parts);
-
-                // Generate a filename based on project name
+                
                 string fileName = $"{_project.Name}_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid()}.{type.ToString().ToLower()}";
                 string filePath;
-                
-                // Branch based on document type
+
                 switch (type)
                 {
                     case GenerateFileTypeEnum.DOCX:
-                        filePath = await _pythonHelper.CreateDocumentAsync(type, parts, fileName);
+                        filePath = await _pythonHelper.CreateDocumentAsync(type, contentParts, fileName);
                         break;
                     case GenerateFileTypeEnum.HTML:
-                        // Pass the selected HTML generation profile to the HTML document creator
-                        filePath = _htmlDocumentCreator.CreateDocument(
-                            parts, 
-                            fileName, 
-                            _project.Settings.CurrentHtmlGenerationProfile);
+                        _htmlDocumentCreator.GenerateHtml(contentParts, _project, _project.Settings.CurrentHtmlGenerationProfile);
+                        filePath = _htmlDocumentCreator.CreateDocument(fileName);
                         break;
                     default:
                         throw new NotSupportedException($"Document type {type} is not supported.");
                 }
-                _project.ProjectData.GeneratedFiles.Add(new GeneratedFile(){ FilePath = filePath, FileType = type, Project = this._project});
+
+                _project.ProjectData.GeneratedFiles.Add(new GeneratedFile
+                {
+                    FilePath = filePath, 
+                    FileType = type, 
+                    Project  = _project
+                });
             }
             catch (Exception ex)
             {

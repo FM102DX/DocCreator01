@@ -77,17 +77,17 @@ namespace DocCreator01.ViewModel
             AddTabCommand = ReactiveCommand.Create(AddTab);
             OpenCommand = ReactiveCommand.Create(OpenFile);
             OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent);
-            SaveCommand = ReactiveCommand.Create(Save);
+            SaveCommand = ReactiveCommand.Create(SaveProject);
             CloseTabCommand = ReactiveCommand.Create<ITabViewModel>(CloseTab);
             DeleteTabCommand = ReactiveCommand.Create<ITabViewModel>(DeleteTab);
             ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown());
             AddTextPartCommand = ReactiveCommand.Create(AddTab);
-            RemoveTextPartCommand = ReactiveCommand.Create(RemoveCurrent);
-            MoveUpCommand = ReactiveCommand.Create(MoveCurrentUp);
-            MoveDownCommand = ReactiveCommand.Create(MoveCurrentDown);
+            RemoveTextPartCommand = ReactiveCommand.Create(RemoveSelectedTextPart);
+            MoveUpCommand = ReactiveCommand.Create(MoveSelectedTextPartUp);
+            MoveDownCommand = ReactiveCommand.Create(MoveSelectedTextPartDown);
             CloseCurrentCommand = ReactiveCommand.Create(CloseCurrent);
-            MoveLeftCommand = ReactiveCommand.Create(MoveCurrentLeft);
-            MoveRightCommand = ReactiveCommand.Create(MoveCurrentRight);
+            MoveLeftCommand = ReactiveCommand.Create(MoveSelectedTextPartLeft);
+            MoveRightCommand = ReactiveCommand.Create(MoveSelectedTextPartRight);
             ActivateTabCommand = ReactiveCommand.Create(ActivateTab);
             OpenSettingsTabCommand = ReactiveCommand.Create(OpenSettingsTab);
 
@@ -98,11 +98,17 @@ namespace DocCreator01.ViewModel
                     OpenFolder(CurrentProject.ProjectFolder);
             });
 
-            GenerateFileCommand = ReactiveCommand.Create(GenerateOutputFile);
-            _projectHelper.CurrentProject.ProjectData.TextParts.CollectionChanged += (s, e) =>
-                RefreshTextPartViewModels();
+               
             _generatedFilesHelper.Initialize(CurrentProject);
             LoadRecentFiles();
+
+            // React when generated files are updated
+            MessageBus.Current
+                .Listen<TextPartCollectionChangedMessage>()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => RefreshTextPartViewModels())
+                .DisposeWith(_cleanup);
+
 
             // React when generated files are updated
             MessageBus.Current
@@ -128,13 +134,6 @@ namespace DocCreator01.ViewModel
 
         #region commands
 
-        private void RefreshGeneratedFiles()
-        {
-            RefreshGeneratedFilesViewModels(
-                CurrentProject.ProjectData.GeneratedFiles,
-                GeneratedFilesViewModels);
-        }
-
         // Collection of TextPartListViewModels for display in the DataGrid
         public ReactiveCommand<Unit, Unit> NewProjectCommand { get; }
         public ReactiveCommand<Unit, Unit> AddTabCommand { get; }
@@ -158,8 +157,9 @@ namespace DocCreator01.ViewModel
         public ReactiveCommand<Unit, Unit> OpenProjectFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenSettingsTabCommand { get; }
 
-
         #endregion
+
+        #region properties
 
         public ObservableCollection<MainGridItemViewModel> MainGridLines { get; } = new();
         public bool IsProjectDirty => DirtyStateMgr.IsDirty;
@@ -180,11 +180,10 @@ namespace DocCreator01.ViewModel
                     SelectedMainGridItem = null;
             }
         }
-        
+
         public ObservableCollection<string> RecentFiles { get; } = new();
         public ObservableCollection<ITabViewModel> Tabs { get; } = new();
         public ObservableCollection<GeneratedFileViewModel> GeneratedFilesViewModels { get; } = new();
-        
         public ITabViewModel? SelectedTab
         {
             get => _selectedTab;
@@ -218,79 +217,9 @@ namespace DocCreator01.ViewModel
         }
 
         private IScheduler Ui => RxApp.MainThreadScheduler;
+        #endregion
 
-        private void RefreshTextPartViewModels()
-        {
-            RefreshTextPartViewModels(CurrentProject.ProjectData.TextParts, MainGridLines);
-        }
-
-        private void RefreshTextPartViewModels(
-            ObservableCollection<TextPart> models,
-            ObservableCollection<MainGridItemViewModel> viewModels)
-        {
-
-            if (models == null) return;
-            viewModels.Clear();
-            NumerationHelper.ApplyNumeration(models);
-            foreach (var model in models)
-            {
-                var vm = new MainGridItemViewModel(model);
-                viewModels.Add(vm);
-            }
-
-            
-        }
-
-        private void AddTab()
-        {
-            var tp = _textPartHelper.CreateTextPart(CurrentProject);
-            CurrentProject.ProjectData.TextParts.Add(tp);
-            var vm = new TabPageViewModel(tp, new DirtyStateManager());
-            SubscribeTab(vm);
-            Tabs.Add(vm);
-            SelectedTab = vm;
-            _dirtyStateMgr.MarkAsDirty();
-            RefreshTextPartViewModels();
-        }
-
-        private void CloseTab(ITabViewModel? vm) => Tabs.Remove(vm!);
-        private void CloseAllTabs() => Tabs.Clear();
-
-        private void DeleteTab(ITabViewModel? vm)
-        {
-            if (vm == null) return;
-
-            // Only handle TextPart tabs
-            if (vm is TabPageViewModel textPartVm)
-            {
-                _textPartHelper.RemoveTextPart(textPartVm.Model, CurrentProject.ProjectData.TextParts, MainGridLines);
-                CloseTab(vm);
-                _dirtyStateMgr.MarkAsDirty();
-            }
-        }
-
-        private void OpenFile()
-        {
-            var dlg = new OpenFileDialog
-            {
-                Filter = "Doc Parts (*.docparts)|*.docparts|All (*.*)|*.*",
-                DefaultExt = ".docparts"
-            };
-            if (dlg.ShowDialog() != true) return;
-            LoadProject(dlg.FileName);
-        }
-
-        private void OpenRecent(string fileName)
-        {
-            if (!File.Exists(fileName))
-            {
-                MessageBox.Show($"Файл «{fileName}» не найден.",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                RecentFiles.Remove(fileName);      // удаляем битую запись
-                return;
-            }
-            LoadProject(fileName);
-        }
+        #region project_manipulation
 
         private void LoadProject(string fileName)
         {
@@ -308,7 +237,7 @@ namespace DocCreator01.ViewModel
 
             // Add recent files entry
             AddRecent(fileName);
-            
+
             // Create tabs for opened tabs in project
             foreach (var tp in CurrentProject.ProjectData.TextParts)
             {
@@ -327,7 +256,7 @@ namespace DocCreator01.ViewModel
             _dirtyStateMgr.ResetDirtyState();
         }
 
-        private void Save()
+        private void SaveProject()
         {
             if (string.IsNullOrEmpty(_currentPath))
             {
@@ -345,163 +274,18 @@ namespace DocCreator01.ViewModel
                 }
                 else return;
             }
-            
+
             CurrentProject.OpenedTabs = Tabs.OfType<TabPageViewModel>()
                 .Select(x => x.Model.Id)
                 .ToList();
-            
+
             // Use ProjectHelper to save project
             _projectHelper.SaveProject(CurrentProject, _currentPath!);
             AddRecent(_currentPath);
-            
+
             // Accept all changes at once
             _dirtyStateMgr.ResetDirtyState();
         }
-
-        private async void GenerateOutputFile()
-        {
-            try
-            {
-                await _generatedFilesHelper.GenerateFileAsync(CurrentProject.Settings.GenDocType);
-                RefreshGeneratedFilesViewModels(CurrentProject.ProjectData.GeneratedFiles, GeneratedFilesViewModels);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    $"Error generating file: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-            }
-        }
-
-        private void RefreshGeneratedFilesViewModels(
-            ObservableCollection<GeneratedFile> models, 
-            ObservableCollection<GeneratedFileViewModel> viewModels)
-        {
-            viewModels.Clear();
-
-            if (models == null) return;
-
-            foreach (var model in models.Where(m => m.Exists))
-            {
-                var vm = new GeneratedFileViewModel(model, _appPathsHelper, _generatedFilesHelper, _browserService);
-                viewModels.Add(vm);
-            }
-        }
-
-        private void RemoveCurrent()
-        {
-            if (SelectedMainGridItemViewModel == null) return;
-
-            var textPart = SelectedMainGridItemViewModel.Model;
-            var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
-
-            if (tab != null)
-                Tabs.Remove(tab);
-
-            _textPartHelper.RemoveTextPart(textPart, CurrentProject.ProjectData.TextParts, MainGridLines);
-
-            SelectedMainGridItemViewModel = MainGridLines.FirstOrDefault();
-            SelectedTab = Tabs.FirstOrDefault();
-
-            _dirtyStateMgr.MarkAsDirty();
-        }
-
-        private void MoveCurrentUp()
-        {
-            if (SelectedMainGridItemViewModel == null) return;
-            var textPart = SelectedMainGridItemViewModel.Model;
-            if (_textPartHelper.MoveTextPartUp(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
-            {
-                this.RaisePropertyChanged(nameof(CurrentProject));
-                _dirtyStateMgr.MarkAsDirty();
-                var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
-                if (tab != null && tab is IDirtyTrackable dtr)
-                {
-                    dtr.DirtyStateMgr.MarkAsDirty();
-                }
-                RefreshTextPartViewModels();
-            }
-            SelectedMainGridItem = textPart;
-        }
-
-        private void MoveCurrentDown()
-        {
-            if (SelectedMainGridItemViewModel == null) return;
-            var textPart = SelectedMainGridItemViewModel.Model;
-            if (_textPartHelper.MoveTextPartDown(textPart, CurrentProject.ProjectData.TextParts, MainGridLines))
-            {
-                this.RaisePropertyChanged(nameof(CurrentProject));
-                _dirtyStateMgr.MarkAsDirty();
-                var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
-                if (tab != null && tab is IDirtyTrackable dtr)
-                {
-                    dtr.DirtyStateMgr.MarkAsDirty();
-                }
-                RefreshTextPartViewModels();
-            }
-            SelectedMainGridItem = textPart;
-        }
-
-        private void MoveCurrentLeft()
-        {
-            if (SelectedMainGridItemViewModel == null) return;
-
-            var textPart = SelectedMainGridItemViewModel.Model;
-            if (_textPartHelper.DecreaseTextPartLevel(textPart))
-            {
-                _dirtyStateMgr.MarkAsDirty();
-                RefreshTextPartViewModels();
-            }
-            SelectedMainGridItem = textPart;
-        }
-
-        private void MoveCurrentRight()
-        {
-            if (SelectedMainGridItemViewModel == null) return;
-
-            var textPart = SelectedMainGridItemViewModel.Model;
-            if (_textPartHelper.IncreaseTextPartLevel(textPart))
-            {
-                _dirtyStateMgr.MarkAsDirty();
-                RefreshTextPartViewModels();
-            }
-            SelectedMainGridItem = textPart;
-        }
-
-        private void ActivateTab()
-        {
-            var tp = SelectedMainGridItem;
-            var vm = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == tp);
-            if (vm == null)
-            {
-                var dirtyMgr = new DirtyStateManager();
-                vm = new TabPageViewModel(tp, dirtyMgr);
-                SubscribeTab(vm);
-                Tabs.Add(vm);
-            }
-            SelectedTab = vm;
-        }
-
-        private void OpenSettingsTab()
-        {
-            var existingTab = Tabs.FirstOrDefault(t => t is ProjectSettingsTabViewModel);
-            
-            if (existingTab == null)
-            {
-                var dirtyMgr = new DirtyStateManager();
-                var settingsTab = new ProjectSettingsTabViewModel(CurrentProject, dirtyMgr, _projectHelper);
-                SubscribeTab(settingsTab);
-                Tabs.Add(settingsTab);
-                SelectedTab = settingsTab;
-            }
-            else
-            {
-                SelectedTab = existingTab;
-            }
-        }
-
         private void CloseCurrent()
         {
             if (_projectHelper.CloseCurrentProject(IsProjectDirty ? null : false))
@@ -538,7 +322,187 @@ namespace DocCreator01.ViewModel
             LoadGeneratedFiles();
             UpdateWindowTitle();
         }
+        #endregion
 
+        #region refresh_view_models
+
+        private void RefreshTextPartViewModels()
+        {
+            RefreshTextPartViewModels(CurrentProject.ProjectData.TextParts, MainGridLines);
+        }
+
+        private void RefreshTextPartViewModels(
+            List<TextPart> models,
+            ObservableCollection<MainGridItemViewModel> viewModels)
+        {
+
+            if (models == null) return;
+            viewModels.Clear();
+            NumerationHelper.ApplyNumeration(models);
+            foreach (var model in models)
+            {
+                var vm = new MainGridItemViewModel(model);
+                viewModels.Add(vm);
+            }
+
+
+        }
+
+        private void RefreshGeneratedFilesViewModels(
+            List<GeneratedFile> models,
+            ObservableCollection<GeneratedFileViewModel> viewModels)
+        {
+            viewModels.Clear();
+
+            if (models == null) return;
+
+            foreach (var model in models.Where(m => m.Exists))
+            {
+                var vm = new GeneratedFileViewModel(model, _appPathsHelper, _generatedFilesHelper, _browserService);
+                viewModels.Add(vm);
+            }
+        }
+        private void RefreshGeneratedFiles()
+        {
+            RefreshGeneratedFilesViewModels(
+                CurrentProject.ProjectData.GeneratedFiles,
+                GeneratedFilesViewModels);
+        }
+        #endregion
+
+        #region textpart_manipulation
+
+        private void RemoveSelectedTextPart()
+        {
+            if (SelectedMainGridItemViewModel == null) return;
+
+            var textPart = SelectedMainGridItemViewModel.Model;
+            var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
+
+            if (tab != null)
+                Tabs.Remove(tab);
+
+            _textPartHelper.RemoveTextPart(textPart, CurrentProject.ProjectData.TextParts);
+            RefreshTextPartViewModels();
+            SelectedMainGridItemViewModel = MainGridLines.FirstOrDefault();
+            SelectedTab = Tabs.FirstOrDefault();
+
+            _dirtyStateMgr.MarkAsDirty();
+        }
+
+        private void MoveSelectedTextPartUp()
+        {
+            if (SelectedMainGridItemViewModel == null) return;
+            var textPart = SelectedMainGridItemViewModel.Model;
+            if (_textPartHelper.MoveTextPartUp(textPart, CurrentProject.ProjectData.TextParts))
+            {
+                this.RaisePropertyChanged(nameof(CurrentProject));
+                _dirtyStateMgr.MarkAsDirty();
+                var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
+                if (tab != null && tab is IDirtyTrackable dtr)
+                {
+                    dtr.DirtyStateMgr.MarkAsDirty();
+                }
+                RefreshTextPartViewModels();
+            }
+            SelectedMainGridItem = textPart;
+        }
+
+        private void MoveSelectedTextPartDown()
+        {
+            if (SelectedMainGridItemViewModel == null) return;
+            var textPart = SelectedMainGridItemViewModel.Model;
+            if (_textPartHelper.MoveTextPartDown(textPart, CurrentProject.ProjectData.TextParts))
+            {
+                this.RaisePropertyChanged(nameof(CurrentProject));
+                _dirtyStateMgr.MarkAsDirty();
+                var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
+                if (tab != null && tab is IDirtyTrackable dtr)
+                {
+                    dtr.DirtyStateMgr.MarkAsDirty();
+                }
+                RefreshTextPartViewModels();
+            }
+            SelectedMainGridItem = textPart;
+        }
+
+        private void MoveSelectedTextPartLeft()
+        {
+            if (SelectedMainGridItemViewModel == null) return;
+
+            var textPart = SelectedMainGridItemViewModel.Model;
+            if (_textPartHelper.DecreaseTextPartLevel(textPart))
+            {
+                _dirtyStateMgr.MarkAsDirty();
+                RefreshTextPartViewModels();
+            }
+            SelectedMainGridItem = textPart;
+        }
+
+        private void MoveSelectedTextPartRight()
+        {
+            if (SelectedMainGridItemViewModel == null) return;
+
+            var textPart = SelectedMainGridItemViewModel.Model;
+            if (_textPartHelper.IncreaseTextPartLevel(textPart))
+            {
+                _dirtyStateMgr.MarkAsDirty();
+                RefreshTextPartViewModels();
+            }
+            SelectedMainGridItem = textPart;
+        }
+
+        #endregion
+
+        #region generated_files_manipulation
+
+        private void LoadGeneratedFiles()
+        {
+
+        }
+        private async void GenerateOutputFile()
+        {
+            try
+            {
+                await _generatedFilesHelper.GenerateFileAsync(CurrentProject.Settings.GenDocType);
+                RefreshGeneratedFilesViewModels(CurrentProject.ProjectData.GeneratedFiles, GeneratedFilesViewModels);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error generating file: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        #endregion
+
+        #region source_files_manipulation
+
+        private void OpenFile()
+        {
+            var dlg = new OpenFileDialog
+            {
+                Filter = "Doc Parts (*.docparts)|*.docparts|All (*.*)|*.*",
+                DefaultExt = ".docparts"
+            };
+            if (dlg.ShowDialog() != true) return;
+            LoadProject(dlg.FileName);
+        }
+
+        private void OpenRecent(string fileName)
+        {
+            if (!File.Exists(fileName))
+            {
+                MessageBox.Show($"Файл «{fileName}» не найден.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                RecentFiles.Remove(fileName);      // удаляем битую запись
+                return;
+            }
+            LoadProject(fileName);
+        }
         private void LoadRecentFiles()
         {
             if (File.Exists(_appPathsHelper.SettingsFilePath))
@@ -570,12 +534,7 @@ namespace DocCreator01.ViewModel
             while (RecentFiles.Count > 5)
                 RecentFiles.RemoveAt(RecentFiles.Count - 1);
 
-            SaveRecentFiles(); // Save changes to the file
-        }
-
-        private void LoadGeneratedFiles()
-        {
-            
+            SaveRecentFiles(); // SaveProject changes to the file
         }
 
         private void OpenFolder(string folderPath)
@@ -593,6 +552,89 @@ namespace DocCreator01.ViewModel
                 MessageBox.Show($"Folder not found: {folderPath}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+
+        #endregion
+
+        #region tabs_manipulation
+        private void ActivateTab()
+        {
+            var tp = SelectedMainGridItem;
+            var vm = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == tp);
+            if (vm == null)
+            {
+                var dirtyMgr = new DirtyStateManager();
+                vm = new TabPageViewModel(tp, dirtyMgr);
+                SubscribeTab(vm);
+                Tabs.Add(vm);
+            }
+            SelectedTab = vm;
+        }
+
+        private void OpenSettingsTab()
+        {
+            var existingTab = Tabs.FirstOrDefault(t => t is ProjectSettingsTabViewModel);
+
+            if (existingTab == null)
+            {
+                var dirtyMgr = new DirtyStateManager();
+                var settingsTab = new ProjectSettingsTabViewModel(CurrentProject, dirtyMgr, _projectHelper);
+                SubscribeTab(settingsTab);
+                Tabs.Add(settingsTab);
+                SelectedTab = settingsTab;
+            }
+            else
+            {
+                SelectedTab = existingTab;
+            }
+        }
+        private void AddTab()
+        {
+            var tp = _textPartHelper.CreateTextPart(CurrentProject);
+            CurrentProject.ProjectData.TextParts.Add(tp);
+            var vm = new TabPageViewModel(tp, new DirtyStateManager());
+            SubscribeTab(vm);
+            Tabs.Add(vm);
+            SelectedTab = vm;
+            _dirtyStateMgr.MarkAsDirty();
+            RefreshTextPartViewModels();
+        }
+
+        private void CloseTab(ITabViewModel? vm) => Tabs.Remove(vm!);
+        private void CloseAllTabs() => Tabs.Clear();
+
+        private void DeleteTab(ITabViewModel? vm)
+        {
+            if (vm == null) return;
+
+            // Only handle TextPart tabs
+            if (vm is TabPageViewModel textPartVm)
+            {
+                _textPartHelper.RemoveTextPart(textPartVm.Model, CurrentProject.ProjectData.TextParts);
+                CloseTab(vm);
+                _dirtyStateMgr.MarkAsDirty();
+            }
+        }
+
+        #endregion
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         public IDirtyStateManager DirtyStateMgr => _dirtyStateMgr;

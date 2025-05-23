@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using DocCreator01.Contracts;
+using DocCreator01.Messages;
 using DocCreator01.Models;
 using DocCreator01.ViewModels;
+using ReactiveUI;
 
 namespace DocCreator01.Services
 {
@@ -26,18 +28,19 @@ namespace DocCreator01.Services
             };
         }
 
-        public bool MoveTextPartUp(TextPart textPart, ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels)
+        public bool MoveTextPartUp(TextPart textPart, List<TextPart> textParts)
         {
             int idx = textParts.IndexOf(textPart);
             if (idx > 0)
             {
                 textParts.Move(idx, idx - 1);
+                MessageBus.Current.SendMessage(new GeneratedFilesUpdatedMessage());
                 return true;
             }
             return false;
         }
 
-        public bool MoveTextPartDown(TextPart textPart, ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels)
+        public bool MoveTextPartDown(TextPart textPart, List<TextPart> textParts)
         {
             int idx = textParts.IndexOf(textPart);
             if (idx < textParts.Count - 1 && idx >= 0)
@@ -48,15 +51,8 @@ namespace DocCreator01.Services
             return false;
         }
 
-        public void RemoveTextPart(TextPart textPart, ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels)
+        public void RemoveTextPart(TextPart textPart, List<TextPart> textParts)
         {
-            var viewModel = viewModels.FirstOrDefault(vm => vm.Model == textPart);
-            
-            if (viewModel != null)
-            {
-                viewModels.Remove(viewModel);
-            }
-
             textParts.Remove(textPart);
         }
         
@@ -65,7 +61,6 @@ namespace DocCreator01.Services
             if (textPart.Level > 1)
             {
                 textPart.Level--;
-                // The view model will update automatically via reactive binding
                 return true;
             }
             return false;
@@ -76,7 +71,6 @@ namespace DocCreator01.Services
             if (textPart.Level < 5)
             {
                 textPart.Level++;
-                // The view model will update automatically via reactive binding
                 return true;
             }
             return false;

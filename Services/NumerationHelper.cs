@@ -19,7 +19,7 @@ namespace DocCreator01.Services
         ///   – верхним уровнем считается минимальный Level в коллекции;
         ///   – отсутствующие промежуточные уровни получают номер «1».
         /// </summary>
-        public static void ApplyNumeration<T>(ObservableCollection<T> parts) where T : INumerableTextPart
+        public static void ApplyNumeration<T>(List<T> parts) where T : INumerableTextPart
         {
             if (parts == null || parts.Count == 0) return;
 

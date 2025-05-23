@@ -40,7 +40,7 @@ namespace DocCreator01.Models
         [JsonProperty] public int Level { get; set; } = 1;
         
         [JsonProperty]
-        public List<TextPartChunk> TextPartChunks { get; set; }
+        public List<TextPartChunk> TextPartChunks { get; set; }=new List<TextPartChunk>();
 
         #region jsonignore
 

@@ -26,7 +26,7 @@ namespace DocCreator01.Contracts
         /// <param name="textParts">Collection containing the TextPart</param>
         /// <param name="viewModels">Collection of view models to update</param>
         /// <returns>True if moved successfully, false otherwise</returns>
-        bool MoveTextPartUp(TextPart textPart, ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels);
+        bool MoveTextPartUp(TextPart textPart, List<TextPart> textParts);
 
         /// <summary>
         /// Moves a TextPart down in the collection
@@ -35,15 +35,9 @@ namespace DocCreator01.Contracts
         /// <param name="textParts">Collection containing the TextPart</param>
         /// <param name="viewModels">Collection of view models to update</param>
         /// <returns>True if moved successfully, false otherwise</returns>
-        bool MoveTextPartDown(TextPart textPart, ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels);
+        bool MoveTextPartDown(TextPart textPart, List<TextPart> textParts);
 
-        /// <summary>
-        /// Removes a TextPart from the collection
-        /// </summary>
-        /// <param name="textPart">TextPart to remove</param>
-        /// <param name="textParts">Collection containing the TextPart</param>
-        /// <param name="viewModels">Collection of view models to update</param>
-        void RemoveTextPart(TextPart textPart, ObservableCollection<TextPart> textParts, ObservableCollection<MainGridItemViewModel> viewModels);
+        void RemoveTextPart(TextPart textPart, List<TextPart> textParts);
         
         /// <summary>
         /// Decreases the level of a TextPart (move left in hierarchy)

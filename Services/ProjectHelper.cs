@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Net.WebSockets;
 using System.Windows;
@@ -165,7 +166,8 @@ namespace DocCreator01.Services
                 if (string.IsNullOrWhiteSpace(tp?.Text)) continue;
 
                 // ensure collection exists
-                tp.TextPartChunks ??= new System.Collections.ObjectModel.ObservableCollection<TextPartChunk>();
+                if(tp.TextPartChunks == null)
+                    tp.TextPartChunks =new  List<TextPartChunk>();
 
                 // if first chunk missing or empty – create / fill it
                 if (tp.TextPartChunks.Count == 0 ||

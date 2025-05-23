@@ -10,11 +10,11 @@ namespace DocCreator01.Models
 {
     public class ProjectData
     {
-        public ObservableCollection<TextPart> TextParts { get; set; } = new ObservableCollection<TextPart>();
+        public List<TextPart> TextParts { get; set; } = new List<TextPart>();
         
         /// <summary>
         /// Collection of files that were generated for this project
         /// </summary>
-        public ObservableCollection<GeneratedFile> GeneratedFiles { get; set; } = new ObservableCollection<GeneratedFile>();
+        public List<GeneratedFile> GeneratedFiles { get; set; } = new List<GeneratedFile>();
     }
 }

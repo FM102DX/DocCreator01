@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 using DocCreator01.Contracts;
 using DocCreator01.Models;
@@ -43,6 +44,11 @@ namespace DocCreator01.ViewModels
                     _dirtyStateMgr.MarkAsDirty();
                 });
 
+
+            TextPartChunks = new ObservableCollection<TextPartChunk>(model.TextPartChunks);
+            TextPartChunks.CollectionChanged += (_, __) => _dirtyStateMgr.MarkAsDirty();
+            /* ----------------------------------------------------------- */
+
             _dirtyStateMgr.IBecameDirty += () => this.RaisePropertyChanged(nameof(TabHeader));
             _dirtyStateMgr.DirtryStateWasReset += () => this.RaisePropertyChanged(nameof(TabHeader));
         }
@@ -56,6 +62,8 @@ namespace DocCreator01.ViewModels
         [Reactive] public string Name { get; set; }
         [Reactive] public string Text { get; set; }
         [Reactive] public bool IncludeInDocument { get; set; }
-        
+
+        // NEW: collection for ListView / ListBox in TextPartUserControl
+        public ObservableCollection<TextPartChunk> TextPartChunks { get; }
     }
 }

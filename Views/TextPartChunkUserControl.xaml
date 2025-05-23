@@ -1,0 +1,22 @@
+<UserControl x:Class="DocCreator01.Views.TextPartChunkUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="Auto" Width="Auto">
+    <TextBox x:Name="PART_TextBox"
+             Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+             AcceptsReturn="True"
+             TextWrapping="Wrap"
+             VerticalScrollBarVisibility="Auto"
+             Margin="0,5,0,5"
+             Padding="5"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch"
+             TextChanged="OnTextChanged">
+        <!-- отключаем подсветку при наведении мыши -->
+        <TextBox.Style>
+            <Style TargetType="TextBox">
+                <!-- intentionally left empty to clear default hover style -->
+            </Style>
+        </TextBox.Style>
+    </TextBox>
+</UserControl>

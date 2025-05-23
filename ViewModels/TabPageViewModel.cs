@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive.Linq;
 using DocCreator01.Contracts;
 using DocCreator01.Models;
@@ -45,7 +46,11 @@ namespace DocCreator01.ViewModels
                 });
 
 
-            TextPartChunks = new ObservableCollection<TextPartChunk>(model.TextPartChunks);
+            TextPartChunks = new ObservableCollection<TextPartChunk>(model.TextPartChunks ?? new List<TextPartChunk>());
+            // гарантируем наличие пустого хвостового элемента
+            if (TextPartChunks.Count == 0 || !string.IsNullOrWhiteSpace(TextPartChunks.Last().Text))
+                TextPartChunks.Add(new TextPartChunk());
+
             TextPartChunks.CollectionChanged += (_, __) => _dirtyStateMgr.MarkAsDirty();
             /* ----------------------------------------------------------- */
 
@@ -65,5 +70,20 @@ namespace DocCreator01.ViewModels
 
         // NEW: collection for ListView / ListBox in TextPartUserControl
         public ObservableCollection<TextPartChunk> TextPartChunks { get; }
+
+        /// <summary>
+        /// Проверяет редактируемый последний элемент и добавляет новый пустой,
+        /// если необходимо.
+        /// </summary>
+        public void EnsureTrailingEmptyChunk(TextPartChunk editedChunk)
+        {
+            if (editedChunk == null) return;
+            if (!ReferenceEquals(TextPartChunks.LastOrDefault(), editedChunk)) return;
+            if (string.IsNullOrWhiteSpace(editedChunk.Text)) return;
+
+            var newChunk = new TextPartChunk(); // пустой
+            TextPartChunks.Add(newChunk);
+            Model.TextPartChunks?.Add(newChunk);
+        }
     }
 }

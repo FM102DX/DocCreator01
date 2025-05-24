@@ -6,7 +6,7 @@
         xmlns:converters="clr-namespace:DocCreator01.Converters"
         Title="{Binding WindowTitle}"
         Height="800" 
-        Width="1200">
+        Width="1500">
 
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>

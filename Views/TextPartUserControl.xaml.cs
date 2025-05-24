@@ -24,10 +24,10 @@ namespace DocCreator01.Views
         private void TextPartChunkTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (sender is not TextBox tb) return;
-            if (tb.DataContext is not TextPartChunk chunk) return;
+            if (tb.DataContext is not TextPartChunkViewModel chunkVm) return;
             if (DataContext is not TabPageViewModel vm) return;
 
-            vm.EnsureTrailingEmptyChunk(chunk);
+            vm.EnsureTrailingEmptyChunk(chunkVm);
         }
     }
 }

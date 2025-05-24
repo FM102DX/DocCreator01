@@ -14,7 +14,7 @@ namespace DocCreator01.Views
 
         private void OnTextChanged(object sender, TextChangedEventArgs e)
         {
-            if (DataContext is not TextPartChunk chunk) return;
+            if (DataContext is not TextPartChunkViewModel chunkVm) return;
 
             // walk up the logical tree until we find a DataContext of TabPageViewModel
             DependencyObject current = this;
@@ -22,7 +22,7 @@ namespace DocCreator01.Views
             {
                 if (current is FrameworkElement fe && fe.DataContext is TabPageViewModel tpVm)
                 {
-                    tpVm.EnsureTrailingEmptyChunk(chunk);
+                    tpVm.EnsureTrailingEmptyChunk(chunkVm);
                     break;
                 }
                 current = LogicalTreeHelper.GetParent(current);

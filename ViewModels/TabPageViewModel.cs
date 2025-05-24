@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
@@ -46,10 +47,18 @@ namespace DocCreator01.ViewModels
                 });
 
 
-            TextPartChunks = new ObservableCollection<TextPartChunk>(model.TextPartChunks ?? new List<TextPartChunk>());
+            // convert model chunks → VM collection
+            TextPartChunks = new ObservableCollection<TextPartChunkViewModel>(
+                (model.TextPartChunks ?? new List<TextPartChunk>())
+                    .Select(c => new TextPartChunkViewModel(c, _dirtyStateMgr)));
+
             // гарантируем наличие пустого хвостового элемента
             if (TextPartChunks.Count == 0 || !string.IsNullOrWhiteSpace(TextPartChunks.Last().Text))
-                TextPartChunks.Add(new TextPartChunk());
+            {
+                var emptyModel = new TextPartChunk();
+                model.TextPartChunks.Add(emptyModel);
+                TextPartChunks.Add(new TextPartChunkViewModel(emptyModel, _dirtyStateMgr));
+            }
 
             TextPartChunks.CollectionChanged += (_, __) => _dirtyStateMgr.MarkAsDirty();
             /* ----------------------------------------------------------- */
@@ -69,21 +78,21 @@ namespace DocCreator01.ViewModels
         [Reactive] public bool IncludeInDocument { get; set; }
 
         // NEW: collection for ListView / ListBox in TextPartUserControl
-        public ObservableCollection<TextPartChunk> TextPartChunks { get; }
+        public ObservableCollection<TextPartChunkViewModel> TextPartChunks { get; }
 
         /// <summary>
         /// Проверяет редактируемый последний элемент и добавляет новый пустой,
         /// если необходимо.
         /// </summary>
-        public void EnsureTrailingEmptyChunk(TextPartChunk editedChunk)
+        public void EnsureTrailingEmptyChunk(TextPartChunkViewModel editedChunk)
         {
             if (editedChunk == null) return;
             if (!ReferenceEquals(TextPartChunks.LastOrDefault(), editedChunk)) return;
             if (string.IsNullOrWhiteSpace(editedChunk.Text)) return;
 
-            var newChunk = new TextPartChunk(); // пустой
-            TextPartChunks.Add(newChunk);
-            Model.TextPartChunks?.Add(newChunk);
+            var newChunkModel = new TextPartChunk();   // пустой
+            Model.TextPartChunks.Add(newChunkModel);
+            TextPartChunks.Add(new TextPartChunkViewModel(newChunkModel, _dirtyStateMgr));
         }
     }
 }

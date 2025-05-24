@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Windows;
 using System.Windows.Input;
 using DocCreator01.Contracts;
 using DocCreator01.Models;
@@ -101,26 +102,29 @@ namespace DocCreator01.ViewModels
         public void RemoveChunk(TextPartChunkViewModel chunk)
         {
             if (chunk == null) return;
-            if (!TextPartChunks.Contains(chunk)) return;
-
-            // Ищем соответствующий элемент модели только по ID
-            var modelChunk = Model.TextPartChunks.FirstOrDefault(c => c.Id == chunk.Id);
             
-            // Если нашли модельный чанк - удаляем его
+            // Новый блок: подтверждение удаления непустого чанка
+            if (!string.IsNullOrWhiteSpace(chunk.Text))
+            {
+                var result = MessageBox.Show(
+                    "Удалить выбранный блок текста?",
+                    "Подтверждение удаления",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result != MessageBoxResult.Yes)
+                    return;     // отмена удаления
+            }
+
+            if (!TextPartChunks.Contains(chunk)) return;
+            var modelChunk = Model.TextPartChunks.FirstOrDefault(c => c.Id == chunk.Id);
             if (modelChunk != null)
             {
                 Model.TextPartChunks.Remove(modelChunk);
             }
-            
-            // В любом случае удаляем из ViewModel
             TextPartChunks.Remove(chunk);
-            
-            // Маркируем как измененный
             _dirtyStateMgr?.MarkAsDirty();
-            
-            // Используем ProjectHelper для добавления пустого чанка если нужно
             var newChunkModel = _projectHelper.AddEmptyChunkIfNeeded(Model);
-            
             if (newChunkModel != null)
             {
                 TextPartChunks.Add(new TextPartChunkViewModel(newChunkModel, _dirtyStateMgr));

@@ -61,7 +61,7 @@
                      HorizontalAlignment="Stretch"
                      VerticalAlignment="Stretch"
                      TextChanged="OnTextChanged"
-                     KeyDown="OnKeyDown">
+                     PreviewKeyDown="OnPreviewKeyDown">
                 <TextBox.Style>
                     <Style TargetType="TextBox">
                         <!-- intentionally left empty to clear default hover style -->

@@ -244,7 +244,7 @@ namespace DocCreator01.ViewModel
                 if (CurrentProject.OpenedTabs.Contains(tp.Id))
                 {
                     var dirtyMgr = new DirtyStateManager();
-                    var vm = new TabPageViewModel(tp, dirtyMgr);
+                    var vm = new TabPageViewModel(tp, dirtyMgr, _projectHelper);
                     SubscribeTab(vm);
                     Tabs.Add(vm);
                 }
@@ -564,7 +564,7 @@ namespace DocCreator01.ViewModel
             if (vm == null)
             {
                 var dirtyMgr = new DirtyStateManager();
-                vm = new TabPageViewModel(tp, dirtyMgr);
+                vm = new TabPageViewModel(tp, dirtyMgr, _projectHelper);
                 SubscribeTab(vm);
                 Tabs.Add(vm);
             }
@@ -592,7 +592,7 @@ namespace DocCreator01.ViewModel
         {
             var tp = _textPartHelper.CreateTextPart(CurrentProject);
             CurrentProject.ProjectData.TextParts.Add(tp);
-            var vm = new TabPageViewModel(tp, new DirtyStateManager());
+            var vm = new TabPageViewModel(tp, new DirtyStateManager(), _projectHelper);
             SubscribeTab(vm);
             Tabs.Add(vm);
             SelectedTab = vm;

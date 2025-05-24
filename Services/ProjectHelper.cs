@@ -186,5 +186,73 @@ namespace DocCreator01.Services
                 }
             }
         }
+        
+        // Simplified: Just handle basic chunk removal without the empty chunk logic
+        public bool RemoveTextPartChunk(TextPart textPart, TextPartChunk chunk)
+        {
+            if (textPart == null || chunk == null) return false;
+            
+            // Remove the chunk from the TextPart and return success/failure
+            if (textPart.TextPartChunks.Contains(chunk))
+            {
+                textPart.TextPartChunks.Remove(chunk);
+                return true;
+            }
+            
+            return false;
+        }
+
+        /// <summary>
+        /// Adds an empty chunk to the TextPart if needed (typically at the end of the collection)
+        /// </summary>
+        /// <param name="textPart">TextPart to add chunk to</param>
+        /// <returns>The newly created chunk if one was added, otherwise null</returns>
+        public TextPartChunk AddEmptyChunkIfNeeded(TextPart textPart)
+        {
+            if (textPart == null) return null;
+            
+            // Ensure collection exists
+            if (textPart.TextPartChunks == null)
+                textPart.TextPartChunks = new List<TextPartChunk>();
+            
+            // Check if we need to add an empty chunk (if collection is empty or last chunk is not empty)
+            if (textPart.TextPartChunks.Count == 0 || 
+                !string.IsNullOrEmpty(textPart.TextPartChunks.Last().Text))
+            {
+                var newChunk = new TextPartChunk 
+                { 
+                    Id = Guid.NewGuid(), 
+                    Text = string.Empty 
+                };
+                
+                textPart.TextPartChunks.Add(newChunk);
+                return newChunk;
+            }
+            
+            return null;
+        }
+
+        /// <summary>
+        /// Force adds a new empty chunk to a TextPart
+        /// </summary>
+        /// <param name="textPart">TextPart to add chunk to</param>
+        /// <returns>The newly created chunk</returns>
+        public TextPartChunk AddEmptyChunk(TextPart textPart)
+        {
+            if (textPart == null) return null;
+            
+            // Ensure collection exists
+            if (textPart.TextPartChunks == null)
+                textPart.TextPartChunks = new List<TextPartChunk>();
+            
+            var newChunk = new TextPartChunk 
+            { 
+                Id = Guid.NewGuid(), 
+                Text = string.Empty 
+            };
+            
+            textPart.TextPartChunks.Add(newChunk);
+            return newChunk;
+        }
     }
 }

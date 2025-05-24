@@ -14,49 +14,30 @@ namespace DocCreator01.ViewModels
     public sealed class TabPageViewModel : ReactiveObject, ITabViewModel, IDirtyTrackable
     {
         private readonly IDirtyStateManager _dirtyStateMgr;
+        private readonly IProjectHelper _projectHelper;
 
-        public TabPageViewModel(TextPart model, IDirtyStateManager dirtyStateMgr)
+        public TabPageViewModel(TextPart model, IDirtyStateManager dirtyStateMgr, IProjectHelper projectHelper)
         {
             Model = model ?? throw new ArgumentNullException(nameof(model));
             _dirtyStateMgr = dirtyStateMgr ?? throw new ArgumentNullException(nameof(dirtyStateMgr));
+            _projectHelper = projectHelper ?? throw new ArgumentNullException(nameof(projectHelper));
 
             Name = model.Name;
             Text = model.Text;
             IncludeInDocument = model.IncludeInDocument;
 
-            this.WhenAnyValue(vm => vm.Name)
-                .DistinctUntilChanged()
-                .Subscribe(val =>
-                {
-                    Model.Name = val;
-                    _dirtyStateMgr.MarkAsDirty();
-                });
+            // Гарантируем, что коллекция TextPartChunks существует в модели
+            if (model.TextPartChunks == null)
+                model.TextPartChunks = new List<TextPartChunk>();
 
-            this.WhenAnyValue(vm => vm.Text)
-                .DistinctUntilChanged()
-                .Subscribe(val =>
-                {
-                    Model.Text = val;
-                    _dirtyStateMgr.MarkAsDirty();
-                });
-            this.WhenAnyValue(vm => vm.IncludeInDocument)
-                .DistinctUntilChanged()
-                .Subscribe(val =>
-                {
-                    Model.IncludeInDocument = val;
-                    _dirtyStateMgr.MarkAsDirty();
-                });
-
-
-            // convert model chunks → VM collection
+            // Преобразуем коллекцию модели в коллекцию ViewModel
             TextPartChunks = new ObservableCollection<TextPartChunkViewModel>(
-                (model.TextPartChunks ?? new List<TextPartChunk>())
-                    .Select(c => new TextPartChunkViewModel(c, _dirtyStateMgr)));
+                model.TextPartChunks.Select(c => new TextPartChunkViewModel(c, _dirtyStateMgr)));
 
-            // гарантируем наличие пустого хвостового элемента
+            // Гарантируем наличие пустого хвостового элемента
             if (TextPartChunks.Count == 0 || !string.IsNullOrWhiteSpace(TextPartChunks.Last().Text))
             {
-                var emptyModel = new TextPartChunk();
+                var emptyModel = new TextPartChunk { Id = Guid.NewGuid(), Text = string.Empty };
                 model.TextPartChunks.Add(emptyModel);
                 TextPartChunks.Add(new TextPartChunkViewModel(emptyModel, _dirtyStateMgr));
             }
@@ -92,12 +73,29 @@ namespace DocCreator01.ViewModels
         public void EnsureTrailingEmptyChunk(TextPartChunkViewModel editedChunk)
         {
             if (editedChunk == null) return;
-            if (!ReferenceEquals(TextPartChunks.LastOrDefault(), editedChunk)) return;
+            
+            // Получаем последний элемент
+            var lastChunk = TextPartChunks.Count > 0 ? TextPartChunks[TextPartChunks.Count - 1] : null;
+            
+            // Проверяем совпадение по ID вместо ссылки
+            bool isLastChunk = lastChunk != null && lastChunk.Id == editedChunk.Id;
+            
+            if (!isLastChunk) return;
+            
+            // Если редактируемый последний чанк пуст, ничего не делаем
             if (string.IsNullOrWhiteSpace(editedChunk.Text)) return;
-
-            var newChunkModel = new TextPartChunk();   // пустой
-            Model.TextPartChunks.Add(newChunkModel);
-            TextPartChunks.Add(new TextPartChunkViewModel(newChunkModel, _dirtyStateMgr));
+            
+            // Принудительно добавляем новый чанк через ProjectHelper
+            var newChunkModel = _projectHelper.AddEmptyChunk(Model);
+            
+            if (newChunkModel != null)
+            {
+                // Добавляем соответствующий ViewModel для нового чанка
+                TextPartChunks.Add(new TextPartChunkViewModel(newChunkModel, _dirtyStateMgr));
+                
+                // Отмечаем документ как измененный
+                _dirtyStateMgr?.MarkAsDirty();
+            }
         }
 
         public void RemoveChunk(TextPartChunkViewModel chunk)
@@ -105,16 +103,27 @@ namespace DocCreator01.ViewModels
             if (chunk == null) return;
             if (!TextPartChunks.Contains(chunk)) return;
 
-            TextPartChunks.Remove(chunk);
-            _dirtyStateMgr?.MarkAsDirty();
-
-            // always ensure there is at least one empty tail chunk
-            if (TextPartChunks.Count == 0 ||
-                !string.IsNullOrEmpty(TextPartChunks.Last().Text))
+            // Ищем соответствующий элемент модели только по ID
+            var modelChunk = Model.TextPartChunks.FirstOrDefault(c => c.Id == chunk.Id);
+            
+            // Если нашли модельный чанк - удаляем его
+            if (modelChunk != null)
             {
-                TextPartChunks.Add(new TextPartChunkViewModel(
-                    new TextPartChunk { Id = Guid.NewGuid(), Text = string.Empty },
-                    _dirtyStateMgr));
+                Model.TextPartChunks.Remove(modelChunk);
+            }
+            
+            // В любом случае удаляем из ViewModel
+            TextPartChunks.Remove(chunk);
+            
+            // Маркируем как измененный
+            _dirtyStateMgr?.MarkAsDirty();
+            
+            // Используем ProjectHelper для добавления пустого чанка если нужно
+            var newChunkModel = _projectHelper.AddEmptyChunkIfNeeded(Model);
+            
+            if (newChunkModel != null)
+            {
+                TextPartChunks.Add(new TextPartChunkViewModel(newChunkModel, _dirtyStateMgr));
             }
         }
     }

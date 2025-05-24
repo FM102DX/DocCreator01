@@ -19,5 +19,13 @@ namespace DocCreator01.Contracts
         void CreateNewProject();
 
         bool CloseCurrentProject(bool? saveChanges = null);
+
+        void EnsureTextPartChunks(Project project);
+
+        bool RemoveTextPartChunk(TextPart textPart, TextPartChunk chunk);
+
+        TextPartChunk AddEmptyChunkIfNeeded(TextPart textPart);
+        
+        TextPartChunk AddEmptyChunk(TextPart textPart);
     }
 }

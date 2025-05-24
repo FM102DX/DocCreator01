@@ -42,7 +42,7 @@ namespace DocCreator01.Contracts
         /// <param name="generatedFile">The file to delete</param>
         /// <param name="generatedFiles">Collection of generated files to update</param>
         /// <returns>True if successfully deleted, false otherwise</returns>
-        bool DeleteFile(GeneratedFile generatedFile, ObservableCollection<GeneratedFile> generatedFiles);
+        bool DeleteFile(GeneratedFile generatedFile, List<GeneratedFile> generatedFiles);
 
         /// <summary>
         /// Renames a generated file

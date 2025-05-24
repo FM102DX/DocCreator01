@@ -38,6 +38,9 @@ namespace DocCreator01.Models
         public bool IncludeInDocument { get; set; }
 
         [JsonProperty] public int Level { get; set; } = 1;
+        
+        [JsonProperty]
+        public List<TextPartChunk> TextPartChunks { get; set; }=new List<TextPartChunk>();
 
         #region jsonignore
 

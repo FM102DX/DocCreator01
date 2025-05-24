@@ -24,7 +24,7 @@ namespace DocCreator01.Services
         private readonly IBrowserService _browserService;
         private readonly ITextPartHtmlRenderer _textPartHtmlRenderer;
         private Project _project;
-        public ObservableCollection<GeneratedFile> GeneratedFiles { get; set; } = new();
+        public List<GeneratedFile> GeneratedFiles { get; set; } = new();
 
         public GeneratedFilesHelper(
             IAppPathsHelper appPathsHelper,
@@ -121,7 +121,7 @@ namespace DocCreator01.Services
             }
         }
 
-        public bool DeleteFile(GeneratedFile generatedFile, ObservableCollection<GeneratedFile> generatedFiles)
+        public bool DeleteFile(GeneratedFile generatedFile, List<GeneratedFile> generatedFiles)
         {
             if (generatedFile == null)
                 return false;
@@ -203,9 +203,9 @@ namespace DocCreator01.Services
             MessageBus.Current.SendMessage(new GeneratedFilesUpdatedMessage());
         }
          
-        public ObservableCollection<GeneratedFile> GetExistingFiles()
+        public List<GeneratedFile> GetExistingFiles()
         {
-            ObservableCollection<GeneratedFile> existingFiles = new ObservableCollection<GeneratedFile>();
+            List<GeneratedFile> existingFiles = new List<GeneratedFile>();
             if (_project == null || _project.ProjectData == null || _project.ProjectData.GeneratedFiles == null)
                 return existingFiles;
 

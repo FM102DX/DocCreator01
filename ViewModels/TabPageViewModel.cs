@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Windows.Input;
 using DocCreator01.Contracts;
 using DocCreator01.Models;
 using ReactiveUI;
@@ -65,6 +66,8 @@ namespace DocCreator01.ViewModels
 
             _dirtyStateMgr.IBecameDirty += () => this.RaisePropertyChanged(nameof(TabHeader));
             _dirtyStateMgr.DirtryStateWasReset += () => this.RaisePropertyChanged(nameof(TabHeader));
+
+            DeleteChunkCommand = ReactiveCommand.Create<TextPartChunkViewModel>(RemoveChunk);
         }
 
         public string TabHeader => _dirtyStateMgr.IsDirty ? $"{Name ?? "Untitled"} *" : Name ?? "Untitled";
@@ -80,6 +83,8 @@ namespace DocCreator01.ViewModels
         // NEW: collection for ListView / ListBox in TextPartUserControl
         public ObservableCollection<TextPartChunkViewModel> TextPartChunks { get; }
 
+        public ICommand DeleteChunkCommand { get; }
+
         /// <summary>
         /// Проверяет редактируемый последний элемент и добавляет новый пустой,
         /// если необходимо.
@@ -93,6 +98,24 @@ namespace DocCreator01.ViewModels
             var newChunkModel = new TextPartChunk();   // пустой
             Model.TextPartChunks.Add(newChunkModel);
             TextPartChunks.Add(new TextPartChunkViewModel(newChunkModel, _dirtyStateMgr));
+        }
+
+        public void RemoveChunk(TextPartChunkViewModel chunk)
+        {
+            if (chunk == null) return;
+            if (!TextPartChunks.Contains(chunk)) return;
+
+            TextPartChunks.Remove(chunk);
+            _dirtyStateMgr?.MarkAsDirty();
+
+            // always ensure there is at least one empty tail chunk
+            if (TextPartChunks.Count == 0 ||
+                !string.IsNullOrEmpty(TextPartChunks.Last().Text))
+            {
+                TextPartChunks.Add(new TextPartChunkViewModel(
+                    new TextPartChunk { Id = Guid.NewGuid(), Text = string.Empty },
+                    _dirtyStateMgr));
+            }
         }
     }
 }

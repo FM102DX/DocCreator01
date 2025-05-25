@@ -20,7 +20,7 @@ using System.Reactive.Disposables;
 using System.Runtime.InteropServices.Marshalling;
 using DocCreator01.Messages;
 
-namespace DocCreator01.ViewModel
+namespace DocCreator01.ViewModels
 {
     public sealed class MainWindowViewModel : ReactiveObject, IDirtyTrackable, IDisposable
     {

@@ -15,7 +15,7 @@ namespace DocCreator01.Views
             DataContext = _viewModel;
         }
 
-        public InputDialog(string title, string prompt, string initialValue = "", Func<string, (bool isValid, string errorMessage)> validationFunc = null) : this()
+        public InputDialog(string title, string prompt, string initialValue, Func<string, (bool isValid, string errorMessage)> validationFunc) : this()
         {
             _viewModel.Title = title;
             _viewModel.Prompt = prompt;

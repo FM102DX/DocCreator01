@@ -125,7 +125,7 @@ namespace DocCreator01.Services
         /// и задаёт его внутренние отступы согласно <see cref="HtmlGenerationProfile.HtmlDocumentPaddings"/>.
         /// Если профиль не передан – используются значения по умолчанию (40 px × 60 px).
         /// </summary>
-        public static string ToCenteredDocument(string rawHtml, HtmlGenerationProfile profile = null)
+        public static string ToCenteredDocument(string rawHtml, HtmlGenerationProfile profile)
         {
             var doc = new HtmlDocument
             {

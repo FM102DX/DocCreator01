@@ -48,7 +48,7 @@
 
         <!-- Header template with close button -->
         <DataTemplate x:Key="ClosableTabHeaderTemplate">
-            <Grid MinHeight="30" MinWidth="70">
+            <Grid MinHeight="30" MinWidth="120">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -57,6 +57,8 @@
                 <TextBlock Text="{Binding TabHeader}"
                            VerticalAlignment="Center"
                            FontSize="14"
+                           Margin="5,0,5,0"
+                           TextTrimming="CharacterEllipsis"
                            Foreground="{StaticResource TextOnPrimaryColor}"/>
 
                 <Button Grid.Column="1"

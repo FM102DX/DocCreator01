@@ -11,7 +11,7 @@
     <UserControl.Resources>
 
         <!-- Насыщенный (всегда активный) цвет выделения -->
-        <SolidColorBrush x:Key="SelectionBrush" Color="#FF3399FF"/>
+        <SolidColorBrush x:Key="SelectionBrush" Color="#0078D7"/>
 
         <!-- Кнопки на панели инструментов -->
         <Style x:Key="SmallToolButtonStyle" TargetType="Button">
@@ -56,17 +56,17 @@
                     DockPanel.Dock="Top"
                     Margin="0,7,0,5">
 
-            <Button Content="+" Style="{StaticResource SmallToolButtonStyle}"
+            <Button Content="+" Style="{StaticResource MaterialSmallToolButtonStyle}"
                     Command="{Binding AddTextPartCommand}"/>
-            <Button Content="–" Style="{StaticResource SmallToolButtonStyle}"
+            <Button Content="–" Style="{StaticResource MaterialSmallToolButtonStyle}"
                     Command="{Binding RemoveTextPartCommand}"/>
-            <Button Content="▲" Style="{StaticResource SmallToolButtonStyle}"
+            <Button Content="▲" Style="{StaticResource MaterialSmallToolButtonStyle}"
                     Command="{Binding MoveUpCommand}"/>
-            <Button Content="▼" Style="{StaticResource SmallToolButtonStyle}"
+            <Button Content="▼" Style="{StaticResource MaterialSmallToolButtonStyle}"
                     Command="{Binding MoveDownCommand}"/>
-            <Button Content="◀" Style="{StaticResource SmallToolButtonStyle}"
+            <Button Content="◀" Style="{StaticResource MaterialSmallToolButtonStyle}"
                     Command="{Binding MoveLeftCommand}"/>
-            <Button Content="▶" Style="{StaticResource SmallToolButtonStyle}"
+            <Button Content="▶" Style="{StaticResource MaterialSmallToolButtonStyle}"
                     Command="{Binding MoveRightCommand}"/>
         </StackPanel>
 

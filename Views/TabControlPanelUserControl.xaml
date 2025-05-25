@@ -18,6 +18,8 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor"          Value="Hand"/>
             <Setter Property="Focusable"       Value="False"/>
+            <Setter Property="Background" Value="{StaticResource ButtonBackgroundColor}"/>
+            <Setter Property="Foreground" Value="{StaticResource ButtonTextColor}"/>
         </Style>
 
         <!-- Style for the close button in a tab header -->
@@ -27,7 +29,7 @@
             <Setter Property="FontWeight"   Value="Bold"/>
             <Setter Property="FontSize"     Value="18"/>
             <Setter Property="Background"   Value="Transparent"/>
-            <Setter Property="Foreground"   Value="#666"/>
+            <Setter Property="Foreground"   Value="{StaticResource TextOnPrimaryColor}"/>
             <Setter Property="Cursor"       Value="Hand"/>
             <Setter Property="Focusable"    Value="False"/>
             <Setter Property="Template">
@@ -55,7 +57,7 @@
                 <TextBlock Text="{Binding TabHeader}"
                            VerticalAlignment="Center"
                            FontSize="14"
-                           Foreground="#333"/>
+                           Foreground="{StaticResource TextOnPrimaryColor}"/>
 
                 <Button Grid.Column="1"
                         Style="{StaticResource ClosableTabButtonStyle}"
@@ -91,22 +93,24 @@
         <!-- Toolbar -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
             <Button Style="{StaticResource ToolbarButtonStyle}"
-                    Background="Purple"
                     Command="{Binding OpenDocumentsFolderCommand}"
-                    ToolTip="Open Documents Folder"/>
+                    ToolTip="Open Documents Folder">
+                <TextBlock Text="📄" FontSize="14"/>
+            </Button>
 
             <Button Style="{StaticResource ToolbarButtonStyle}"
-                    Background="Green"
                     Command="{Binding OpenScriptsFolderCommand}"
-                    ToolTip="Open Scripts Folder"/>
+                    ToolTip="Open Scripts Folder">
+                <TextBlock Text="📜" FontSize="14"/>
+            </Button>
 
             <Button Style="{StaticResource ToolbarButtonStyle}"
-                    Background="Red"
                     Command="{Binding OpenProjectFolderCommand}"
-                    ToolTip="Open Project Folder"/>
+                    ToolTip="Open Project Folder">
+                <TextBlock Text="📁" FontSize="14"/>
+            </Button>
             
             <Button Style="{StaticResource ToolbarButtonStyle}"
-                    Background="Purple"
                     Command="{Binding OpenSettingsTabCommand}"
                     ToolTip="Открыть настройки">
                 <TextBlock Text="⚙" FontSize="16" FontWeight="Bold"/>
@@ -114,8 +118,6 @@
 
             <Button Style="{StaticResource ToolbarButtonStyle}"
                     Content="+"
-                    Background="Red"
-                    Foreground="White"
                     Command="{Binding AddTabCommand}"
                     ToolTip="Add Tab"/>
         </StackPanel>
@@ -125,13 +127,16 @@
                     ItemsSource="{Binding Tabs}" 
                     SelectedItem="{Binding SelectedTab}" 
                     ContentTemplateSelector="{StaticResource TabContentTemplateSelector}"
-                    TabStripPlacement="Top">
+                    TabStripPlacement="Top"
+                    Background="White">
+            <TabControl.Resources>
+                <Style TargetType="TabPanel">
+                    <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+                </Style>
+            </TabControl.Resources>
             <TabControl.ItemContainerStyle>
-                <Style TargetType="TabItem">
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Style TargetType="TabItem" BasedOn="{StaticResource MaterialTabItemStyle}">
                     <Setter Property="HeaderTemplate" Value="{StaticResource ClosableTabHeaderTemplate}"/>
-                    <Setter Property="MinWidth" Value="70"/>
-                    <Setter Property="Height"   Value="30"/>
                     <EventSetter Event="MouseRightButtonUp" Handler="TabItem_RightClick"/>
                 </Style>
             </TabControl.ItemContainerStyle>

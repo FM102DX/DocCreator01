@@ -5,6 +5,64 @@
     <!-- Убираем StartupUri, используем код для запуска главного окна через DI -->
     <Application.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <!-- Other resources here... -->
+        
+        <!-- Material Design Color Palette -->
+        <SolidColorBrush x:Key="PrimaryColor" Color="#0078D7"/>
+        <SolidColorBrush x:Key="PrimaryLightColor" Color="#1E90FF"/>
+        <SolidColorBrush x:Key="PrimaryDarkColor" Color="#0063B1"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#E5A100"/>
+        <SolidColorBrush x:Key="TextOnPrimaryColor" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="ButtonBackgroundColor" Color="#E0E0E0"/>
+        <SolidColorBrush x:Key="ButtonTextColor" Color="#0078D7"/>
+        
+        <!-- Menu Item Style -->
+        <Style x:Key="MaterialMenuItemStyle" TargetType="MenuItem">
+            <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryColor}"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        
+        <!-- Button Style -->
+        <Style x:Key="MaterialButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource ButtonBackgroundColor}"/>
+            <Setter Property="Foreground" Value="{StaticResource ButtonTextColor}"/>
+            <Setter Property="Padding" Value="15,5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.9"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <!-- Tab Item Style -->
+        <Style x:Key="MaterialTabItemStyle" TargetType="TabItem">
+            <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryColor}"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="MinWidth" Value="70"/>
+            <Setter Property="Height" Value="30"/>
+        </Style>
+        
+        <!-- Small Tool Button Style -->
+        <Style x:Key="MaterialSmallToolButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="Width" Value="25"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Background" Value="{StaticResource ButtonBackgroundColor}"/>
+            <Setter Property="Foreground" Value="{StaticResource ButtonTextColor}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.9"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Application.Resources>
 </Application>

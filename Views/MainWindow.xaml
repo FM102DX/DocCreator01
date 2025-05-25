@@ -20,8 +20,8 @@
 
     <DockPanel Margin="0,0,10,10">
         <!-- Верхнее меню -->
-        <Menu DockPanel.Dock="Top">
-            <MenuItem Header="_Файл">
+        <Menu DockPanel.Dock="Top" Background="{StaticResource PrimaryColor}">
+            <MenuItem Header="_Файл" Style="{StaticResource MaterialMenuItemStyle}">
                 <MenuItem Header="Новый проект" Command="{Binding NewProjectCommand}"/>
                 <MenuItem Header="Открыть..." Command="{Binding OpenCommand}"/>
                 <MenuItem Header="Сохранить" Command="{Binding SaveCommand}"/>
@@ -59,10 +59,10 @@
 
             <!-- Правая колонка -->
             <DockPanel Grid.Column="2" Margin="10,0,0,0">
-                <Border Background="#E5A100" DockPanel.Dock="Top">
+                <Border Background="{StaticResource PrimaryColor}" DockPanel.Dock="Top">
                     <StackPanel>
                         <TextBlock Text="Status"
-                                   Foreground="White"
+                                   Foreground="{StaticResource TextOnPrimaryColor}"
                                    HorizontalAlignment="Center"
                                    Margin="0,10,0,5"/>
 
@@ -78,7 +78,7 @@
                 <Button Content="Create"
                         Command="{Binding GenerateFileCommand}"
                         Height="50" Margin="0,10,0,10"
-                        Background="#0063B1" Foreground="White"
+                        Style="{StaticResource MaterialButtonStyle}"
                         DockPanel.Dock="Top"/>
 
                 <!-- The ListBox with context menu -->

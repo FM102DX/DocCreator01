@@ -63,7 +63,6 @@ namespace DocCreator01.ViewModels
         [Reactive] public string Text { get; set; }
         [Reactive] public bool IncludeInDocument { get; set; }
 
-        // NEW: collection for ListView / ListBox in TextPartUserControl
         public ObservableCollection<TextPartChunkViewModel> TextPartChunks { get; }
 
         public ICommand DeleteChunkCommand { get; }
@@ -73,7 +72,6 @@ namespace DocCreator01.ViewModels
             var vm = new TextPartChunkViewModel(chunkModel, _dirtyStateMgr);
 
             // подписываемся на любые изменения изображения
-            vm.ImageCleared  += OnChunkImageChanged;   // legacy
             vm.ImageChanged  += OnChunkImageChanged;   // new
             return vm;
         }
@@ -99,10 +97,6 @@ namespace DocCreator01.ViewModels
                 _dirtyStateMgr?.MarkAsDirty();
             }
         }
-
-        private void OnChunkImageCleared(TextPartChunkViewModel vm)
-            => EnsureTrailingEmptyChunk(vm);
-
  
         public void RemoveChunk(TextPartChunkViewModel chunk)
         {

@@ -91,12 +91,8 @@ namespace DocCreator01.ViewModels
             this.RaisePropertyChanged(nameof(HasImage));
             this.RaisePropertyChanged(nameof(ThumbnailImage));
             _dirtyStateMgr?.MarkAsDirty();
-
-            ImageCleared?.Invoke(this);
             ImageChanged?.Invoke(this);
         }
-
-        public event Action<TextPartChunkViewModel>? ImageCleared;          // keep for backward-compat
-        public event Action<TextPartChunkViewModel>? ImageChanged;          // <-- new
+        public event Action<TextPartChunkViewModel>? ImageChanged;
     }
 }

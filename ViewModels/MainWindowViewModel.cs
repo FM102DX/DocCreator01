@@ -81,6 +81,7 @@ namespace DocCreator01.ViewModel
             CloseTabCommand = ReactiveCommand.Create<ITabViewModel>(CloseTab);
             DeleteTabCommand = ReactiveCommand.Create<ITabViewModel>(DeleteTab);
             ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown());
+            GenerateFileCommand = ReactiveCommand.Create(GenerateOutputFile); // Add missing initialization
             AddTextPartCommand = ReactiveCommand.Create(AddTab);
             RemoveTextPartCommand = ReactiveCommand.Create(RemoveSelectedTextPart);
             MoveUpCommand = ReactiveCommand.Create(MoveSelectedTextPartUp);

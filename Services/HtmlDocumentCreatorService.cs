@@ -506,12 +506,23 @@ h1,h2,h3  {{color:#333366;}}";
             if (string.IsNullOrEmpty(headerTableHtml))
                 return null;
 
+            // Создаем TextPartChunk с HTML-содержимым заголовка
+            var chunk = new TextPartChunk
+            {
+                Text = headerTableHtml,
+                Id = Guid.NewGuid(),
+            };
+
             return new TextPart {
                 Name = string.Empty,
-                Text = headerTableHtml,
-                Html = headerTableHtml,
+                // Не используем свойство Text для HTML-содержимого
+                Text = string.Empty,
+                // Оставляем Html как null, чтобы рендерер установил его на основе TextPartChunks
+                Html = null,
                 Level = 1,
-                IncludeInDocument = true
+                IncludeInDocument = true,
+                // Добавляем чанк с HTML-содержимым заголовка
+                TextPartChunks = new List<TextPartChunk> { chunk }
             };
         }
 

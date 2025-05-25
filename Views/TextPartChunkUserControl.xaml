@@ -6,6 +6,7 @@
     <UserControl.Resources>
         <converters:ByteArrayToImageSourceConverter x:Key="ByteArrayToImageConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
     </UserControl.Resources>
     
     <Grid Margin="0,5">
@@ -52,7 +53,9 @@
         <!-- Текстовое поле -->
         <ScrollViewer Grid.Column="0" Grid.Row="1"
                       HorizontalScrollBarVisibility="Auto" 
-                      VerticalScrollBarVisibility="Auto">
+                      VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding HasImage,
+                                       Converter={StaticResource InverseBoolToVisibilityConverter}}">
             <TextBox x:Name="PART_TextBox"
                      Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      AcceptsReturn="True"

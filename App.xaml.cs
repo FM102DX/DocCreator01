@@ -3,78 +3,67 @@ using DocCreator01.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using DocCreator01.Data;
+using DocCreator01.Contracts;
+using DocCreator01.Views;
+using System;
 
 namespace DocCreator01
 {
-    using global::DocCreator01.Contracts;
-    using global::DocCreator01.ViewModels;
-    using global::DocCreator01.Views;
-    using Microsoft.Extensions.DependencyInjection;
-    using System;
-    using System.Windows;
-
-    namespace DocCreator01
+    public partial class App : Application
     {
+        ServiceProvider? _provider;
 
-        public partial class App : Application
+        protected override void OnStartup(StartupEventArgs e)
         {
-            ServiceProvider? _provider;
+            var services = new ServiceCollection();
 
-            protected override void OnStartup(StartupEventArgs e)
-            {
-                var services = new ServiceCollection();
+            services.AddSingleton<IProjectRepository, JsonProjectRepository>();
 
-                services.AddSingleton<IProjectRepository, JsonProjectRepository>();
+            // Register the GeneratedFilesHelper service
+            services.AddSingleton<IGeneratedFilesHelper, GeneratedFilesHelper>();
 
-                // Register the GeneratedFilesHelper service
-                services.AddSingleton<IGeneratedFilesHelper, GeneratedFilesHelper>();
+            // Update the TextPartHelper registration to remove dependency on IProjectRepository
+            services.AddTransient<ITextPartHelper, TextPartHelper>();
 
-                // Update the TextPartHelper registration to remove dependency on IProjectRepository
-                services.AddTransient<ITextPartHelper, TextPartHelper>();
+            // Register the Python helper
+            services.AddSingleton<IPythonHelper, PythonHelper>();
 
-                // Register the Python helper
-                services.AddSingleton<IPythonHelper, PythonHelper>();
+            // Register the AppPathsHelper
+            services.AddSingleton<IAppPathsHelper, AppPathsHelper>();
 
-                // Register the AppPathsHelper
-                services.AddSingleton<IAppPathsHelper, AppPathsHelper>();
+            // Register HTML document creator service
+            services.AddSingleton<IHtmlDocumentCreatorService, HtmlDocumentCreatorService>();
 
-                // Register HTML document creator service
-                services.AddSingleton<IHtmlDocumentCreatorService, HtmlDocumentCreatorService>();
-                
-                // Register browser service
-                services.AddSingleton<IBrowserService, BrowserService>();
+            // Register browser service
+            services.AddSingleton<IBrowserService, BrowserService>();
 
-                // Add the TextPartHtmlRenderer service
-                services.AddSingleton<ITextPartHtmlRenderer, TextPartHtmlRenderer>();
+            // Add the TextPartHtmlRenderer service
+            services.AddSingleton<ITextPartHtmlRenderer, TextPartHtmlRenderer>();
 
-                // Add these lines to your DI container registration
-                services.AddTransient<IProjectHelper, ProjectHelper>();
+            // Add these lines to your DI container registration
+            services.AddTransient<IProjectHelper, ProjectHelper>();
 
-                // Update the MainWindowViewModel registration in App.xaml.cs
-                // Register MainWindowViewModel correctly with all its dependencies
-                services.AddTransient<MainWindowViewModel>(provider => 
-                    new MainWindowViewModel(
-                        provider.GetRequiredService<IProjectRepository>(),
-                        provider.GetRequiredService<ITextPartHelper>(),
-                        provider.GetRequiredService<IProjectHelper>(),
-                        provider.GetRequiredService<IAppPathsHelper>(),
-                        provider.GetRequiredService<IGeneratedFilesHelper>(),
-                        provider.GetRequiredService<IBrowserService>()
-                    )
-                );
-                
-                services.AddTransient<MainWindow>();
+            // Update the MainWindowViewModel registration in App.xaml.cs
+            // Register MainWindowViewModel correctly with all its dependencies
+            services.AddTransient<MainWindowViewModel>(provider =>
+                new MainWindowViewModel(
+                    provider.GetRequiredService<IProjectRepository>(),
+                    provider.GetRequiredService<ITextPartHelper>(),
+                    provider.GetRequiredService<IProjectHelper>(),
+                    provider.GetRequiredService<IAppPathsHelper>(),
+                    provider.GetRequiredService<IGeneratedFilesHelper>(),
+                    provider.GetRequiredService<IBrowserService>()
+                )
+            );
 
-                _provider = services.BuildServiceProvider();
+            services.AddTransient<MainWindow>();
 
-                var window = _provider.GetRequiredService<MainWindow>();
-                window.Show();
+            _provider = services.BuildServiceProvider();
 
-                base.OnStartup(e);
-            }
+            var window = _provider.GetRequiredService<MainWindow>();
+            window.Show();
+
+            base.OnStartup(e);
         }
-
     }
-
-
 }

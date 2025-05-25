@@ -10,6 +10,7 @@ using DocCreator01.Models;
 using ReactiveUI;
 using DocCreator01.Messages;
 using System.Linq;
+using DocCreator01.Services;  // allow calling TextPartHelper
 
 namespace DocCreator01.Services
 {
@@ -208,29 +209,7 @@ namespace DocCreator01.Services
         /// <param name="textPart">TextPart to add chunk to</param>
         /// <returns>The newly created chunk if one was added, otherwise null</returns>
         public TextPartChunk AddEmptyChunkIfNeeded(TextPart textPart)
-        {
-            if (textPart == null) return null;
-            
-            // Ensure collection exists
-            if (textPart.TextPartChunks == null)
-                textPart.TextPartChunks = new List<TextPartChunk>();
-            
-            // Check if we need to add an empty chunk (if collection is empty or last chunk is not empty)
-            if (textPart.TextPartChunks.Count == 0 || 
-                !string.IsNullOrEmpty(textPart.TextPartChunks.Last().Text))
-            {
-                var newChunk = new TextPartChunk 
-                { 
-                    Id = Guid.NewGuid(), 
-                    Text = string.Empty 
-                };
-                
-                textPart.TextPartChunks.Add(newChunk);
-                return newChunk;
-            }
-            
-            return null;
-        }
+            => TextPartHelper.AddEmptyChunkIfNeeded(textPart);
 
         /// <summary>
         /// Force adds a new empty chunk to a TextPart
@@ -238,21 +217,6 @@ namespace DocCreator01.Services
         /// <param name="textPart">TextPart to add chunk to</param>
         /// <returns>The newly created chunk</returns>
         public TextPartChunk AddEmptyChunk(TextPart textPart)
-        {
-            if (textPart == null) return null;
-            
-            // Ensure collection exists
-            if (textPart.TextPartChunks == null)
-                textPart.TextPartChunks = new List<TextPartChunk>();
-            
-            var newChunk = new TextPartChunk 
-            { 
-                Id = Guid.NewGuid(), 
-                Text = string.Empty 
-            };
-            
-            textPart.TextPartChunks.Add(newChunk);
-            return newChunk;
-        }
+            => TextPartHelper.AddEmptyChunk(textPart);
     }
 }

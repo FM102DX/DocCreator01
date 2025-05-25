@@ -48,7 +48,7 @@ namespace DocCreator01.ViewModels
             {
                 if (Model.ThumbnailData == null || Model.ThumbnailData.Length == 0)
                     return null;
-                    
+   
                 try
                 {
                     var bitmap = new BitmapImage();
@@ -77,6 +77,7 @@ namespace DocCreator01.ViewModels
             this.RaisePropertyChanged(nameof(HasImage));
             this.RaisePropertyChanged(nameof(ThumbnailImage));
             _dirtyStateMgr?.MarkAsDirty();
+            ImageChanged?.Invoke(this);
         }
         
         /// <summary>
@@ -84,12 +85,18 @@ namespace DocCreator01.ViewModels
         /// </summary>
         public void ClearImage()
         {
-            Model.ImageData = null;
+            Model.ImageData     = null;
             Model.ThumbnailData = null;
-            
+
             this.RaisePropertyChanged(nameof(HasImage));
             this.RaisePropertyChanged(nameof(ThumbnailImage));
             _dirtyStateMgr?.MarkAsDirty();
+
+            ImageCleared?.Invoke(this);
+            ImageChanged?.Invoke(this);
         }
+
+        public event Action<TextPartChunkViewModel>? ImageCleared;          // keep for backward-compat
+        public event Action<TextPartChunkViewModel>? ImageChanged;          // <-- new
     }
 }

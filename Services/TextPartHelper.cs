@@ -5,7 +5,6 @@ using System.Linq;
 using DocCreator01.Contracts;
 using DocCreator01.Messages;
 using DocCreator01.Models;
-using DocCreator01.ViewModels;
 using ReactiveUI;
 
 namespace DocCreator01.Services
@@ -74,6 +73,42 @@ namespace DocCreator01.Services
                 return true;
             }
             return false;
+        }
+
+        /* ---------- shared chunk helpers ---------- */
+        public static bool IsChunkEmpty(TextPartChunk? chunk) =>
+            chunk == null ||
+            (string.IsNullOrWhiteSpace(chunk.Text) &&
+             (chunk.ImageData == null || chunk.ImageData.Length == 0));
+
+        public static TextPartChunk? AddEmptyChunk(TextPart? textPart)
+        {
+            if (textPart == null) return null;
+
+            textPart.TextPartChunks ??= new List<TextPartChunk>();
+
+            var newChunk = new TextPartChunk
+            {
+                Id   = Guid.NewGuid(),
+                Text = string.Empty
+            };
+            textPart.TextPartChunks.Add(newChunk);
+            return newChunk;
+        }
+
+        public static TextPartChunk? AddEmptyChunkIfNeeded(TextPart? textPart)
+        {
+            if (textPart == null) return null;
+
+            textPart.TextPartChunks ??= new List<TextPartChunk>();
+
+            if (textPart.TextPartChunks.Count == 0 ||
+                !IsChunkEmpty(textPart.TextPartChunks.Last()))
+            {
+                return AddEmptyChunk(textPart);
+            }
+
+            return null;                    // nothing added
         }
     }
 }

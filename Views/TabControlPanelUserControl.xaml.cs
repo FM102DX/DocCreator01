@@ -1,5 +1,5 @@
 using DocCreator01.Contracts;
-using DocCreator01.ViewModel;
+using DocCreator01.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;

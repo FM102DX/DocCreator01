@@ -7,7 +7,7 @@ using DocCreator01.Data;
 namespace DocCreator01
 {
     using global::DocCreator01.Contracts;
-    using global::DocCreator01.ViewModel;
+    using global::DocCreator01.ViewModels;
     using global::DocCreator01.Views;
     using Microsoft.Extensions.DependencyInjection;
     using System;

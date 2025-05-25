@@ -22,6 +22,19 @@
             <Setter Property="Padding" Value="10,5"/>
             <Setter Property="FontSize" Value="14"/>
         </Style>
+
+        <!-- Dropdown Menu Item Style -->
+        <Style x:Key="DropdownMenuItemStyle" TargetType="MenuItem">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="{StaticResource ButtonTextColor}"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Style.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryLightColor}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
         
         <!-- Button Style -->
         <Style x:Key="MaterialButtonStyle" TargetType="Button">

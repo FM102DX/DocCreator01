@@ -22,18 +22,18 @@
         <!-- Верхнее меню -->
         <Menu DockPanel.Dock="Top" Background="{StaticResource PrimaryColor}">
             <MenuItem Header="_Файл" Style="{StaticResource MaterialMenuItemStyle}">
-                <MenuItem Header="Новый проект" Command="{Binding NewProjectCommand}"/>
-                <MenuItem Header="Открыть..." Command="{Binding OpenCommand}"/>
-                <MenuItem Header="Сохранить" Command="{Binding SaveCommand}"/>
+                <MenuItem Header="Новый проект" Command="{Binding NewProjectCommand}" Style="{StaticResource DropdownMenuItemStyle}"/>
+                <MenuItem Header="Открыть..." Command="{Binding OpenCommand}" Style="{StaticResource DropdownMenuItemStyle}"/>
+                <MenuItem Header="Сохранить" Command="{Binding SaveCommand}" Style="{StaticResource DropdownMenuItemStyle}"/>
                 <Separator/>
-                <MenuItem Header="Выход" Command="{Binding ExitCommand}"/>
+                <MenuItem Header="Выход" Command="{Binding ExitCommand}" Style="{StaticResource DropdownMenuItemStyle}"/>
                 <Separator/>
-                <MenuItem Header="Открыть недавние">
+                <MenuItem Header="Открыть недавние" Style="{StaticResource DropdownMenuItemStyle}">
                     <MenuItem.ItemsSource>
                         <Binding Path="RecentFiles" />
                     </MenuItem.ItemsSource>
                     <MenuItem.ItemContainerStyle>
-                        <Style TargetType="MenuItem">
+                        <Style TargetType="MenuItem" BasedOn="{StaticResource DropdownMenuItemStyle}">
                             <Setter Property="Header" Value="{Binding}" />
                             <Setter Property="Command" Value="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=Menu}}" />
                             <Setter Property="CommandParameter" Value="{Binding}" />
@@ -82,13 +82,14 @@
                         DockPanel.Dock="Top"/>
 
                 <!-- The ListBox with context menu -->
-                <Border Background="#FEFDB0" DockPanel.Dock="Bottom" Margin="0,0,0,0">
+                <Border Background="White" DockPanel.Dock="Bottom" Margin="0,0,0,0" BorderThickness="1" BorderBrush="{StaticResource PrimaryColor}">
                     <ListBox ItemsSource="{Binding GeneratedFilesViewModels}"
                              Background="Transparent"
                              BorderThickness="0"
                              Margin="0,0,0,0"
                              ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                             MouseDoubleClick="ListBox_MouseDoubleClick">
+                             MouseDoubleClick="ListBox_MouseDoubleClick"
+                             Foreground="{StaticResource ButtonTextColor}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" Margin="5"
@@ -96,7 +97,8 @@
                                     <Image Source="{Binding IconPath}" Width="32" Height="32"/>
                                     <TextBlock Text="{Binding DisplayFileName}" 
                                                VerticalAlignment="Center" 
-                                               Margin="8,0,0,0"/>
+                                               Margin="8,0,0,0"
+                                               Foreground="{StaticResource ButtonTextColor}"/>
                                     
                                     <!-- Context Menu -->
                                     <StackPanel.ContextMenu>

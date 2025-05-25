@@ -45,27 +45,101 @@ namespace DocCreator01.Services
         {
             if (part is null) return string.Empty;
 
-            var detected = DetectFormat(part.Text);
-
-            string body = detected switch
+            // Work only with TextPartChunks
+            if (part.TextPartChunks != null && part.TextPartChunks.Count > 0)
             {
-                TextFormat.Html      => TransformHtml(part),     // извлечь только содержимое тегов body
-                TextFormat.Markdown  => Markdown.ToHtml(part.Text, _pipeline),
-                _                    => ConvertPlainText(part.Text)        // обычный текст
-            };
-
+                var chunkHtmls = new List<string>();
+                
+                foreach (var chunk in part.TextPartChunks)
+                {
+                    string chunkHtml = BuildChunkHtml(chunk);
+                    if (!string.IsNullOrWhiteSpace(chunkHtml))
+                    {
+                        chunkHtmls.Add(chunkHtml);
+                    }
+                }
+                
+                string combinedBody = string.Join("\n", chunkHtmls);
+                string partHeading = BuildHeading(part.Name, part.Level, part.ParagraphNo);
+                return $"{partHeading}\n{combinedBody}".Trim();
+            }
+            
+            // If no chunks, return only heading
             string heading = BuildHeading(part.Name, part.Level, part.ParagraphNo);
-            return $"{heading}\n{body}".Trim();
+            return heading;
         }
 
-        private static string TransformHtml(TextPart part)
+        /// <summary>
+        /// Builds HTML for a single TextPartChunk, handling both text and image content
+        /// </summary>
+        private string BuildChunkHtml(TextPartChunk chunk)
         {
-            var tmp = ExtractBodyContent(part.Text);
-            tmp = ShiftHtmlHeaders(tmp, part.Level);
-            return tmp;
+            if (chunk == null) return string.Empty;
+
+            // Handle image chunks
+            if (chunk.HasImage && chunk.ImageData != null)
+            {
+                return ConvertImageToHtml(chunk.ImageData);
+            }
+
+            // Handle text chunks
+            if (!string.IsNullOrWhiteSpace(chunk.Text))
+            {
+                var detected = DetectFormat(chunk.Text);
+
+                return detected switch
+                {
+                    TextFormat.Html      => ExtractBodyContent(chunk.Text),
+                    TextFormat.Markdown  => Markdown.ToHtml(chunk.Text, _pipeline),
+                    _                    => ConvertPlainText(chunk.Text)
+                };
+            }
+
+            return string.Empty;
         }
 
-        
+        /// <summary>
+        /// Converts image byte array to inline HTML img tag with base64 encoding
+        /// </summary>
+        private static string ConvertImageToHtml(byte[] imageData)
+        {
+            if (imageData == null || imageData.Length == 0)
+                return string.Empty;
+
+            try
+            {
+                // Determine image format based on first few bytes
+                string mimeType = GetImageMimeType(imageData);
+                string base64String = Convert.ToBase64String(imageData);
+                
+                return $"<img src=\"data:{mimeType};base64,{base64String}\" style=\"max-width: 100%; height: auto;\" />";
+            }
+            catch (Exception)
+            {
+                // If conversion fails, return empty string or error message
+                return "<p><em>Error: Unable to display image</em></p>";
+            }
+        }
+
+        /// <summary>
+        /// Determines MIME type based on image file signature
+        /// </summary>
+        private static string GetImageMimeType(byte[] imageData)
+        {
+            if (imageData.Length < 4) return "image/png"; // default
+
+            // Check for common image signatures
+            if (imageData[0] == 0xFF && imageData[1] == 0xD8) return "image/jpeg";
+            if (imageData[0] == 0x89 && imageData[1] == 0x50 && imageData[2] == 0x4E && imageData[3] == 0x47) return "image/png";
+            if (imageData[0] == 0x47 && imageData[1] == 0x49 && imageData[2] == 0x46) return "image/gif";
+            if (imageData[0] == 0x42 && imageData[1] == 0x4D) return "image/bmp";
+            if (imageData.Length >= 12 && 
+                imageData[0] == 0x52 && imageData[1] == 0x49 && imageData[2] == 0x46 && imageData[3] == 0x46 &&
+                imageData[8] == 0x57 && imageData[9] == 0x45 && imageData[10] == 0x42 && imageData[11] == 0x50) return "image/webp";
+
+            return "image/png"; // default fallback
+        }
+
         //Сдвигает уровни HTML-заголовков так, чтобы они были однородны и соответстовали Level
         private static string ShiftHtmlHeaders(string html, int level)
         {
@@ -138,7 +212,7 @@ namespace DocCreator01.Services
             return string.Join(Environment.NewLine, paragraphs);
         }
 
-        private static string BuildHeading(string name, int level, string paragraphNo = null)
+        private static string BuildHeading(string name, int level, string? paragraphNo = null)
         {
             if (string.IsNullOrWhiteSpace(name)) return string.Empty;
 

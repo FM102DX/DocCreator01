@@ -58,8 +58,9 @@
                            VerticalAlignment="Center"
                            FontSize="14"
                            Margin="5,0,5,0"
+                           Foreground="{StaticResource TextOnPrimaryColor}"
                            TextTrimming="CharacterEllipsis"
-                           Foreground="{StaticResource TextOnPrimaryColor}"/>
+                           TextWrapping="NoWrap"/>
 
                 <Button Grid.Column="1"
                         Style="{StaticResource ClosableTabButtonStyle}"
@@ -134,11 +135,18 @@
             <TabControl.Resources>
                 <Style TargetType="TabPanel">
                     <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+                    <Setter Property="Margin"     Value="0"/> <!-- NEW -->
                 </Style>
             </TabControl.Resources>
             <TabControl.ItemContainerStyle>
                 <Style TargetType="TabItem" BasedOn="{StaticResource MaterialTabItemStyle}">
+                    <!-- guarantee uniform look even when style fails to load -->
+                    <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>      <!-- NEW -->
                     <Setter Property="HeaderTemplate" Value="{StaticResource ClosableTabHeaderTemplate}"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>            <!-- NEW -->
+                    <Setter Property="VerticalContentAlignment"   Value="Center"/>             <!-- NEW -->
+                    <Setter Property="Padding" Value="0"/>                                      <!-- NEW -->
+                    <Setter Property="Margin"  Value="-1,0,-1,0"/>  <!-- CHANGED: no visible gaps -->
                     <EventSetter Event="MouseRightButtonUp" Handler="TabItem_RightClick"/>
                 </Style>
             </TabControl.ItemContainerStyle>

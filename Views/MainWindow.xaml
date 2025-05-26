@@ -108,10 +108,10 @@
                                                       Command="{Binding RenameCommand}"/>
                                             <MenuItem Header="Удалить" 
                                                       Command="{Binding DeleteCommand}"/>
-                                            <Separator />
+                                            <Separator Style="{StaticResource MaterialMenuSeparatorStyle}" />
                                             <MenuItem Header="Удалить все"
                                                       Command="{Binding DeleteAllGeneratedFilesCommand}"/>
-                                            <Separator />
+                                            <Separator Style="{StaticResource MaterialMenuSeparatorStyle}" />
                                             
                                             <!-- HTML specific operations -->
                                             <MenuItem Header="Открыть в браузере" 

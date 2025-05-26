@@ -20,16 +20,46 @@
     </Style>
 
     <!-- Dropdown Menu Item Style -->
-    <Style x:Key="DropdownMenuItemStyle" TargetType="MenuItem">
-        <Setter Property="Background" Value="White"/>
-        <Setter Property="Foreground" Value="{StaticResource ButtonTextColor}"/>
-        <Setter Property="Padding" Value="10,5"/>
+    <Style x:Key="DropdownMenuItemStyle"
+           TargetType="MenuItem"
+           BasedOn="{StaticResource {x:Type MenuItem}}">
+        <!-- Цвета и отступы -->
+        <Setter Property="Background"      Value="White"/>
+        <Setter Property="Foreground"      Value="{StaticResource ButtonTextColor}"/>
+        <Setter Property="Padding"         Value="10,5"/>
+
+        <!-- Убираем серый бордюр -->
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="BorderBrush"     Value="Transparent"/>
+
+        <!-- Подсветка -->
         <Style.Triggers>
-                        <Trigger Property="IsHighlighted" Value="True">
+            <Trigger Property="IsHighlighted" Value="True">
                 <Setter Property="Background" Value="{StaticResource PrimaryLightColor}"/>
-                            <Setter Property="Foreground" Value="White"/>
-                        </Trigger>
+                <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryColor}"/>
+            </Trigger>
+
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4"/>
+            </Trigger>
         </Style.Triggers>
+    </Style>
+
+    <!-- Separator в меню -->
+    <Style x:Key="MaterialMenuSeparatorStyle"
+           TargetType="Separator">
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Background" Value="#FFD0D0D0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Background="{TemplateBinding Background}"
+                            Height="{TemplateBinding Height}"
+                            HorizontalAlignment="Stretch"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- Button Style -->

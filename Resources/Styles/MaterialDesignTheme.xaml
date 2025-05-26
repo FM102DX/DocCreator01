@@ -21,8 +21,7 @@
 
     <!-- Dropdown Menu Item Style -->
     <Style x:Key="DropdownMenuItemStyle"
-           TargetType="MenuItem"
-           BasedOn="{StaticResource {x:Type MenuItem}}">
+           TargetType="MenuItem">
         <!-- Цвета и отступы -->
         <Setter Property="Background"      Value="White"/>
         <Setter Property="Foreground"      Value="{StaticResource ButtonTextColor}"/>
@@ -31,18 +30,99 @@
         <!-- Убираем серый бордюр -->
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="BorderBrush"     Value="Transparent"/>
-
-        <!-- Подсветка -->
-        <Style.Triggers>
-            <Trigger Property="IsHighlighted" Value="True">
-                <Setter Property="Background" Value="{StaticResource PrimaryLightColor}"/>
-                <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryColor}"/>
-            </Trigger>
-
-            <Trigger Property="IsEnabled" Value="False">
-                <Setter Property="Opacity" Value="0.4"/>
-            </Trigger>
-        </Style.Triggers>
+        
+        <!-- Полностью переопределяем шаблон для удаления серых областей -->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Border" 
+                            Background="{TemplateBinding Background}"
+                            BorderThickness="0" 
+                            Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Icon"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Arrow"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Icon -->
+                            <ContentPresenter x:Name="Icon" 
+                                              Content="{TemplateBinding Icon}"
+                                              Margin="4,0,6,0" 
+                                              VerticalAlignment="Center"/>
+                            
+                            <!-- Header -->
+                            <ContentPresenter Grid.Column="1"
+                                              ContentSource="Header"
+                                              Margin="0,0,0,0"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                            
+                            <!-- Submenu Arrow -->
+                            <Path x:Name="Arrow"
+                                  Grid.Column="3"
+                                  Data="M0,0 L4,4 L0,8 Z"
+                                  Fill="{TemplateBinding Foreground}"
+                                  Margin="10,0,0,0"
+                                  VerticalAlignment="Center"
+                                  Visibility="Collapsed"/>
+                            
+                            <!-- Popup for submenu -->
+                            <Popup x:Name="SubMenuPopup" 
+                                   IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                   AllowsTransparency="True" 
+                                   Placement="Right"
+                                   Focusable="false" 
+                                   PopupAnimation="Fade">
+                                <Border x:Name="SubMenuBorder" 
+                                        Background="White"
+                                        BorderThickness="0">
+                                    <ScrollViewer Style="{DynamicResource {ComponentResourceKey ResourceId=MenuScrollViewer, TypeInTargetAssembly={x:Type FrameworkElement}}}">
+                                        <ItemsPresenter x:Name="ItemsPresenter" 
+                                                        KeyboardNavigation.DirectionalNavigation="Cycle" 
+                                                        Grid.IsSharedSizeScope="True"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Triggers -->
+                    <ControlTemplate.Triggers>
+                        <!-- When highlighted (hovered) -->
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter Property="Background" TargetName="Border" Value="{StaticResource PrimaryLightColor}"/>
+                            <!-- Keep text blue on hover -->
+                        </Trigger>
+                        
+                        <!-- For disabled state -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                        
+                        <!-- For items with subitems -->
+                        <Trigger Property="HasDropShadow" Value="true">
+                            <Setter TargetName="SubMenuBorder" Property="Background" Value="White"/>
+                        </Trigger>
+                        
+                        <!-- Show arrow for items with subitems -->
+                        <Trigger Property="Role" Value="TopLevelHeader">
+                            <Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="Role" Value="SubMenuHeader">
+                            <Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        
+                        <!-- Submenu placement -->
+                        <Trigger Property="Role" Value="TopLevelHeader">
+                            <Setter TargetName="SubMenuPopup" Property="Placement" Value="Bottom"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- Separator в меню -->

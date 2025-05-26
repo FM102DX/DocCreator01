@@ -91,7 +91,7 @@
         <!-- Toolbar -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
             <Button Style="{StaticResource ToolbarButtonStyle}"
-                    Background="Purple"
+                    Background="Green"
                     Command="{Binding OpenDocumentsFolderCommand}"
                     ToolTip="Open Documents Folder"/>
 
@@ -101,12 +101,12 @@
                     ToolTip="Open Scripts Folder"/>
 
             <Button Style="{StaticResource ToolbarButtonStyle}"
-                    Background="Red"
+                    Background="Green"
                     Command="{Binding OpenProjectFolderCommand}"
                     ToolTip="Open Project Folder"/>
             
             <Button Style="{StaticResource ToolbarButtonStyle}"
-                    Background="Purple"
+                    Background="Green"
                     Command="{Binding OpenSettingsTabCommand}"
                     ToolTip="Открыть настройки">
                 <TextBlock Text="⚙" FontSize="16" FontWeight="Bold"/>
@@ -114,7 +114,7 @@
 
             <Button Style="{StaticResource ToolbarButtonStyle}"
                     Content="+"
-                    Background="Red"
+                    Background="Green"
                     Foreground="White"
                     Command="{Binding AddTabCommand}"
                     ToolTip="Add Tab"/>

@@ -67,7 +67,7 @@
                     ToolTip="Add Tab"/>
         </StackPanel>
 
-        <!-- Tab control -->
+        <!-- Tab control с кастомным шаблоном для выравнивания контента по верху -->
         <TabControl Grid.Row="1" 
                     ItemsSource="{Binding Tabs}" 
                     SelectedItem="{Binding SelectedTab}" 
@@ -75,16 +75,46 @@
                     TabStripPlacement="Top"
                     Background="White">
 
-            <!-- Use compact TabPanel style -->
-            <TabControl.Resources>
-                <Style TargetType="TabPanel" BasedOn="{StaticResource CompactTabPanelStyle}"/>
-            </TabControl.Resources>
+            <!-- Используем кастомный шаблон для TabControl -->
+            <TabControl.Template>
+                <ControlTemplate TargetType="TabControl">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Верхняя панель с вкладками -->
+                        <TabPanel x:Name="HeaderPanel"
+                                  Grid.Row="0" 
+                                  Panel.ZIndex="1" 
+                                  IsItemsHost="True"
+                                  KeyboardNavigation.TabIndex="1"
+                                  Style="{StaticResource CompactTabPanelStyle}" />
+
+                        <!-- Контентная зона - убираем ScrollViewer и добавляем VerticalAlignment="Top" -->
+                        <Border Grid.Row="1"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                KeyboardNavigation.TabNavigation="Local"
+                                KeyboardNavigation.DirectionalNavigation="Contained"
+                                KeyboardNavigation.TabIndex="2">
+                            <!-- Контент каждой вкладки будет здесь -->
+                            <ContentPresenter x:Name="PART_SelectedContentHost" 
+                                              ContentSource="SelectedContent"
+                                              VerticalAlignment="Top" />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </TabControl.Template>
 
             <!-- Use compact TabItem style -->
             <TabControl.ItemContainerStyle>
                 <Style TargetType="TabItem"
                        BasedOn="{StaticResource MaterialTabItemStyle_Compact}">
                     <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+                    <Setter Property="VerticalContentAlignment" Value="Top" />
                     <EventSetter Event="MouseRightButtonUp" Handler="TabItem_RightClick"/>
                 </Style>
             </TabControl.ItemContainerStyle>

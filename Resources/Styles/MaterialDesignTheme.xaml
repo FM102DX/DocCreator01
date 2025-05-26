@@ -101,12 +101,7 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4"/>
                         </Trigger>
-                        
-                        <!-- For items with subitems -->
-                        <Trigger Property="HasDropShadow" Value="true">
-                            <Setter TargetName="SubMenuBorder" Property="Background" Value="White"/>
-                        </Trigger>
-                        
+                       
                         <!-- Show arrow for items with subitems -->
                         <Trigger Property="Role" Value="TopLevelHeader">
                             <Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>

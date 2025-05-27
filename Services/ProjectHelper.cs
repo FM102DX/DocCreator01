@@ -149,19 +149,19 @@ namespace DocCreator01.Services
                 return true;
             }
             
-            // If current file exists, copy it
-            if (!string.IsNullOrEmpty(_currentPath) && File.Exists(_currentPath))
+            // Check if file exists and confirm overwrite
+            if (File.Exists(newPath))
             {
-                File.Copy(_currentPath, newPath, true);
-            }
-            else
-            {
-                // Otherwise save the current project to the new location
-                SaveProject(_currentProject, newPath);
+                var result = MessageBox.Show("Файл уже существует. Перезаписать?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result != MessageBoxResult.Yes)
+                {
+                    return false; // User chose not to overwrite
+                }
             }
             
-            // Load the new file
-            LoadProject(newPath);
+            // Save the current project to the new location
+            SaveProject(_currentProject, newPath);
+            _currentProject.FilePath = newPath;
             
             return true;
         }

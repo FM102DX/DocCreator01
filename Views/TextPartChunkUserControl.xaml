@@ -34,14 +34,10 @@
                            
                     <!-- Кнопка удаления изображения -->
                     <Button Content="✕" 
-                            Width="20" Height="20"
+                            Style="{StaticResource MaterialImageDeleteButtonStyle}"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Top"
                             Margin="3"
-                            Background="Red"
-                            Foreground="White"
-                            FontSize="12"
-                            ToolTip="Удалить изображение"
                             Click="OnRemoveImageClick"/>
                 </Grid>
             </Border>
@@ -62,11 +58,10 @@
 
             <!-- Кнопка удаления чанка -->
             <Button Grid.Column="1"
-                    Content="[x]"
-                    Width="20" Height="20"
+                    Content="✕"
+                    Style="{StaticResource MaterialChunkDeleteButtonStyle}"
                     Margin="5,0,0,0"
                     VerticalAlignment="Top"
-                    ToolTip="Delete"
                     Command="{Binding DataContext.DeleteChunkCommand, 
                               RelativeSource={RelativeSource AncestorType=ListView}}"
                     CommandParameter="{Binding}"/>

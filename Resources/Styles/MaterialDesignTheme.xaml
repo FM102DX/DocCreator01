@@ -255,4 +255,57 @@
         <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
         <Setter Property="Margin" Value="0,0,0,-1"/>
     </Style>
+
+    <!-- Small Delete Button Style for Chunks -->
+    <Style x:Key="MaterialDeleteButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="20"/>
+        <Setter Property="Height" Value="20"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Background" Value="{StaticResource ButtonBackgroundColor}"/>
+        <Setter Property="Foreground" Value="{StaticResource ButtonTextColor}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="2"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter HorizontalAlignment="Center" 
+                                        VerticalAlignment="Center"
+                                        Content="{TemplateBinding Content}"
+                                        TextElement.Foreground="{TemplateBinding Foreground}"
+                                        TextElement.FontSize="{TemplateBinding FontSize}"
+                                        TextElement.FontWeight="{TemplateBinding FontWeight}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#F44336"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="#D32F2F"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Chunk Delete Button Style (для удаления чанка) -->
+    <Style x:Key="MaterialChunkDeleteButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDeleteButtonStyle}">
+        <Setter Property="ToolTip" Value="Удалить блок текста"/>
+    </Style>
+
+    <!-- Image Delete Button Style (для удаления изображения) -->
+    <Style x:Key="MaterialImageDeleteButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDeleteButtonStyle}">
+        <Setter Property="ToolTip" Value="Удалить изображение"/>
+    </Style>
+
 </ResourceDictionary>

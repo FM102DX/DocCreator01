@@ -4,7 +4,13 @@
              xmlns:converters="clr-namespace:DocCreator01.Converters">
     <!-- Убираем StartupUri, используем код для запуска главного окна через DI -->
     <Application.Resources>
-        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <!-- Other resources here... -->
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/Styles/MaterialDesignTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            
+            <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <!-- Other resources here... -->
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -261,33 +261,22 @@ namespace DocCreator01.ViewModels
 
         private void SaveProject()
         {
-            if (string.IsNullOrEmpty(_currentPath))
-            {
-                var dlg = new SaveFileDialog
-                {
-                    Filter = "Doc Parts (*.docparts)|*.docparts",
-                    DefaultExt = ".docparts",
-                    FileName = $"{CurrentProject.Name}.docparts" // Set default filename to project name
-                };
-                if (dlg.ShowDialog() == true)
-                {
-                    _currentPath = dlg.FileName;
-                    CurrentProject.FilePath = _currentPath;
-                    UpdateWindowTitle();
-                }
-                else return;
-            }
-
-            CurrentProject.OpenedTabs = Tabs.OfType<TabPageViewModel>()
+            // Get list of opened tabs
+            var openedTabs = Tabs.OfType<TabPageViewModel>()
                 .Select(x => x.Model.Id)
                 .ToList();
-
+            
             // Use ProjectHelper to save project
-            _projectHelper.SaveProject(CurrentProject, _currentPath!);
-            AddRecent(_currentPath);
-
-            // Accept all changes at once
-            _dirtyStateMgr.ResetDirtyState();
+            if (_projectHelper.SaveProject(CurrentProject, openedTabs))
+            {
+                // Update UI state after successful save
+                _currentPath = CurrentProject.FilePath;
+                AddRecent(_currentPath);
+                UpdateWindowTitle();
+                
+                // Accept all changes at once
+                _dirtyStateMgr.ResetDirtyState();
+            }
         }
         
         private void SaveProjectAs()

@@ -15,6 +15,8 @@ namespace DocCreator01.Contracts
         Project LoadProject(string fileName);
 
         void SaveProject(Project project, string filePath);
+        
+        bool SaveProject(Project project, List<Guid>? openedTabs = null);
 
         bool SaveProjectAs();
 

@@ -100,7 +100,7 @@ namespace DocCreator01.Services
                 {
                     Filter = "Doc Parts (*.docparts)|*.docparts",
                     DefaultExt = ".docparts",
-                    FileName = "Свой_конфлис_на_сищарп.docparts"
+                    FileName = $"{_currentProject.Name}.docparts"
                 };
 
                 if (dlg.ShowDialog() == true)
@@ -132,7 +132,7 @@ namespace DocCreator01.Services
             {
                 Filter = "Doc Parts (*.docparts)|*.docparts",
                 DefaultExt = ".docparts",
-                FileName = $"Свой_конфлис_на_сищарп.docparts" // Set default filename as shown in the screenshot
+                FileName = $"{_currentProject.Name}.docparts"
             };
             
             if (dlg.ShowDialog() != true)

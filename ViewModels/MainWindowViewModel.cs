@@ -267,7 +267,7 @@ namespace DocCreator01.ViewModels
                 {
                     Filter = "Doc Parts (*.docparts)|*.docparts",
                     DefaultExt = ".docparts",
-                    FileName = "Свой_конфлис_на_сищарп.docparts" // Set default filename as shown in the screenshot
+                    FileName = $"{CurrentProject.Name}.docparts" // Set default filename to project name
                 };
                 if (dlg.ShowDialog() == true)
                 {

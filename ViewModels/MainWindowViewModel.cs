@@ -78,6 +78,7 @@ namespace DocCreator01.ViewModels
             OpenCommand = ReactiveCommand.Create(OpenFile);
             OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent);
             SaveCommand = ReactiveCommand.Create(SaveProject);
+            SaveAsCommand = ReactiveCommand.Create(SaveProjectAs);
             CloseTabCommand = ReactiveCommand.Create<ITabViewModel>(CloseTab);
             DeleteTabCommand = ReactiveCommand.Create<ITabViewModel>(DeleteTab);
             ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown());
@@ -141,6 +142,7 @@ namespace DocCreator01.ViewModels
         public ReactiveCommand<Unit, Unit> OpenCommand { get; }
         public ReactiveCommand<string, Unit> OpenRecentCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+        public ReactiveCommand<Unit, Unit> SaveAsCommand { get; }
         public ReactiveCommand<ITabViewModel, Unit> CloseTabCommand { get; }
         public ReactiveCommand<ITabViewModel, Unit> DeleteTabCommand { get; }
         public ReactiveCommand<Unit, Unit> ExitCommand { get; }
@@ -259,33 +261,37 @@ namespace DocCreator01.ViewModels
 
         private void SaveProject()
         {
-            if (string.IsNullOrEmpty(_currentPath))
-            {
-                var dlg = new SaveFileDialog
-                {
-                    Filter = "Doc Parts (*.docparts)|*.docparts",
-                    DefaultExt = ".docparts",
-                    FileName = $"{CurrentProject.Name}.docparts" // Set default filename to project name
-                };
-                if (dlg.ShowDialog() == true)
-                {
-                    _currentPath = dlg.FileName;
-                    CurrentProject.FilePath = _currentPath;
-                    UpdateWindowTitle();
-                }
-                else return;
-            }
-
-            CurrentProject.OpenedTabs = Tabs.OfType<TabPageViewModel>()
+            // Get list of opened tabs
+            var openedTabs = Tabs.OfType<TabPageViewModel>()
                 .Select(x => x.Model.Id)
                 .ToList();
-
+            
             // Use ProjectHelper to save project
-            _projectHelper.SaveProject(CurrentProject, _currentPath!);
-            AddRecent(_currentPath);
-
-            // Accept all changes at once
-            _dirtyStateMgr.ResetDirtyState();
+            if (_projectHelper.SaveProject(CurrentProject, openedTabs))
+            {
+                // Update UI state after successful save
+                _currentPath = CurrentProject.FilePath;
+                AddRecent(_currentPath);
+                UpdateWindowTitle();
+                
+                // Accept all changes at once
+                _dirtyStateMgr.ResetDirtyState();
+            }
+        }
+        
+        private void SaveProjectAs()
+        {
+            // Use ProjectHelper to handle the Save As operation
+            if (_projectHelper.SaveProjectAs())
+            {
+                // Update UI state after successful save
+                _currentPath = CurrentProject.FilePath;
+                UpdateWindowTitle();
+                AddRecent(_currentPath);
+                
+                // Accept all changes at once
+                _dirtyStateMgr.ResetDirtyState();
+            }
         }
         private void CloseCurrent()
         {

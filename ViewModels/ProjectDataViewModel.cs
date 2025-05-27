@@ -22,7 +22,10 @@ namespace DocCreator01.ViewModels
 
             // Конвертируем каждую доменную TextPart → TextPartViewModel
             TextParts = new ObservableCollection<TextPartViewModel>(
-                Model.TextParts.Select(tp => new TextPartViewModel(tp)));
+                Model.TextParts.Select(tp => {
+                    var vm = new TextPartViewModel(tp);
+                    return vm;
+                }));
 
             /* Синхронизация: если из UI добавят/удалят VM, меняем и доменную коллекцию */
             TextParts.CollectionChanged += (_, e) =>

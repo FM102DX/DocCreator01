@@ -28,6 +28,9 @@ namespace DocCreator01.ViewModels
             Text = model.Text;
             IncludeInDocument = model.IncludeInDocument;
 
+            // Настраиваем синхронизацию реактивных свойств с моделью
+            SetupPropertySynchronization();
+
             // Гарантируем, что коллекция TextPartChunks существует в модели
             if (model.TextPartChunks == null)
                 model.TextPartChunks = new List<TextPartChunk>();
@@ -126,6 +129,44 @@ namespace DocCreator01.ViewModels
             var newChunk = TextPartHelper.AddEmptyChunkIfNeeded(Model);
             if (newChunk != null)
                 TextPartChunks.Add(CreateChunkVm(newChunk));
+        }
+
+        private void SetupPropertySynchronization()
+        {
+            // Подписываемся на изменения реактивных свойств и синхронизируем с моделью
+            this.WhenAnyValue(x => x.Name)
+                .Subscribe(value => 
+                {
+                    if (Model.Name != value)
+                    {
+                        Model.Name = value;
+                        _dirtyStateMgr.MarkAsDirty();
+                    }
+                });
+
+            this.WhenAnyValue(x => x.Text)
+                .Subscribe(value => 
+                {
+                    if (Model.Text != value)
+                    {
+                        Model.Text = value;
+                        _dirtyStateMgr.MarkAsDirty();
+                    }
+                });
+
+            this.WhenAnyValue(x => x.IncludeInDocument)
+                .Subscribe(value => 
+                {
+                    if (Model.IncludeInDocument != value)
+                    {
+                        Model.IncludeInDocument = value;
+                        _dirtyStateMgr.MarkAsDirty();
+                    }
+                });
+
+            // Обновляем TabHeader при изменении Name
+            this.WhenAnyValue(x => x.Name)
+                .Subscribe(_ => this.RaisePropertyChanged(nameof(TabHeader)));
         }
     }
 }

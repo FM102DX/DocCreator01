@@ -25,6 +25,7 @@
                 <MenuItem Header="Новый проект" Command="{Binding NewProjectCommand}" Style="{StaticResource DropdownMenuItemStyle}"/>
                 <MenuItem Header="Открыть..." Command="{Binding OpenCommand}" Style="{StaticResource DropdownMenuItemStyle}"/>
                 <MenuItem Header="Сохранить" Command="{Binding SaveCommand}" Style="{StaticResource DropdownMenuItemStyle}"/>
+                <MenuItem Header="Сохранить как..." Command="{Binding SaveAsCommand}" Style="{StaticResource DropdownMenuItemStyle}"/>
                 <Separator/>
                 <MenuItem Header="Выход" Command="{Binding ExitCommand}" Style="{StaticResource DropdownMenuItemStyle}"/>
                 <Separator/>

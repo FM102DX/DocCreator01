@@ -11,6 +11,7 @@ using ReactiveUI;
 using DocCreator01.Messages;
 using System.Linq;
 using DocCreator01.Services;  // allow calling TextPartHelper
+using System.Collections.Generic;
 
 namespace DocCreator01.Services
 {
@@ -53,6 +54,36 @@ namespace DocCreator01.Services
             MessageBus.Current.SendMessage(new ProjectLoadedMessage(project));
             
             return project;
+        }
+
+        public bool SaveProject(Project project, List<Guid>? openedTabs = null)
+        {
+            if (string.IsNullOrEmpty(_currentPath))
+            {
+                var dlg = new SaveFileDialog
+                {
+                    Filter = "Doc Parts (*.docparts)|*.docparts",
+                    DefaultExt = ".docparts",
+                    FileName = $"{project.Name}.docparts" // Set default filename to project name
+                };
+                if (dlg.ShowDialog() == true)
+                {
+                    _currentPath = dlg.FileName;
+                    project.FilePath = _currentPath;
+                }
+                else return false; // User canceled
+            }
+
+            // Set any opened tabs data if provided
+            if (openedTabs != null)
+            {
+                project.OpenedTabs = openedTabs;
+            }
+
+            // Save the file
+            SaveProject(project, _currentPath!);
+            
+            return true;
         }
 
         public void SaveProject(Project project, string filePath)
@@ -119,6 +150,53 @@ namespace DocCreator01.Services
             return true;
         }
 
+        public bool SaveProjectAs()
+        {
+            // First save the current project if it has a path
+            if (!string.IsNullOrEmpty(_currentPath))
+            {
+                SaveProject(_currentProject, _currentPath);
+            }
+            
+            // Show save dialog
+            var dlg = new SaveFileDialog
+            {
+                Filter = "Doc Parts (*.docparts)|*.docparts",
+                DefaultExt = ".docparts",
+                FileName = $"{_currentProject.Name}.docparts"
+            };
+            
+            if (dlg.ShowDialog() != true)
+            {
+                return false; // User canceled
+            }
+            
+            // Get new path
+            var newPath = dlg.FileName;
+            
+            // Skip if same path
+            if (newPath == _currentPath)
+            {
+                return true;
+            }
+            
+            // Check if file exists and confirm overwrite
+            if (File.Exists(newPath))
+            {
+                var result = MessageBox.Show("Файл уже существует. Перезаписать?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result != MessageBoxResult.Yes)
+                {
+                    return false; // User chose not to overwrite
+                }
+            }
+            
+            // Save the current project to the new location
+            SaveProject(_currentProject, newPath);
+            _currentProject.FilePath = newPath;
+            
+            return true;
+        }
+        
         public List<HtmlGenerationProfile> GetHtmlGenerationProfiles()
         {
             var profiles = new List<HtmlGenerationProfile>

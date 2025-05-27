@@ -78,6 +78,7 @@ namespace DocCreator01.ViewModels
             OpenCommand = ReactiveCommand.Create(OpenFile);
             OpenRecentCommand = ReactiveCommand.Create<string>(OpenRecent);
             SaveCommand = ReactiveCommand.Create(SaveProject);
+            SaveAsCommand = ReactiveCommand.Create(SaveProjectAs);
             CloseTabCommand = ReactiveCommand.Create<ITabViewModel>(CloseTab);
             DeleteTabCommand = ReactiveCommand.Create<ITabViewModel>(DeleteTab);
             ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown());
@@ -141,6 +142,7 @@ namespace DocCreator01.ViewModels
         public ReactiveCommand<Unit, Unit> OpenCommand { get; }
         public ReactiveCommand<string, Unit> OpenRecentCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+        public ReactiveCommand<Unit, Unit> SaveAsCommand { get; }
         public ReactiveCommand<ITabViewModel, Unit> CloseTabCommand { get; }
         public ReactiveCommand<ITabViewModel, Unit> DeleteTabCommand { get; }
         public ReactiveCommand<Unit, Unit> ExitCommand { get; }
@@ -286,6 +288,21 @@ namespace DocCreator01.ViewModels
 
             // Accept all changes at once
             _dirtyStateMgr.ResetDirtyState();
+        }
+        
+        private void SaveProjectAs()
+        {
+            // Use ProjectHelper to handle the Save As operation
+            if (_projectHelper.SaveProjectAs())
+            {
+                // Update UI state after successful save
+                _currentPath = CurrentProject.FilePath;
+                UpdateWindowTitle();
+                AddRecent(_currentPath);
+                
+                // Accept all changes at once
+                _dirtyStateMgr.ResetDirtyState();
+            }
         }
         private void CloseCurrent()
         {

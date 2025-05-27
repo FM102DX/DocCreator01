@@ -119,6 +119,53 @@ namespace DocCreator01.Services
             return true;
         }
 
+        public bool SaveProjectAs()
+        {
+            // First save the current project if it has a path
+            if (!string.IsNullOrEmpty(_currentPath))
+            {
+                SaveProject(_currentProject, _currentPath);
+            }
+            
+            // Show save dialog
+            var dlg = new SaveFileDialog
+            {
+                Filter = "Doc Parts (*.docparts)|*.docparts",
+                DefaultExt = ".docparts",
+                FileName = $"{_currentProject.Name}.docparts"
+            };
+            
+            if (dlg.ShowDialog() != true)
+            {
+                return false; // User canceled
+            }
+            
+            // Get new path
+            var newPath = dlg.FileName;
+            
+            // Skip if same path
+            if (newPath == _currentPath)
+            {
+                return true;
+            }
+            
+            // If current file exists, copy it
+            if (!string.IsNullOrEmpty(_currentPath) && File.Exists(_currentPath))
+            {
+                File.Copy(_currentPath, newPath, true);
+            }
+            else
+            {
+                // Otherwise save the current project to the new location
+                SaveProject(_currentProject, newPath);
+            }
+            
+            // Load the new file
+            LoadProject(newPath);
+            
+            return true;
+        }
+        
         public List<HtmlGenerationProfile> GetHtmlGenerationProfiles()
         {
             var profiles = new List<HtmlGenerationProfile>

@@ -155,10 +155,11 @@
 
     <!-- Small Tool Button Style -->
     <Style x:Key="MaterialSmallToolButtonStyle" TargetType="Button">
-        <Setter Property="Height" Value="25"/>
-        <Setter Property="Width" Value="25"/>
+        <Setter Property="Height" Value="30"/>
+        <Setter Property="Width" Value="30"/>
         <Setter Property="Margin" Value="0,0,4,0"/>
         <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="Background" Value="{StaticResource ButtonBackgroundColor}"/>
         <Setter Property="Foreground" Value="{StaticResource ButtonTextColor}"/>
         <Setter Property="BorderThickness" Value="0"/>

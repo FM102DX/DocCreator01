@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,7 +14,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using DocCreator01.Helpers;
 using DocCreator01.ViewModels;
 
 namespace DocCreator01.Views
@@ -54,19 +54,33 @@ namespace DocCreator01.Views
                     return;
 
                 string longestNumber = items.Select(i => i.ParagraphNo ?? string.Empty).OrderByDescending(s => s.Length).First();
-                double width = TextWidthCalculator.CalculateTextWidth(
+                double width = CalculateTextWidth(
                     longestNumber, 
                     "Segoe UI", 
                     12, 
                     FontWeights.SemiBold);
 
                 // Add some padding for the margin
-                width += 12; // Accounting for left and right margins (4px each) plus some buffer
+                width += 20; // Accounting for left margin (4px) and right margin (8px) plus additional buffer
 
                 if (PartsGrid.Columns.Count > 0)
                 {
                     PartsGrid.Columns[0].Width = new DataGridLength(width);
                 }
+            }
+            
+            private double CalculateTextWidth(string text, string fontFamily, double fontSize, FontWeight fontWeight)
+            {
+                var formattedText = new FormattedText(
+                    text,
+                    CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    new Typeface(fontFamily, FontStyles.Normal, fontWeight, FontStretches.Normal),
+                    fontSize,
+                    Brushes.Black,
+                    VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip);
+
+                return formattedText.Width;
             }
         }
 }

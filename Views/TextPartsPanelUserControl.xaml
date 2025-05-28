@@ -100,7 +100,7 @@
                             <TextBlock Text="{Binding ParagraphNo}"
                                        Foreground="{StaticResource PrimaryColor}"
                                        FontWeight="SemiBold"
-                                       Margin="4,0"
+                                       Margin="4,0,8,0"
                                        VerticalAlignment="Center"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

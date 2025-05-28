@@ -9,18 +9,6 @@
              mc:Ignorable="d">
 
     <UserControl.Resources>
-        <!-- Toolbar Button Style -->
-        <Style x:Key="ToolbarButtonStyle" TargetType="Button">
-            <Setter Property="Width"           Value="27"/>
-            <Setter Property="Height"          Value="27"/>
-            <Setter Property="Padding"         Value="0"/>
-            <Setter Property="Margin"          Value="2"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-            <Setter Property="Focusable"       Value="False"/>
-            <Setter Property="Background"      Value="{StaticResource ButtonBackgroundColor}"/>
-            <Setter Property="Foreground"      Value="{StaticResource ButtonTextColor}"/>
-        </Style>
 
         <!-- DataTemplate for content, keep as before -->
         <DataTemplate x:Key="TextPartTabTemplate" DataType="{x:Type vm:TabPageViewModel}">
@@ -42,27 +30,27 @@
 
         <!-- Toolbar -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
-            <Button Style="{StaticResource ToolbarButtonStyle}"
+            <Button Style="{StaticResource MaterialSmallToolButtonStyle}"
                     Command="{Binding OpenDocumentsFolderCommand}"
                     ToolTip="Open Documents Folder">
-                <TextBlock Text="📄" FontSize="14"/>
+                <TextBlock Text="📄"/>
             </Button>
-            <Button Style="{StaticResource ToolbarButtonStyle}"
+            <Button Style="{StaticResource MaterialSmallToolButtonStyle}"
                     Command="{Binding OpenScriptsFolderCommand}"
                     ToolTip="Open Scripts Folder">
-                <TextBlock Text="📜" FontSize="14"/>
+                <TextBlock Text="📜"/>
             </Button>
-            <Button Style="{StaticResource ToolbarButtonStyle}"
+            <Button Style="{StaticResource MaterialSmallToolButtonStyle}"
                     Command="{Binding OpenProjectFolderCommand}"
                     ToolTip="Open Project Folder">
-                <TextBlock Text="📁" FontSize="14"/>
+                <TextBlock Text="📁"/>
             </Button>
-            <Button Style="{StaticResource ToolbarButtonStyle}"
+            <Button Style="{StaticResource MaterialSmallToolButtonStyle}"
                     Command="{Binding OpenSettingsTabCommand}"
                     ToolTip="Открыть настройки">
-                <TextBlock Text="⚙" FontSize="16" FontWeight="Bold"/>
+                <TextBlock Text="⚙" FontWeight="Bold"/>
             </Button>
-            <Button Style="{StaticResource ToolbarButtonStyle}"
+            <Button Style="{StaticResource MaterialSmallToolButtonStyle}"
                     Content="+" Command="{Binding AddTabCommand}"
                     ToolTip="Add Tab"/>
         </StackPanel>

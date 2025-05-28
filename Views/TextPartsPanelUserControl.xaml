@@ -94,11 +94,11 @@
 
             <DataGrid.Columns>
                 <!-- Column for paragraph number only -->
-                <DataGridTemplateColumn Width="Auto">
+                <DataGridTemplateColumn x:Name="ParagraphNumberColumn" Width="Auto">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding ParagraphNo}"
-                                       Foreground="MediumSeaGreen"
+                                       Foreground="{StaticResource PrimaryColor}"
                                        FontWeight="SemiBold"
                                        Margin="4,0"
                                        VerticalAlignment="Center"/>

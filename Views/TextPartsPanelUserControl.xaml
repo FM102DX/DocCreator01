@@ -93,16 +93,25 @@
                   CanUserResizeColumns="False">
 
             <DataGrid.Columns>
+                <!-- Column for paragraph number only -->
+                <DataGridTemplateColumn Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ParagraphNo}"
+                                       Foreground="MediumSeaGreen"
+                                       FontWeight="SemiBold"
+                                       Margin="4,0"
+                                       VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                
+                <!-- Column for indentation and name -->
                 <DataGridTemplateColumn Width="*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
                                 <!-- Отступ формируется во вью-модели -->
-                                <TextBlock Text="{Binding ParagraphNo}"
-                                           Foreground="MediumSeaGreen"
-                                           FontWeight="SemiBold"
-                                           VerticalAlignment="Center"/>
-
                                 <TextBlock Text="{Binding Indentation}"
                                            Foreground="White"
                                            FontFamily="Consolas"

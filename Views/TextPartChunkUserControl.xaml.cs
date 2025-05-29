@@ -15,6 +15,9 @@ namespace DocCreator01.Views
         public TextPartChunkUserControl()
         {
             InitializeComponent();
+            
+            // Handle mouse wheel events to enable scrolling within the TextBox
+            this.PreviewMouseWheel += OnPreviewMouseWheel;
         }
 
         private void OnTextChanged(object sender, TextChangedEventArgs e)
@@ -54,6 +57,29 @@ namespace DocCreator01.Views
                 chunkVm.ClearImage();
             }
         }
+
+        private void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            // Only handle mouse wheel events when the mouse is over the TextBox
+            // and the TextBox is visible (not in image mode)
+            if (PART_TextBox != null && PART_TextBox.IsVisible && PART_TextBox.IsMouseOver)
+            {
+                // Check if the TextBox can scroll (has content that overflows)
+                if (PART_TextBox.ExtentHeight > PART_TextBox.ViewportHeight)
+                {
+                    // Calculate scroll amount
+                    var scrollLines = SystemParameters.WheelScrollLines;
+                    var scrollAmount = e.Delta * scrollLines / 120.0;
+                    
+                    // Scroll the TextBox content
+                    PART_TextBox.ScrollToVerticalOffset(PART_TextBox.VerticalOffset - scrollAmount);
+                    
+                    // Prevent the event from bubbling up to the ListView
+                    e.Handled = true;
+                }
+            }
+        }
+
         
         private void HandlePasteImage()
         {

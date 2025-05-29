@@ -60,7 +60,7 @@ namespace DocCreator01.Views
                     FontWeights.SemiBold);
 
                 // Add some padding for the margin
-                width += 20; // Accounting for left margin (4px) and right margin (8px) plus additional buffer
+                width += 16; // Accounting for right margin (8px) plus additional buffer
 
                 if (PartsGrid.Columns.Count > 0)
                 {

@@ -42,28 +42,32 @@
                 </Grid>
             </Border>
 
-            <!-- ScrollViewer с TextBox для плавного скролла -->
-            <ScrollViewer Grid.Column="0"
-                         x:Name="PART_ScrollViewer"
-                         VerticalScrollBarVisibility="Auto"
-                         HorizontalScrollBarVisibility="Disabled"
-                         CanContentScroll="False"
-                         PanningMode="VerticalOnly"
-                         Visibility="{Binding HasImage, Converter={StaticResource InverseBoolToVisibilityConverter}}"
-                         MaxHeight="200"
-                         MinHeight="20">
-                <TextBox x:Name="PART_TextBox"
-                         Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                         AcceptsReturn="True"
-                         TextWrapping="Wrap"
-                         Padding="5"
-                         BorderThickness="0"
-                         Background="Transparent"
-                         VerticalScrollBarVisibility="Disabled"
-                         HorizontalScrollBarVisibility="Disabled"
-                         TextChanged="OnTextChanged"
-                         PreviewKeyDown="OnPreviewKeyDown"/>
-            </ScrollViewer>
+            <!-- ScrollViewer с TextBox для плавного скролла с рамкой -->
+            <Border Grid.Column="0"
+                    BorderBrush="LightGray"
+                    BorderThickness="1"
+                    CornerRadius="3"
+                    Visibility="{Binding HasImage, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                <ScrollViewer x:Name="PART_ScrollViewer"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Disabled"
+                             CanContentScroll="False"
+                             PanningMode="VerticalOnly"
+                             MaxHeight="200"
+                             MinHeight="20">
+                    <TextBox x:Name="PART_TextBox"
+                             Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             Padding="5"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             VerticalScrollBarVisibility="Disabled"
+                             HorizontalScrollBarVisibility="Disabled"
+                             TextChanged="OnTextChanged"
+                             PreviewKeyDown="OnPreviewKeyDown"/>
+                </ScrollViewer>
+            </Border>
 
             <!-- Кнопка удаления чанка -->
             <Button Grid.Column="1"

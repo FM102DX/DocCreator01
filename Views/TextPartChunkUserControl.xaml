@@ -42,19 +42,28 @@
                 </Grid>
             </Border>
 
-            <!-- Простой TextBox без всяких ScrollViewer -->
-            <TextBox Grid.Column="0"
-                     x:Name="PART_TextBox"
-                     Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                     AcceptsReturn="True"
-                     TextWrapping="Wrap"
-                     Padding="5"
-                     MinHeight="20"
-                     VerticalScrollBarVisibility="Auto"
-                     HorizontalScrollBarVisibility="Disabled"
-                     Visibility="{Binding HasImage, Converter={StaticResource InverseBoolToVisibilityConverter}}"
-                     TextChanged="OnTextChanged"
-                     PreviewKeyDown="OnPreviewKeyDown"/>
+            <!-- ScrollViewer с TextBox для плавного скролла -->
+            <ScrollViewer Grid.Column="0"
+                         x:Name="PART_ScrollViewer"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Disabled"
+                         CanContentScroll="False"
+                         PanningMode="VerticalOnly"
+                         Visibility="{Binding HasImage, Converter={StaticResource InverseBoolToVisibilityConverter}}"
+                         MaxHeight="200"
+                         MinHeight="20">
+                <TextBox x:Name="PART_TextBox"
+                         Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         Padding="5"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         VerticalScrollBarVisibility="Disabled"
+                         HorizontalScrollBarVisibility="Disabled"
+                         TextChanged="OnTextChanged"
+                         PreviewKeyDown="OnPreviewKeyDown"/>
+            </ScrollViewer>
 
             <!-- Кнопка удаления чанка -->
             <Button Grid.Column="1"

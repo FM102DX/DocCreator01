@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using DocCreator01.Models;
 using DocCreator01.ViewModels;
@@ -15,6 +16,47 @@ namespace DocCreator01.Views
         public TextPartChunkUserControl()
         {
             InitializeComponent();
+            
+            // Подписываемся на событие прокрутки мыши для плавного скролла
+            this.PreviewMouseWheel += OnPreviewMouseWheel;
+        }
+
+        // Обработчик плавного скролла мышью
+        private void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var scrollViewer = FindScrollViewer(this);
+            if (scrollViewer != null && scrollViewer.IsMouseOver)
+            {
+                // Плавная прокрутка с использованием ScrollToVerticalOffset
+                var currentOffset = scrollViewer.VerticalOffset;
+                var delta = e.Delta * 0.5; // Коэффициент скорости прокрутки
+                var targetOffset = currentOffset - delta;
+                
+                // Ограничиваем значения
+                targetOffset = Math.Max(0, Math.Min(targetOffset, scrollViewer.ScrollableHeight));
+                
+                // Применяем плавную прокрутку
+                scrollViewer.ScrollToVerticalOffset(targetOffset);
+                
+                e.Handled = true;
+            }
+        }
+
+        // Поиск ScrollViewer в визуальном дереве
+        private ScrollViewer? FindScrollViewer(DependencyObject obj)
+        {
+            if (obj is ScrollViewer scrollViewer)
+                return scrollViewer;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
+            {
+                var child = VisualTreeHelper.GetChild(obj, i);
+                var result = FindScrollViewer(child);
+                if (result != null)
+                    return result;
+            }
+
+            return null;
         }
 
         private void OnTextChanged(object sender, TextChangedEventArgs e)

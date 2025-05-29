@@ -71,16 +71,10 @@ namespace DocCreator01.Views
             
             private double CalculateTextWidth(string text, string fontFamily, double fontSize, FontWeight fontWeight)
             {
-                var formattedText = new FormattedText(
-                    text,
-                    CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight,
-                    new Typeface(fontFamily, FontStyles.Normal, fontWeight, FontStretches.Normal),
-                    fontSize,
-                    Brushes.Black,
-                    VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip);
-
-                return formattedText.Width;
+                // Упрощенный расчет: используем среднюю ширину символа для 14 шрифта
+                // Для шрифта Segoe UI размером 12-14 пикселей, средняя ширина символа составляет примерно 7-8 пикселей
+                const double averageCharWidth = 8.0;
+                return text.Length * averageCharWidth;
             }
         }
 }

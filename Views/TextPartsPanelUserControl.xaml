@@ -120,9 +120,6 @@
                                            VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding Name}"
                                            VerticalAlignment="Center"/>
-                                <TextBlock Text=" — "
-                                           Foreground="#777777"
-                                           VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding Level}"
                                            Foreground="#FF6600"
                                            FontWeight="SemiBold"

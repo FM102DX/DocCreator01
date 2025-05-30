@@ -45,6 +45,7 @@ namespace DocCreator01.Services
             if (idx < textParts.Count - 1 && idx >= 0)
             {
                 textParts.Move(idx, idx + 1);
+                MessageBus.Current.SendMessage(new GeneratedFilesUpdatedMessage());
                 return true;
             }
             return false;

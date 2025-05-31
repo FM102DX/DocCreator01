@@ -3,22 +3,18 @@ using System.Collections.Generic;
 
 public static class TextPartExtentions
 {
-	/// <summary>
-	/// Перемещает элемент с позиции <paramref name="sourceIndex"/> на позицию <paramref name="destIndex"/>.
-	/// </summary>
-	public static void Move<T>(this IList<T> list, int sourceIndex, int destIndex)
-	{
-		if (list == null) throw new ArgumentNullException(nameof(list));
-		if (sourceIndex == destIndex) return;
-		if (sourceIndex < 0 || sourceIndex >= list.Count) throw new ArgumentOutOfRangeException(nameof(sourceIndex));
-		if (destIndex   < 0 || destIndex   >= list.Count) throw new ArgumentOutOfRangeException(nameof(destIndex));
+    /// <summary>
+    /// Перемещает элемент с позиции <paramref name="sourceIndex"/> на позицию <paramref name="destIndex"/>.
+    /// </summary>
+    public static void Move<T>(this IList<T> list, int oldIndex, int newIndex)
+    {
+        if (oldIndex == newIndex ||
+            oldIndex < 0 || oldIndex >= list.Count ||
+            newIndex < 0 || newIndex >= list.Count)
+            return;
 
-		T item = list[sourceIndex];
-		list.RemoveAt(sourceIndex);
-
-		// При удалении левее целевой позиции индекс смещается на 1.
-		if (sourceIndex < destIndex) destIndex--;
-
-		list.Insert(destIndex, item);
-	}
+        T item = list[oldIndex];
+        list.RemoveAt(oldIndex);   // после этого список стал короче на 1
+        list.Insert(newIndex, item); // вставляем точно в newIndex
+    }
 }

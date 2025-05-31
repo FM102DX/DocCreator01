@@ -48,7 +48,6 @@ namespace DocCreator01
             services.AddTransient<MainWindowViewModel>(provider =>
                 new MainWindowViewModel(
                     provider.GetRequiredService<IProjectRepository>(),
-                    provider.GetRequiredService<ITextPartHelper>(),
                     provider.GetRequiredService<IProjectHelper>(),
                     provider.GetRequiredService<IAppPathsHelper>(),
                     provider.GetRequiredService<IGeneratedFilesHelper>(),

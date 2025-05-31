@@ -101,7 +101,7 @@
                             <TextBlock Text="{Binding ParagraphNo}"
                                        Foreground="{StaticResource PrimaryColor}"
                                        FontWeight="SemiBold"
-                                       Margin="0,0,8,0"
+                                       Margin="3,0,8,0"
                                        VerticalAlignment="Center"
                                        HorizontalAlignment="Left"/>
                         </DataTemplate>
@@ -119,10 +119,6 @@
                                            FontFamily="Consolas"
                                            VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding Name}"
-                                           VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding Level}"
-                                           Foreground="#FF6600"
-                                           FontWeight="SemiBold"
                                            VerticalAlignment="Center"/>
                             </StackPanel>
                         </DataTemplate>

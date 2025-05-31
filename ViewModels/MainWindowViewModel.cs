@@ -25,13 +25,14 @@ namespace DocCreator01.ViewModels
     public sealed class MainWindowViewModel : ReactiveObject, IDirtyTrackable, IDisposable
     {
         private readonly IProjectRepository _repo;
-        private readonly ITextPartHelper _textPartHelper;
         private readonly IProjectHelper _projectHelper;
         private readonly IAppPathsHelper _appPathsHelper;
         private readonly IGeneratedFilesHelper _generatedFilesHelper;
         private readonly IBrowserService _browserService;
         private readonly IDirtyStateManager _dirtyStateMgr;
         private readonly CompositeDisposable _cleanup = new();
+        private Guid _selectedItemId;
+        private int _selectedItemIndex;
 
         private string? _currentPath;
         private ITabViewModel? _selectedTab;
@@ -40,14 +41,12 @@ namespace DocCreator01.ViewModels
 
         public MainWindowViewModel(
             IProjectRepository repo, 
-            ITextPartHelper textPartHelper,
             IProjectHelper projectHelper,
             IAppPathsHelper appPathsHelper,
             IGeneratedFilesHelper generatedFilesHelper,
             IBrowserService browserService)
         {
             _repo = repo;
-            _textPartHelper = textPartHelper;
             _projectHelper = projectHelper;
             _appPathsHelper = appPathsHelper;
             _generatedFilesHelper = generatedFilesHelper;
@@ -73,12 +72,13 @@ namespace DocCreator01.ViewModels
             GenerateFileCommand = ReactiveCommand.Create(GenerateOutputFile); // Add missing initialization
             AddTextPartCommand = ReactiveCommand.Create(AddTab);
             RemoveTextPartCommand = ReactiveCommand.Create(RemoveSelectedTextPart);
+            
             MoveUpCommand = ReactiveCommand.Create(MoveSelectedTextPartUp);
             MoveDownCommand = ReactiveCommand.Create(MoveSelectedTextPartDown);
             CloseCurrentCommand = ReactiveCommand.Create(CloseCurrent);
             MoveLeftCommand = ReactiveCommand.Create(MoveSelectedTextPartLeft);
             MoveRightCommand = ReactiveCommand.Create(MoveSelectedTextPartRight);
-            ActivateTabCommand = ReactiveCommand.Create(ActivateTab);
+            ActivateTabCommand = ReactiveCommand.Create(ActivateSelectedItemTab);
             OpenSettingsTabCommand = ReactiveCommand.Create(OpenSettingsTab);
 
             OpenDocumentsFolderCommand = ReactiveCommand.Create(() => OpenFolder(_appPathsHelper.DocumentsOutputDirectory));
@@ -91,13 +91,6 @@ namespace DocCreator01.ViewModels
                
             _generatedFilesHelper.Initialize(CurrentProject);
             LoadRecentFiles();
-
-            MessageBus.Current
-                .Listen<TextPartCollectionChangedMessage>()
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => RefreshTextPartViewModels())
-                .DisposeWith(_cleanup);
-
 
             // React when generated files are updated
             MessageBus.Current
@@ -176,7 +169,11 @@ namespace DocCreator01.ViewModels
             {
                 this.RaiseAndSetIfChanged(ref _selectedMainGridItemViewModel, value);
                 if (value != null)
+                {
                     SelectedMainGridItem = value.Model;
+                    _selectedItemId = value.Model.Id;
+                    _selectedItemIndex = MainGridLines.IndexOf(value);
+                }
                 else
                     SelectedMainGridItem = null;
             }
@@ -209,6 +206,43 @@ namespace DocCreator01.ViewModels
 
         private void UpdateWindowTitle() => this.RaisePropertyChanged(nameof(WindowTitle));
 
+        private void SetNewSelectedItem()
+        {
+            //выставляет выбранный элемент после обновления грида
+            if (MainGridLines.Count == 0)
+            {
+                SelectedMainGridItemViewModel = null;
+                return;
+            }
+
+            bool elementWasSelected = _selectedItemId != Guid.Empty;
+            var selectionTmp= MainGridLines.FirstOrDefault(vm => vm.Model.Id == _selectedItemId);
+
+            bool elementWasDeleted = (selectionTmp == null && elementWasSelected);
+            if (!elementWasSelected)
+            {
+                //если не было выделения, то первый
+                SelectedMainGridItemViewModel = MainGridLines.FirstOrDefault();
+            }
+            if (elementWasDeleted)
+            {
+                //если был удаен, то по этой логике
+                if (_selectedItemIndex >= 0 && _selectedItemIndex < MainGridLines.Count)
+                {
+                    SelectedMainGridItemViewModel = MainGridLines[_selectedItemIndex];
+                }
+                else if (_selectedItemIndex == MainGridLines.Count)
+                {
+                    //выставляем последний элемент
+                    SelectedMainGridItemViewModel = MainGridLines.LastOrDefault();
+                }
+            }
+            else
+            {
+                //в остальных случаях - тот же самый
+                SelectedMainGridItemViewModel = selectionTmp;
+            }
+        }
         private void SubscribeTab(ITabViewModel vm)
         {
            if (vm is IDirtyTrackable dirtyTrackable)
@@ -274,6 +308,8 @@ namespace DocCreator01.ViewModels
                 
                 // Accept all changes at once
                 _dirtyStateMgr.ResetDirtyState();
+                RefreshTextPartViewModels();
+                SetNewSelectedItem();
             }
         }
         
@@ -333,20 +369,13 @@ namespace DocCreator01.ViewModels
 
         private void RefreshTextPartViewModels()
         {
-            RefreshTextPartViewModels(MainGridLines);
-        }
-
-        private void RefreshTextPartViewModels(ObservableCollection<MainGridItemViewModel> viewModels)
-        {
-            viewModels.Clear();
-            //NumerationHelper.ApplyNumeration(models);
-            foreach (var model in this.TextPartHelper.TextParts)
+            MainGridLines.Clear();
+            TextPartHelper.RefreshTextParts();
+            foreach (var model in TextPartHelper.TextParts)
             {
                 var vm = new MainGridItemViewModel(model);
-                viewModels.Add(vm);
+                MainGridLines.Add(vm);
             }
-
-
         }
 
         private void RefreshGeneratedFilesViewModels(
@@ -376,18 +405,16 @@ namespace DocCreator01.ViewModels
         private void RemoveSelectedTextPart()
         {
             if (SelectedMainGridItemViewModel == null) return;
-
             var textPart = SelectedMainGridItemViewModel.Model;
             var tab = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == textPart);
 
             if (tab != null)
                 Tabs.Remove(tab);
 
-            _textPartHelper.RemoveTextPart(textPart);
+            TextPartHelper.RemoveTextPart(textPart);
             RefreshTextPartViewModels();
-            SelectedMainGridItemViewModel = MainGridLines.FirstOrDefault();
-            SelectedTab = Tabs.FirstOrDefault();
-
+            SetNewSelectedItem();
+            ActivateSelectedItemTab();
             _dirtyStateMgr.MarkAsDirty();
         }
 
@@ -395,7 +422,7 @@ namespace DocCreator01.ViewModels
         {
             if (SelectedMainGridItemViewModel == null) return;
             var textPart = SelectedMainGridItemViewModel.Model;
-            if (_textPartHelper.MoveTextPartUp(textPart))
+            if (TextPartHelper.MoveTextPartUp(textPart))
             {
                 this.RaisePropertyChanged(nameof(CurrentProject));
                 _dirtyStateMgr.MarkAsDirty();
@@ -405,15 +432,16 @@ namespace DocCreator01.ViewModels
                     dtr.DirtyStateMgr.MarkAsDirty();
                 }
                 RefreshTextPartViewModels();
+                SetNewSelectedItem();
             }
-            SelectedMainGridItem = textPart;
+            //SelectedMainGridItem = textPart;
         }
 
         private void MoveSelectedTextPartDown()
         {
             if (SelectedMainGridItemViewModel == null) return;
             var textPart = SelectedMainGridItemViewModel.Model;
-            if (_textPartHelper.MoveTextPartDown(textPart))
+            if (TextPartHelper.MoveTextPartDown(textPart))
             {
                 this.RaisePropertyChanged(nameof(CurrentProject));
                 _dirtyStateMgr.MarkAsDirty();
@@ -423,8 +451,9 @@ namespace DocCreator01.ViewModels
                     dtr.DirtyStateMgr.MarkAsDirty();
                 }
                 RefreshTextPartViewModels();
+                SetNewSelectedItem();
             }
-            SelectedMainGridItem = textPart;
+            //SelectedMainGridItem = textPart;
         }
 
         private void MoveSelectedTextPartLeft()
@@ -432,12 +461,13 @@ namespace DocCreator01.ViewModels
             if (SelectedMainGridItemViewModel == null) return;
 
             var textPart = SelectedMainGridItemViewModel.Model;
-            if (_textPartHelper.DecreaseTextPartLevel(textPart))
+            if (TextPartHelper.DecreaseTextPartLevel(textPart))
             {
                 _dirtyStateMgr.MarkAsDirty();
                 RefreshTextPartViewModels();
+                SetNewSelectedItem();
             }
-            SelectedMainGridItem = textPart;
+            //SelectedMainGridItem = textPart;
         }
 
         private void MoveSelectedTextPartRight()
@@ -445,12 +475,13 @@ namespace DocCreator01.ViewModels
             if (SelectedMainGridItemViewModel == null) return;
 
             var textPart = SelectedMainGridItemViewModel.Model;
-            if (_textPartHelper.IncreaseTextPartLevel(textPart))
+            if (TextPartHelper.IncreaseTextPartLevel(textPart))
             {
                 _dirtyStateMgr.MarkAsDirty();
                 RefreshTextPartViewModels();
+                SetNewSelectedItem();
             }
-            SelectedMainGridItem = textPart;
+            //SelectedMainGridItem = textPart;
         }
 
         #endregion
@@ -558,8 +589,9 @@ namespace DocCreator01.ViewModels
         #endregion
 
         #region tabs_manipulation
-        private void ActivateTab()
+        private void ActivateSelectedItemTab()
         {
+            if (SelectedMainGridItem == null) return;
             var tp = SelectedMainGridItem;
             var vm = Tabs.FirstOrDefault(t => t is TabPageViewModel tpVm && tpVm.Model == tp);
             if (vm == null)
@@ -591,7 +623,7 @@ namespace DocCreator01.ViewModels
         }
         private void AddTab()
         {
-            var tp = _textPartHelper.CreateTextPart(CurrentProject);
+            var tp = TextPartHelper.CreateTextPart();
             CurrentProject.ProjectData.TextParts.Add(tp);
             var vm = new TabPageViewModel(tp, new DirtyStateManager(), _projectHelper);
             SubscribeTab(vm);
@@ -599,6 +631,7 @@ namespace DocCreator01.ViewModels
             SelectedTab = vm;
             _dirtyStateMgr.MarkAsDirty();
             RefreshTextPartViewModels();
+            SetNewSelectedItem(); // TODO проверить правильно ли выделяется
         }
 
         private void CloseTab(ITabViewModel? vm) => Tabs.Remove(vm!);
@@ -611,7 +644,7 @@ namespace DocCreator01.ViewModels
             // Only handle TextPart tabs
             if (vm is TabPageViewModel textPartVm)
             {
-                _textPartHelper.RemoveTextPart(textPartVm.Model);
+                TextPartHelper.RemoveTextPart(textPartVm.Model);
                 CloseTab(vm);
                 _dirtyStateMgr.MarkAsDirty();
             }

@@ -12,7 +12,7 @@ namespace DocCreator01.Contracts
     public interface ITextPartHelper
     {
         TextPart CreateTextPart();
-
+        void RefreshTextParts();
         List<TextPart> TextParts { get; }
         bool MoveTextPartUp(TextPart textPart);
 

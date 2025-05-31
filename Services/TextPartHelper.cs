@@ -16,6 +16,11 @@ namespace DocCreator01.Services
         {
             _project = project;
         }
+
+        public void RefreshTextParts()
+        {
+            NumerationHelper.ApplyNumeration(TextParts);
+        }
         public List<TextPart> TextParts=> _project.ProjectData.TextParts;
         public TextPart CreateTextPart()
         {
@@ -43,7 +48,7 @@ namespace DocCreator01.Services
         public bool MoveTextPartDown(TextPart textPart)
         {
             int idx = TextParts.IndexOf(textPart);
-            if (idx < TextParts.Count - 1 && idx >= 0)
+            if (idx >= 0 && idx < TextParts.Count - 1)
             {
                 TextParts.Move(idx, idx + 1);
                 MessageBus.Current.SendMessage(new TextPartCollectionChangedMessage());

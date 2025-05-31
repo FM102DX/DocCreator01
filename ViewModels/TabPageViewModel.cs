@@ -20,10 +20,9 @@ namespace DocCreator01.ViewModels
 
         public TabPageViewModel(TextPart model, IDirtyStateManager dirtyStateMgr, IProjectHelper projectHelper)
         {
-            Model = model ?? throw new ArgumentNullException(nameof(model));
-            _dirtyStateMgr = dirtyStateMgr ?? throw new ArgumentNullException(nameof(dirtyStateMgr));
-            _projectHelper = projectHelper ?? throw new ArgumentNullException(nameof(projectHelper));
-
+            Model = model;
+            _dirtyStateMgr = dirtyStateMgr;
+            _projectHelper = projectHelper;
             Name = model.Name;
             Text = model.Text;
             IncludeInDocument = model.IncludeInDocument;

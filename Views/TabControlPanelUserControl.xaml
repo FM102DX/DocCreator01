@@ -20,6 +20,21 @@
         <views:TabContentTemplateSelector x:Key="TabContentTemplateSelector" 
                                           TextPartTemplate="{StaticResource TextPartTabTemplate}"
                                           SettingsTemplate="{StaticResource SettingsTabTemplate}"/>
+
+        <!-- Context menu for tabs -->
+        <ContextMenu x:Key="TabContextMenu">
+            <MenuItem Header="Закрыть вкладку" 
+                      Command="{Binding DataContext.CloseTabSafeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      CommandParameter="{Binding}"/>
+            <MenuItem Header="Закрыть все вкладки" 
+                      Command="{Binding DataContext.CloseAllTabsSafeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+            <Separator/>
+            <MenuItem Header="Pin" 
+                      Command="{Binding DataContext.PinTabCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      CommandParameter="{Binding}"/>
+            <MenuItem Header="Close All but pinned" 
+                      Command="{Binding DataContext.CloseAllButPinnedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+        </ContextMenu>
     </UserControl.Resources>
 
     <Grid>

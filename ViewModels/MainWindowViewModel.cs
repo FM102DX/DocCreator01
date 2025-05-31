@@ -88,6 +88,12 @@ namespace DocCreator01.ViewModels
                     OpenFolder(CurrentProject.ProjectFolder);
             });
 
+            // New context menu commands
+            CloseTabSafeCommand = ReactiveCommand.Create<ITabViewModel>(CloseTabSafe);
+            CloseAllTabsSafeCommand = ReactiveCommand.Create(CloseAllTabsSafe);
+            PinTabCommand = ReactiveCommand.Create<ITabViewModel>(PinTab);
+            CloseAllButPinnedCommand = ReactiveCommand.Create(CloseAllButPinned);
+
                
             _generatedFilesHelper.Initialize(CurrentProject);
             LoadRecentFiles();
@@ -150,6 +156,12 @@ namespace DocCreator01.ViewModels
         public ReactiveCommand<Unit, Unit> OpenScriptsFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenProjectFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenSettingsTabCommand { get; }
+        
+        // New context menu commands
+        public ReactiveCommand<ITabViewModel, Unit> CloseTabSafeCommand { get; }
+        public ReactiveCommand<Unit, Unit> CloseAllTabsSafeCommand { get; }
+        public ReactiveCommand<ITabViewModel, Unit> PinTabCommand { get; }
+        public ReactiveCommand<Unit, Unit> CloseAllButPinnedCommand { get; }
 
         #endregion
 
@@ -648,6 +660,49 @@ namespace DocCreator01.ViewModels
                 CloseTab(vm);
                 _dirtyStateMgr.MarkAsDirty();
             }
+        }
+
+        // New context menu methods
+        private void CloseTabSafe(ITabViewModel? vm)
+        {
+            if (vm == null) return;
+            
+            // Check if the tab is dirty (has unsaved changes)
+            if (vm is IDirtyTrackable dirtyTrackable && dirtyTrackable.DirtyStateMgr.IsDirty)
+            {
+                // Don't close dirty tabs
+                return;
+            }
+            
+            CloseTab(vm);
+        }
+
+        private void CloseAllTabsSafe()
+        {
+            // Create a copy of the tabs list to iterate over
+            var tabsToClose = Tabs.Where(tab => 
+            {
+                if (tab is IDirtyTrackable dirtyTrackable)
+                    return !dirtyTrackable.DirtyStateMgr.IsDirty;
+                return true; // Close tabs that don't implement dirty tracking
+            }).ToList();
+            
+            foreach (var tab in tabsToClose)
+            {
+                CloseTab(tab);
+            }
+        }
+
+        private void PinTab(ITabViewModel? vm)
+        {
+            // Placeholder for future implementation
+            // TODO: Implement pinning functionality
+        }
+
+        private void CloseAllButPinned()
+        {
+            // Placeholder for future implementation  
+            // TODO: Implement close all but pinned functionality
         }
 
         #endregion

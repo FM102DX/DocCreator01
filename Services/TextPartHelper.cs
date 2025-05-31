@@ -11,49 +11,51 @@ namespace DocCreator01.Services
 {
     public class TextPartHelper : ITextPartHelper
     {
-        // Constructor no longer needs repository
-        public TextPartHelper()
+        private Project _project;
+        public TextPartHelper(Project project)
         {
+            _project = project;
         }
-
-        public TextPart CreateTextPart(Project project)
+        public List<TextPart> TextParts=> _project.ProjectData.TextParts;
+        public TextPart CreateTextPart()
         {
             return new TextPart
             {
                 Id = Guid.NewGuid(),
-                Text = $"Tab {project.ProjectData.TextParts.Count + 1}",
-                Name = project.GetNewTextPartName(),
+                Text = $"Tab {_project.ProjectData.TextParts.Count + 1}",
+                Name = _project.GetNewTextPartName(),
                 IncludeInDocument = true
             };
         }
 
-        public bool MoveTextPartUp(TextPart textPart, List<TextPart> textParts)
+        public bool MoveTextPartUp(TextPart textPart)
         {
-            int idx = textParts.IndexOf(textPart);
+            int idx = TextParts.IndexOf(textPart);
             if (idx > 0)
             {
-                textParts.Move(idx, idx - 1);
-                MessageBus.Current.SendMessage(new GeneratedFilesUpdatedMessage());
+                TextParts.Move(idx, idx - 1);
+                MessageBus.Current.SendMessage(new TextPartCollectionChangedMessage());
                 return true;
             }
             return false;
         }
 
-        public bool MoveTextPartDown(TextPart textPart, List<TextPart> textParts)
+        public bool MoveTextPartDown(TextPart textPart)
         {
-            int idx = textParts.IndexOf(textPart);
-            if (idx < textParts.Count - 1 && idx >= 0)
+            int idx = TextParts.IndexOf(textPart);
+            if (idx < TextParts.Count - 1 && idx >= 0)
             {
-                textParts.Move(idx, idx + 1);
-                MessageBus.Current.SendMessage(new GeneratedFilesUpdatedMessage());
+                TextParts.Move(idx, idx + 1);
+                MessageBus.Current.SendMessage(new TextPartCollectionChangedMessage());
                 return true;
             }
             return false;
         }
 
-        public void RemoveTextPart(TextPart textPart, List<TextPart> textParts)
+        public void RemoveTextPart(TextPart textPart)
         {
-            textParts.Remove(textPart);
+            TextParts.Remove(textPart);
+            MessageBus.Current.SendMessage(new TextPartCollectionChangedMessage());
         }
         
         public bool DecreaseTextPartLevel(TextPart textPart)
@@ -61,6 +63,7 @@ namespace DocCreator01.Services
             if (textPart.Level > 1)
             {
                 textPart.Level--;
+                MessageBus.Current.SendMessage(new TextPartCollectionChangedMessage());
                 return true;
             }
             return false;
@@ -71,6 +74,7 @@ namespace DocCreator01.Services
             if (textPart.Level < 5)
             {
                 textPart.Level++;
+                MessageBus.Current.SendMessage(new TextPartCollectionChangedMessage());
                 return true;
             }
             return false;
@@ -110,6 +114,11 @@ namespace DocCreator01.Services
             }
 
             return null;                    // nothing added
+        }
+
+        public void RefreshTextPartData()
+        {
+            NumerationHelper.ApplyNumeration(TextParts);
         }
     }
 }

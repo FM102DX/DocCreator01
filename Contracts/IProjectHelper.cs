@@ -1,6 +1,7 @@
 using DocCreator01.Models;
 using System;
 using System.Collections.Generic;
+using DocCreator01.Services;
 
 namespace DocCreator01.Contracts
 {
@@ -11,7 +12,7 @@ namespace DocCreator01.Contracts
         List<HtmlGenerationProfile> GetHtmlGenerationProfiles();
 
         event EventHandler<Project> ProjectChanged;
-
+        TextPartHelper TextPartHelper { get; }
         Project LoadProject(string fileName);
 
         void SaveProject(Project project, string filePath);

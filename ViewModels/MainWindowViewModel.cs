@@ -54,18 +54,6 @@ namespace DocCreator01.ViewModels
             _browserService = browserService;
             _dirtyStateMgr = new DirtyStateManager();
             
-            // Subscribe to project changes
-            _projectHelper.ProjectChanged += (s, project) => 
-            {
-                // Update UI when project changes
-                RefreshTextPartViewModels();
-                this.RaisePropertyChanged(nameof(CurrentProject));
-                this.RaisePropertyChanged(nameof(WindowTitle));
-
-                // Reset dirty state when project changes
-                _dirtyStateMgr.ResetDirtyState();
-            };
-
             // Subscribe to dirty state for window title update
             _dirtyStateMgr.IBecameDirty += () => 
                 this.RaisePropertyChanged(nameof(WindowTitle));
@@ -104,7 +92,6 @@ namespace DocCreator01.ViewModels
             _generatedFilesHelper.Initialize(CurrentProject);
             LoadRecentFiles();
 
-            // React when generated files are updated
             MessageBus.Current
                 .Listen<TextPartCollectionChangedMessage>()
                 .ObserveOn(RxApp.MainThreadScheduler)
@@ -123,7 +110,18 @@ namespace DocCreator01.ViewModels
             MessageBus.Current
                 .Listen<ProjectLoadedMessage>()
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(msg => RefreshGeneratedFiles())
+                .Subscribe(msg =>
+                {
+                    // Update UI when project changes
+                    RefreshTextPartViewModels();
+                    RefreshGeneratedFiles();
+
+                    // Reset dirty state when project changes
+                    _dirtyStateMgr.ResetDirtyState();
+
+                    this.RaisePropertyChanged(nameof(CurrentProject));
+                    this.RaisePropertyChanged(nameof(WindowTitle));
+                })
                 .DisposeWith(_cleanup);
 
             MessageBus.Current
@@ -183,7 +181,7 @@ namespace DocCreator01.ViewModels
                     SelectedMainGridItem = null;
             }
         }
-
+        public ITextPartHelper TextPartHelper => this._projectHelper.TextPartHelper;
         public ObservableCollection<string> RecentFiles { get; } = new();
         public ObservableCollection<ITabViewModel> Tabs { get; } = new();
         public ObservableCollection<GeneratedFileViewModel> GeneratedFilesViewModels { get; } = new();
@@ -335,18 +333,14 @@ namespace DocCreator01.ViewModels
 
         private void RefreshTextPartViewModels()
         {
-            RefreshTextPartViewModels(CurrentProject.ProjectData.TextParts, MainGridLines);
+            RefreshTextPartViewModels(MainGridLines);
         }
 
-        private void RefreshTextPartViewModels(
-            List<TextPart> models,
-            ObservableCollection<MainGridItemViewModel> viewModels)
+        private void RefreshTextPartViewModels(ObservableCollection<MainGridItemViewModel> viewModels)
         {
-
-            if (models == null) return;
             viewModels.Clear();
-            NumerationHelper.ApplyNumeration(models);
-            foreach (var model in models)
+            //NumerationHelper.ApplyNumeration(models);
+            foreach (var model in this.TextPartHelper.TextParts)
             {
                 var vm = new MainGridItemViewModel(model);
                 viewModels.Add(vm);
@@ -389,7 +383,7 @@ namespace DocCreator01.ViewModels
             if (tab != null)
                 Tabs.Remove(tab);
 
-            _textPartHelper.RemoveTextPart(textPart, CurrentProject.ProjectData.TextParts);
+            _textPartHelper.RemoveTextPart(textPart);
             RefreshTextPartViewModels();
             SelectedMainGridItemViewModel = MainGridLines.FirstOrDefault();
             SelectedTab = Tabs.FirstOrDefault();
@@ -401,7 +395,7 @@ namespace DocCreator01.ViewModels
         {
             if (SelectedMainGridItemViewModel == null) return;
             var textPart = SelectedMainGridItemViewModel.Model;
-            if (_textPartHelper.MoveTextPartUp(textPart, CurrentProject.ProjectData.TextParts))
+            if (_textPartHelper.MoveTextPartUp(textPart))
             {
                 this.RaisePropertyChanged(nameof(CurrentProject));
                 _dirtyStateMgr.MarkAsDirty();
@@ -419,7 +413,7 @@ namespace DocCreator01.ViewModels
         {
             if (SelectedMainGridItemViewModel == null) return;
             var textPart = SelectedMainGridItemViewModel.Model;
-            if (_textPartHelper.MoveTextPartDown(textPart, CurrentProject.ProjectData.TextParts))
+            if (_textPartHelper.MoveTextPartDown(textPart))
             {
                 this.RaisePropertyChanged(nameof(CurrentProject));
                 _dirtyStateMgr.MarkAsDirty();
@@ -617,7 +611,7 @@ namespace DocCreator01.ViewModels
             // Only handle TextPart tabs
             if (vm is TabPageViewModel textPartVm)
             {
-                _textPartHelper.RemoveTextPart(textPartVm.Model, CurrentProject.ProjectData.TextParts);
+                _textPartHelper.RemoveTextPart(textPartVm.Model);
                 CloseTab(vm);
                 _dirtyStateMgr.MarkAsDirty();
             }

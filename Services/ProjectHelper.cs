@@ -20,6 +20,7 @@ namespace DocCreator01.Services
         private readonly IProjectRepository _repo;
         private Project _currentProject = new();
         private string? _currentPath;
+        public TextPartHelper TextPartHelper { get; set; }
 
         public ProjectHelper(IProjectRepository repo)
         {
@@ -47,8 +48,7 @@ namespace DocCreator01.Services
             
             EnsureTextPartChunks(project);          // <-- new fix-up
 
-            // Notify listeners that the project has changed
-            ProjectChanged?.Invoke(this, _currentProject);
+            TextPartHelper = new TextPartHelper(_currentProject);
 
             // Notify the application that a project was loaded
             MessageBus.Current.SendMessage(new ProjectLoadedMessage(project));
@@ -96,7 +96,8 @@ namespace DocCreator01.Services
         public void CreateNewProject()
         {
             _currentProject = new Project();
-            ProjectChanged?.Invoke(this, _currentProject);
+            TextPartHelper = new TextPartHelper(_currentProject);
+            MessageBus.Current.SendMessage(new ProjectLoadedMessage(_currentProject));
         }
 
         public bool CloseCurrentProject(bool? saveChanges = null)

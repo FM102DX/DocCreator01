@@ -172,12 +172,12 @@
 
     <!-- Close Button Style for Tab Header -->
     <Style x:Key="ClosableTabButtonStyle" TargetType="Button">
-        <Setter Property="Width"        Value="25"/>
-        <Setter Property="Height"       Value="25"/>
+        <Setter Property="Width"        Value="16"/>
+        <Setter Property="Height"       Value="16"/>
         <Setter Property="FontWeight"   Value="Bold"/>
-        <Setter Property="FontSize"     Value="18"/>
+        <Setter Property="FontSize"     Value="12"/>
         <Setter Property="Background"   Value="Transparent"/>
-        <Setter Property="Foreground"   Value="{StaticResource TextOnPrimaryColor}"/>
+        <Setter Property="Foreground"   Value="#808080"/>
         <Setter Property="Cursor"       Value="Hand"/>
         <Setter Property="Focusable"    Value="False"/>
         <Setter Property="Template">
@@ -196,20 +196,30 @@
 
     <!-- Compact Closable Tab Header -->
     <DataTemplate x:Key="ClosableTabHeaderTemplate_Compact">
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" MinHeight="26">
-            <TextBlock Text="{Binding TabHeader}"
+        <Grid VerticalAlignment="Center" MinHeight="26" MinWidth="80">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <TextBlock Grid.Column="0"
+                       Text="{Binding TabHeader}"
                        Margin="6,0,4,0"
                        VerticalAlignment="Center"
+                       HorizontalAlignment="Left"
                        TextWrapping="NoWrap"
                        TextTrimming="CharacterEllipsis"
                        Foreground="{StaticResource TextOnPrimaryColor}" />
-            <Button Style="{StaticResource ClosableTabButtonStyle}"
+            
+            <Button Grid.Column="1"
+                    Style="{StaticResource ClosableTabButtonStyle}"
                     Content="✕"
                     ToolTip="Close tab"
+                    Margin="4,5,2,5"
                     Command="{Binding DataContext.CloseTabCommand,
-                                      RelativeSource={RelativeSource AncestorType=TabControl}}"
+                              RelativeSource={RelativeSource AncestorType=TabControl}}"
                     CommandParameter="{Binding}" />
-        </StackPanel>
+        </Grid>
     </DataTemplate>
 
     <!-- Compact Material TabItem Style -->

@@ -15,20 +15,5 @@ namespace DocCreator01.Views
         {
             InitializeComponent();
         }
-
-        private void TabItem_RightClick(object sender, MouseButtonEventArgs e)
-        {
-            var item = sender as TabItem;
-            if (item != null && item.DataContext is ITabViewModel)
-            {
-                var cm = Resources["TabContextMenu"] as ContextMenu;
-                if (cm != null)
-                {
-                    cm.DataContext = item.DataContext;
-                    cm.IsOpen = true;
-                    e.Handled = true;
-                }
-            }
-        }
     }
 }

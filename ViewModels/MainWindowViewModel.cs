@@ -67,7 +67,6 @@ namespace DocCreator01.ViewModels
             SaveCommand = ReactiveCommand.Create(SaveProject);
             SaveAsCommand = ReactiveCommand.Create(SaveProjectAs);
             CloseTabCommand = ReactiveCommand.Create<ITabViewModel>(CloseTab);
-            DeleteTabCommand = ReactiveCommand.Create<ITabViewModel>(DeleteTab);
             ExitCommand = ReactiveCommand.Create(() => Application.Current.Shutdown());
             GenerateFileCommand = ReactiveCommand.Create(GenerateOutputFile); // Add missing initialization
             AddTextPartCommand = ReactiveCommand.Create(AddTab);
@@ -649,18 +648,6 @@ namespace DocCreator01.ViewModels
         private void CloseTab(ITabViewModel? vm) => Tabs.Remove(vm!);
         private void CloseAllTabs() => Tabs.Clear();
 
-        private void DeleteTab(ITabViewModel? vm)
-        {
-            if (vm == null) return;
-
-            // Only handle TextPart tabs
-            if (vm is TabPageViewModel textPartVm)
-            {
-                TextPartHelper.RemoveTextPart(textPartVm.Model);
-                CloseTab(vm);
-                _dirtyStateMgr.MarkAsDirty();
-            }
-        }
 
         // New context menu methods
         private void CloseTabSafe(ITabViewModel? vm)

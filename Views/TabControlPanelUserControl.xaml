@@ -1,4 +1,5 @@
 ﻿<UserControl x:Class="DocCreator01.Views.TabControlPanelUserControl" 
+             x:Name="RootUserControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -22,18 +23,19 @@
                                           SettingsTemplate="{StaticResource SettingsTabTemplate}"/>
 
         <!-- Context menu for tabs -->
-        <ContextMenu x:Key="TabContextMenu">
+        <ContextMenu x:Key="TabContextMenu" 
+                     DataContext="{Binding DataContext, Source={x:Reference RootUserControl}}">
             <MenuItem Header="Закрыть вкладку" 
-                      Command="{Binding DataContext.CloseTabSafeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                      CommandParameter="{Binding}"/>
+                      Command="{Binding CloseTabSafeCommand}"
+                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <MenuItem Header="Закрыть все вкладки" 
-                      Command="{Binding DataContext.CloseAllTabsSafeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                      Command="{Binding CloseAllTabsSafeCommand}"/>
             <Separator/>
             <MenuItem Header="Pin" 
-                      Command="{Binding DataContext.PinTabCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                      CommandParameter="{Binding}"/>
+                      Command="{Binding PinTabCommand}"
+                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <MenuItem Header="Close All but pinned" 
-                      Command="{Binding DataContext.CloseAllButPinnedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                      Command="{Binding CloseAllButPinnedCommand}"/>
         </ContextMenu>
     </UserControl.Resources>
 
